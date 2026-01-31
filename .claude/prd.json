@@ -1,0 +1,724 @@
+{
+  "project": "Flint - AI-Native Note-Taking Second Brain",
+  "version": "1.0.0",
+  "lastUpdated": "2026-02-01",
+  "phases": [
+    {
+      "phase": 1,
+      "name": "Foundation & Infrastructure",
+      "description": "Complete the core setup, auth, database schema, and routing infrastructure",
+      "items": [
+        {
+          "id": "F1-001",
+          "name": "TypeScript Strict Mode & Type Checking",
+          "description": "Set up proper TypeScript configuration with strict checks and create a bun script for CI/pre-commit validation",
+          "priority": "critical",
+          "steps": [
+            "Update tsconfig.json to enable strict mode, noUncheckedIndexedAccess, and noImplicitReturns",
+            "Create scripts/typecheck.ts that runs tsc --noEmit with proper error formatting",
+            "Add 'typecheck': 'bun run tsc --noEmit' to package.json scripts",
+            "Run bun tsc and fix all existing type errors in the codebase",
+            "Add typecheck to pre-commit hook using husky or lefthook",
+            "Verify CI pipeline includes typecheck step"
+          ],
+          "completed": false
+        },
+        {
+          "id": "F1-002",
+          "name": "GitHub OAuth Authentication",
+          "description": "Implement GitHub OAuth provider using Better Auth for secure user authentication",
+          "priority": "critical",
+          "steps": [
+            "Create GitHub OAuth App in GitHub Developer Settings (get CLIENT_ID and CLIENT_SECRET)",
+            "Add GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET to .env.local",
+            "Update lib/auth.ts to add GitHub provider configuration to Better Auth",
+            "Create app/(auth)/login/page.tsx with GitHub sign-in button using auth.signIn.social({ provider: 'github' })",
+            "Create app/(auth)/callback/github/route.ts to handle OAuth callback",
+            "Add user avatar and name extraction from GitHub profile to session",
+            "Test full OAuth flow: login -> callback -> session creation -> redirect to dashboard",
+            "Run type checks to ensure auth types are properly inferred"
+          ],
+          "completed": false
+        },
+        {
+          "id": "F1-003",
+          "name": "Protected & Public Route Separation",
+          "description": "Implement Next.js middleware for route protection and create proper route groups",
+          "priority": "critical",
+          "steps": [
+            "Create middleware.ts at project root with auth session validation",
+            "Define PUBLIC_ROUTES array: ['/', '/login', '/signup', '/api/auth/*']",
+            "Define PROTECTED_ROUTES array: ['/dashboard/*', '/notes/*', '/journal/*', '/search/*']",
+            "Implement redirect logic: unauthenticated users -> /login, authenticated on /login -> /dashboard",
+            "Create app/(public) route group for landing page and auth pages",
+            "Create app/(protected) route group for dashboard, notes, journal, search",
+            "Add layout.tsx in (protected) that fetches and provides session context",
+            "Create SessionProvider context component using React context",
+            "Test all routes with and without authentication",
+            "Run type checks"
+          ],
+          "completed": false
+        },
+        {
+          "id": "F1-004",
+          "name": "Core Database Schema - Notes & Journals",
+          "description": "Design and implement the complete Drizzle schema for notes, journals, tags, and relationships",
+          "priority": "critical",
+          "steps": [
+            "Create db/schema/notes.ts with notes table: id, userId, title, content, contentPlain, noteType (enum: 'note' | 'journal'), sourceUrl, moodScore, qualityScore, templateId, createdAt, updatedAt, metadata (jsonb)",
+            "Create db/schema/tags.ts with tags table: id, userId, name, color, createdAt",
+            "Create db/schema/noteTags.ts junction table: noteId, tagId, primary key composite",
+            "Create db/schema/people.ts for @mentions: id, userId, name, email, metadata",
+            "Create db/schema/noteMentions.ts junction table: noteId, personId",
+            "Create db/schema/noteLinks.ts for relationships: id, sourceNoteId, targetNoteId, linkType (enum: 'reference' | 'ai_suggested' | 'manual'), strength (float), createdAt",
+            "Create db/schema/templates.ts: id, userId, name, noteType, content, isDefault, createdAt",
+            "Add proper foreign key relations with onDelete: 'cascade'",
+            "Create db/schema/index.ts to export all schemas",
+            "Run drizzle-kit generate to create migration",
+            "Run drizzle-kit push to apply migration to Neon",
+            "Verify tables created correctly in Neon console",
+            "Run type checks"
+          ],
+          "completed": false
+        },
+        {
+          "id": "F1-005",
+          "name": "Row Level Security (RLS) for Neon",
+          "description": "Implement database-level security policies to ensure users can only access their own data",
+          "priority": "high",
+          "steps": [
+            "Create db/migrations/rls-policies.sql with RLS setup",
+            "Enable RLS on notes table: ALTER TABLE notes ENABLE ROW LEVEL SECURITY",
+            "Create policy for notes: CREATE POLICY notes_user_policy ON notes USING (user_id = current_setting('app.current_user_id')::uuid)",
+            "Enable RLS on tags, note_tags, people, note_mentions, note_links, templates tables",
+            "Create corresponding policies for each table",
+            "Create db/lib/rls.ts helper to set current_user_id: SET LOCAL app.current_user_id = 'uuid'",
+            "Update all database queries to call setCurrentUser() before operations",
+            "Create integration tests to verify RLS prevents cross-user data access",
+            "Run type checks"
+          ],
+          "completed": false
+        },
+        {
+          "id": "F1-006",
+          "name": "Full-Text Search Index Setup",
+          "description": "Configure PostgreSQL full-text search for keyword-based note searching",
+          "priority": "high",
+          "steps": [
+            "Create migration for GIN index: CREATE INDEX notes_fts_idx ON notes USING GIN (to_tsvector('english', content_plain || ' ' || title))",
+            "Create db/lib/search.ts with searchNotes function using ts_rank",
+            "Implement plainto_tsquery for user search input sanitization",
+            "Add search result ranking and pagination",
+            "Create API route app/api/search/keyword/route.ts",
+            "Test search with various queries and edge cases",
+            "Run type checks"
+          ],
+          "completed": false
+        }
+      ]
+    },
+    {
+      "phase": 2,
+      "name": "Editor & Core Note Operations",
+      "description": "Implement the markdown editor, note CRUD operations, and template system",
+      "items": [
+        {
+          "id": "F2-001",
+          "name": "Markdown Editor Setup - TipTap Integration",
+          "description": "Install and configure TipTap as the rich markdown editor with essential extensions",
+          "priority": "critical",
+          "steps": [
+            "Install TipTap core: bun add @tiptap/react @tiptap/pm @tiptap/starter-kit",
+            "Install extensions: bun add @tiptap/extension-placeholder @tiptap/extension-link @tiptap/extension-image @tiptap/extension-task-list @tiptap/extension-task-item @tiptap/extension-highlight @tiptap/extension-typography",
+            "Install markdown support: bun add @tiptap/extension-markdown tiptap-markdown",
+            "Create components/editor/TipTapEditor.tsx with useEditor hook",
+            "Configure StarterKit with: heading (levels 1-3), bulletList, orderedList, codeBlock, blockquote, horizontalRule",
+            "Add Placeholder extension with 'Start writing...' text",
+            "Add Link extension with autolink and openOnClick",
+            "Add TaskList and TaskItem for todo support",
+            "Create components/editor/EditorToolbar.tsx with formatting buttons",
+            "Style editor with Tailwind prose classes for beautiful typography",
+            "Implement getMarkdown() and setMarkdown() methods for content serialization",
+            "Add keyboard shortcuts display tooltip",
+            "Run type checks"
+          ],
+          "completed": false
+        },
+        {
+          "id": "F2-002",
+          "name": "Tag System with Autocomplete",
+          "description": "Implement #tag inline mentions with autocomplete dropdown",
+          "priority": "high",
+          "steps": [
+            "Install mention extension: bun add @tiptap/extension-mention",
+            "Create components/editor/TagSuggestion.tsx dropdown component",
+            "Create hooks/useTags.ts to fetch user's existing tags",
+            "Configure Mention extension with '#' trigger character",
+            "Implement suggestion items fetching from tags API",
+            "Add keyboard navigation (up/down/enter) for suggestions",
+            "Style tag pills with colored backgrounds matching tag.color",
+            "Create API route app/api/tags/route.ts for CRUD operations",
+            "Implement tag creation on-the-fly when tag doesn't exist",
+            "Add tag extraction on note save to populate note_tags junction",
+            "Run type checks"
+          ],
+          "completed": false
+        },
+        {
+          "id": "F2-003",
+          "name": "People Mentions with @mention",
+          "description": "Implement @person inline mentions for linking notes to people",
+          "priority": "medium",
+          "steps": [
+            "Create components/editor/PeopleSuggestion.tsx dropdown component",
+            "Create hooks/usePeople.ts to fetch user's contact list",
+            "Add second Mention extension instance with '@' trigger",
+            "Configure separate suggestion popup styling for people vs tags",
+            "Create API route app/api/people/route.ts for CRUD operations",
+            "Implement person creation modal when mention doesn't exist",
+            "Add person extraction on note save to populate note_mentions junction",
+            "Display mentioned people as clickable pills that link to person profile",
+            "Run type checks"
+          ],
+          "completed": false
+        },
+        {
+          "id": "F2-004",
+          "name": "Note CRUD API Routes",
+          "description": "Implement complete REST API for note operations",
+          "priority": "critical",
+          "steps": [
+            "Create app/api/notes/route.ts with GET (list) and POST (create) handlers",
+            "Create app/api/notes/[id]/route.ts with GET, PUT, DELETE handlers",
+            "Implement pagination for list endpoint with cursor-based pagination",
+            "Add filtering by noteType, tags, dateRange, moodScore",
+            "Implement content_plain extraction by stripping markdown on save",
+            "Add Zod schemas for request validation: createNoteSchema, updateNoteSchema",
+            "Return proper error responses with status codes and messages",
+            "Add optimistic locking with updatedAt timestamp comparison",
+            "Create lib/notes.ts with typed helper functions: createNote, updateNote, deleteNote, getNote, listNotes",
+            "Run type checks"
+          ],
+          "completed": false
+        },
+        {
+          "id": "F2-005",
+          "name": "Note Creation Modal & Flow",
+          "description": "Implement the Smart Capture modal that distinguishes between Journal and Note types",
+          "priority": "critical",
+          "steps": [
+            "Create components/notes/CreateNoteModal.tsx using shadcn Dialog",
+            "Step 1: Type Selection - two large cards: 'Journal Entry' (clock icon, 'Time-based, emotional, ephemeral') and 'Knowledge Note' (brain icon, 'Timeless, interlinkable, permanent')",
+            "Step 2: Basic Info - title input (required), source URL input (optional)",
+            "Step 3: Template Selection - show templates filtered by noteType, with preview",
+            "Add 'Skip to blank' option for users who want empty editor",
+            "Implement multi-step navigation with back button and progress indicator",
+            "Store selected type, title, sourceUrl, templateId in form state",
+            "On submit: create note via API, redirect to /notes/[id] for editing",
+            "Add keyboard shortcut (Cmd+N / Ctrl+N) to open modal globally",
+            "Run type checks"
+          ],
+          "completed": false
+        },
+        {
+          "id": "F2-006",
+          "name": "Template System",
+          "description": "Create predefined and custom templates for notes and journals",
+          "priority": "high",
+          "steps": [
+            "Create db/seed/templates.ts with default templates",
+            "Journal templates: 'Daily Reflection' (gratitude, highlights, stressors), 'Morning Pages' (freeform), 'Weekly Review' (wins, challenges, lessons)",
+            "Note templates: 'Literature Note' (source, key takeaways, quotes, connections), 'Meeting Notes' (attendees, agenda, decisions, action items), 'Idea Capture' (problem, solution, next steps)",
+            "Create API route app/api/templates/route.ts for CRUD",
+            "Create components/templates/TemplateCard.tsx for selection UI",
+            "Create components/templates/TemplateEditor.tsx for custom template creation",
+            "Implement template variable system: {{date}}, {{time}}, {{mood}} auto-filled on use",
+            "Add 'Save as Template' option when editing any note",
+            "Run type checks"
+          ],
+          "completed": false
+        },
+        {
+          "id": "F2-007",
+          "name": "Note Editor Page",
+          "description": "Build the complete note editing experience with sidebar trackers",
+          "priority": "critical",
+          "steps": [
+            "Create app/(protected)/notes/[id]/page.tsx",
+            "Fetch note data with useQuery or server component",
+            "Layout: main editor area (70%) + collapsible sidebar (30%)",
+            "Integrate TipTapEditor with note content",
+            "Auto-save implementation: debounce 2 seconds after last keystroke",
+            "Add save status indicator: 'Saved', 'Saving...', 'Unsaved changes'",
+            "Create components/editor/LiveTrackers.tsx sidebar with mood slider (1-10) and word count",
+            "Add 'Related Notes' section in sidebar (placeholder for Serendipity Engine)",
+            "Implement delete note with confirmation modal",
+            "Add breadcrumb navigation: Dashboard > Notes > [Note Title]",
+            "Run type checks"
+          ],
+          "completed": false
+        }
+      ]
+    },
+    {
+      "phase": 3,
+      "name": "Voice Capture & Transcription",
+      "description": "Implement voice recording, transcription via Groq, and AI-enhanced processing",
+      "items": [
+        {
+          "id": "F3-001",
+          "name": "Voice Recording Hook",
+          "description": "Create reusable hook for browser-based audio recording",
+          "priority": "high",
+          "steps": [
+            "Create hooks/useVoiceRecorder.ts",
+            "Implement MediaRecorder API with audio/webm mime type",
+            "Add state: isRecording, isPaused, duration, audioBlob",
+            "Implement startRecording(): request microphone permission, create MediaRecorder",
+            "Implement pauseRecording() and resumeRecording() for pause/resume",
+            "Implement stopRecording(): stop recorder, return Blob",
+            "Add real-time duration counter using setInterval",
+            "Implement audio level visualization using AnalyserNode",
+            "Handle permission denied error gracefully with user message",
+            "Add cleanup on unmount to release media stream",
+            "Run type checks"
+          ],
+          "completed": false
+        },
+        {
+          "id": "F3-002",
+          "name": "Groq Transcription API Integration",
+          "description": "Set up server-side endpoint for Whisper transcription via Groq",
+          "priority": "high",
+          "steps": [
+            "Verify GROQ_API_KEY is set in environment variables",
+            "Create lib/groq.ts with Groq SDK initialization",
+            "Create app/api/transcribe/route.ts POST handler",
+            "Accept multipart/form-data with audio file",
+            "Validate file size (max 25MB) and type (audio/*)",
+            "Call groq.audio.transcriptions.create with whisper-large-v3 model",
+            "Return transcription text and detected language",
+            "Add error handling for rate limits and API errors",
+            "Implement retry logic with exponential backoff",
+            "Run type checks"
+          ],
+          "completed": false
+        },
+        {
+          "id": "F3-003",
+          "name": "Voice Capture UI Component",
+          "description": "Build the voice recording button and transcription flow UI",
+          "priority": "high",
+          "steps": [
+            "Create components/voice/VoiceCapture.tsx",
+            "Design states: idle (microphone icon), recording (pulsing red), processing (spinner)",
+            "Add recording timer display during recording",
+            "Implement audio waveform visualization during recording",
+            "Add 'Cancel' and 'Done' buttons during recording",
+            "On 'Done': upload to /api/transcribe, show processing state",
+            "Display transcribed text in preview modal before insertion",
+            "Add 'Insert' button to append transcription to editor",
+            "Add 'Re-record' option if transcription is unsatisfactory",
+            "Style component to be non-intrusive, floating button design",
+            "Run type checks"
+          ],
+          "completed": false
+        },
+        {
+          "id": "F3-004",
+          "name": "Voice-to-Note Quick Capture",
+          "description": "Implement quick capture flow that creates a note directly from voice",
+          "priority": "medium",
+          "steps": [
+            "Create components/voice/QuickVoiceCapture.tsx modal",
+            "Add floating action button (FAB) on dashboard for quick capture",
+            "Flow: tap FAB -> select Journal/Note type -> start recording",
+            "After transcription: show preview with suggested title (first sentence)",
+            "Auto-detect mood from tone using Claude API (optional enhancement)",
+            "Add quick tags suggestion based on content keywords",
+            "On confirm: create note with transcribed content, redirect to editor",
+            "Add 'Just save' option to skip editing and save immediately",
+            "Run type checks"
+          ],
+          "completed": false
+        },
+        {
+          "id": "F3-005",
+          "name": "AI Mood Inference from Voice/Text",
+          "description": "Use LLM to analyze content and suggest mood score",
+          "priority": "low",
+          "steps": [
+            "Create lib/ai/moodAnalysis.ts",
+            "Design prompt for mood analysis: extract emotional tone, suggest 1-10 score",
+            "Create app/api/analyze/mood/route.ts endpoint",
+            "Accept text content, return mood score and brief explanation",
+            "Integrate with VoiceCapture: after transcription, analyze mood",
+            "Display suggested mood with 'Accept' or 'Adjust' options",
+            "Store AI-suggested vs user-confirmed mood in metadata",
+            "Run type checks"
+          ],
+          "completed": false
+        }
+      ]
+    },
+    {
+      "phase": 4,
+      "name": "AI Features & Semantic Search",
+      "description": "Implement embeddings, semantic search, and the Serendipity Engine",
+      "items": [
+        {
+          "id": "F4-001",
+          "name": "Voyage AI Embeddings Integration",
+          "description": "Set up embedding generation for notes using Voyage AI",
+          "priority": "high",
+          "steps": [
+            "Verify VOYAGE_API_KEY is set in environment variables",
+            "Create lib/embeddings.ts with getEmbedding function",
+            "Call Voyage API with voyage-3-lite model",
+            "Truncate input text to 4000 chars to stay within limits",
+            "Return embedding vector (array of floats)",
+            "Add error handling and retry logic",
+            "Create app/api/embed/route.ts for on-demand embedding",
+            "Run type checks"
+          ],
+          "completed": false
+        },
+        {
+          "id": "F4-002",
+          "name": "Upstash Vector Store Setup",
+          "description": "Configure Upstash Vector for storing and querying note embeddings",
+          "priority": "high",
+          "steps": [
+            "Create Upstash Vector index in Upstash console (dimensions: 1024 for voyage-3-lite)",
+            "Add UPSTASH_VECTOR_URL and UPSTASH_VECTOR_TOKEN to environment",
+            "Install: bun add @upstash/vector",
+            "Create lib/vector.ts with Index initialization",
+            "Implement indexNote(noteId, embedding, metadata) function",
+            "Implement semanticSearch(queryEmbedding, userId, topK) function",
+            "Implement deleteNoteVector(noteId) for cleanup on note deletion",
+            "Add metadata schema: userId, title, noteType, tags[], createdAt",
+            "Run type checks"
+          ],
+          "completed": false
+        },
+        {
+          "id": "F4-003",
+          "name": "Automatic Embedding on Note Save",
+          "description": "Generate and store embeddings automatically when notes are created/updated",
+          "priority": "high",
+          "steps": [
+            "Create lib/jobs/embedNote.ts background job function",
+            "On note create/update: queue embedding job",
+            "Job: fetch note content, generate embedding via Voyage, upsert to Upstash",
+            "Store embedding status in note metadata: { embeddingStatus: 'pending' | 'complete' | 'failed' }",
+            "For MVP: run synchronously after save (async can come later with Inngest)",
+            "Add retry logic for failed embeddings",
+            "Update note metadata with embeddingStatus on completion",
+            "Run type checks"
+          ],
+          "completed": false
+        },
+        {
+          "id": "F4-004",
+          "name": "Hybrid Search API",
+          "description": "Combine semantic and keyword search for comprehensive results",
+          "priority": "high",
+          "steps": [
+            "Create app/api/search/route.ts unified search endpoint",
+            "Accept query string and optional filters (noteType, tags, dateRange, mood)",
+            "Execute keyword search via Postgres full-text search",
+            "Execute semantic search via Upstash Vector",
+            "Implement result fusion: combine and deduplicate results",
+            "Rank by weighted score: 0.6 * semantic_score + 0.4 * keyword_rank",
+            "Return unified results with highlights for keyword matches",
+            "Add pagination support",
+            "Run type checks"
+          ],
+          "completed": false
+        },
+        {
+          "id": "F4-005",
+          "name": "Search UI Page",
+          "description": "Build the intelligent search interface",
+          "priority": "high",
+          "steps": [
+            "Create app/(protected)/search/page.tsx",
+            "Create components/search/SearchBar.tsx with debounced input",
+            "Create components/search/SearchFilters.tsx: noteType toggle, tag multiselect, date range picker, mood range slider",
+            "Create components/search/SearchResults.tsx with note cards",
+            "Implement search-as-you-type with 300ms debounce",
+            "Highlight matching text in results using mark.js or custom highlighting",
+            "Add 'No results' state with suggestions",
+            "Add recent searches dropdown (stored in localStorage)",
+            "Implement keyboard navigation for results (up/down to navigate, enter to open)",
+            "Run type checks"
+          ],
+          "completed": false
+        },
+        {
+          "id": "F4-006",
+          "name": "Serendipity Engine - Related Notes",
+          "description": "Automatically suggest related notes while editing",
+          "priority": "medium",
+          "steps": [
+            "Create components/editor/RelatedNotes.tsx sidebar component",
+            "Create app/api/notes/[id]/related/route.ts endpoint",
+            "Fetch current note's embedding from Upstash",
+            "Query for top 5 similar notes (excluding current note)",
+            "Display related notes as cards with title, preview, and similarity score",
+            "Add 'Link' button to create manual note_link relationship",
+            "Update related notes on editor content change (debounced, every 30 seconds)",
+            "Show loading skeleton while fetching",
+            "Run type checks"
+          ],
+          "completed": false
+        },
+        {
+          "id": "F4-007",
+          "name": "AI-Suggested Note Links",
+          "description": "Background job to discover and suggest relationships between notes",
+          "priority": "low",
+          "steps": [
+            "Create lib/jobs/discoverLinks.ts",
+            "For each new note: find top 10 similar notes via semantic search",
+            "Filter by similarity threshold (> 0.7)",
+            "Create note_link entries with linkType: 'ai_suggested' and strength: similarity_score",
+            "Avoid duplicate links (check existing)",
+            "Run job after embedding generation completes",
+            "Create UI to review and approve/dismiss AI suggestions",
+            "Run type checks"
+          ],
+          "completed": false
+        }
+      ]
+    },
+    {
+      "phase": 5,
+      "name": "Dashboard & Analytics",
+      "description": "Build the cognitive dashboard with mood tracking, streaks, and weekly summaries",
+      "items": [
+        {
+          "id": "F5-001",
+          "name": "Dashboard Layout",
+          "description": "Create the main dashboard page structure with responsive grid",
+          "priority": "critical",
+          "steps": [
+            "Create app/(protected)/dashboard/page.tsx",
+            "Design 4-quadrant grid layout: Mood Trends (top-left), Calendar/Streaks (top-right), Recent Notes (bottom-left), Weekly Summary (bottom-right)",
+            "Make layout responsive: stack vertically on mobile, 2x2 grid on desktop",
+            "Add dashboard header with greeting ('Good morning, [Name]') and date",
+            "Add quick action buttons: New Note, New Journal, Voice Capture",
+            "Create loading skeletons for each quadrant",
+            "Run type checks"
+          ],
+          "completed": false
+        },
+        {
+          "id": "F5-002",
+          "name": "Mood Trend Chart",
+          "description": "Visualize mood patterns over time",
+          "priority": "high",
+          "steps": [
+            "Install charting library: bun add recharts",
+            "Create components/dashboard/MoodChart.tsx",
+            "Create app/api/analytics/mood-trends/route.ts",
+            "Query notes with mood_score, group by date, calculate daily average",
+            "Return last 30 days of mood data",
+            "Render line chart with mood score (y-axis) over time (x-axis)",
+            "Add moving average trend line (7-day)",
+            "Color code line segments: green (7-10), yellow (4-6), red (1-3)",
+            "Add tooltip showing date, mood score, and note count",
+            "Run type checks"
+          ],
+          "completed": false
+        },
+        {
+          "id": "F5-003",
+          "name": "Streak Calendar",
+          "description": "Display writing streak and activity calendar",
+          "priority": "high",
+          "steps": [
+            "Create components/dashboard/StreakCalendar.tsx",
+            "Create app/api/analytics/activity/route.ts",
+            "Query notes grouped by date for last 90 days",
+            "Calculate current streak (consecutive days with notes)",
+            "Calculate longest streak",
+            "Render GitHub-style contribution calendar grid",
+            "Color intensity based on note count per day",
+            "Display streak counter prominently: '🔥 7 day streak'",
+            "Add tooltip on hover showing date and note count",
+            "Run type checks"
+          ],
+          "completed": false
+        },
+        {
+          "id": "F5-004",
+          "name": "Recent Notes Widget",
+          "description": "Display quick access to recently edited notes",
+          "priority": "high",
+          "steps": [
+            "Create components/dashboard/RecentNotes.tsx",
+            "Fetch last 5 notes ordered by updatedAt",
+            "Display as list with: title, noteType badge, preview (first 100 chars), relative time",
+            "Add click handler to navigate to note editor",
+            "Add 'View all' link to notes list page",
+            "Show empty state if no notes: 'Create your first note →'",
+            "Run type checks"
+          ],
+          "completed": false
+        },
+        {
+          "id": "F5-005",
+          "name": "AI Weekly Summary",
+          "description": "Generate and display AI-powered weekly insights",
+          "priority": "medium",
+          "steps": [
+            "Create components/dashboard/WeeklySummary.tsx",
+            "Create app/api/analytics/weekly-summary/route.ts",
+            "Fetch all notes from past 7 days",
+            "Construct prompt for Claude: analyze themes, mood patterns, productivity insights",
+            "Generate summary with: key themes, mood observations, one actionable insight",
+            "Cache generated summary in database (regenerate weekly or on-demand)",
+            "Display summary as formatted text with emoji highlights",
+            "Add 'Regenerate' button for manual refresh",
+            "Show placeholder if less than 3 notes in week",
+            "Run type checks"
+          ],
+          "completed": false
+        },
+        {
+          "id": "F5-006",
+          "name": "Mood-Productivity Correlation",
+          "description": "Chart correlating mood with writing quality/quantity",
+          "priority": "low",
+          "steps": [
+            "Create components/dashboard/MoodProductivityChart.tsx",
+            "Query: group notes by mood_score buckets, count notes and avg word count",
+            "Render scatter plot: mood (x) vs notes created (y) with bubble size = avg word count",
+            "Add trend line showing correlation",
+            "Display insight text: 'You write more when mood is 6-8'",
+            "Make interactive: click bubble to filter notes by mood range",
+            "Run type checks"
+          ],
+          "completed": false
+        }
+      ]
+    },
+    {
+      "phase": 6,
+      "name": "Advanced Features & Polish",
+      "description": "Implement AI-augmented writing assistance, URL ingestion, and quality tracking",
+      "items": [
+        {
+          "id": "F6-001",
+          "name": "URL Content Ingestion",
+          "description": "Automatically extract and summarize content from source URLs",
+          "priority": "medium",
+          "steps": [
+            "Create lib/urlParser.ts using @mozilla/readability or similar",
+            "Create app/api/ingest-url/route.ts endpoint",
+            "Accept URL, fetch page content, extract article text and metadata",
+            "Use Claude to generate: summary (3-5 sentences), key quotes, suggested tags",
+            "Return extracted data for pre-populating note",
+            "Integrate into CreateNoteModal: when URL entered, show 'Extract content' button",
+            "Auto-fill template with extracted summary and quotes",
+            "Handle errors: invalid URL, paywalled content, timeout",
+            "Run type checks"
+          ],
+          "completed": false
+        },
+        {
+          "id": "F6-002",
+          "name": "Writing Quality Tracker",
+          "description": "Real-time feedback on writing quality and cognitive density",
+          "priority": "low",
+          "steps": [
+            "Create lib/ai/qualityAnalysis.ts",
+            "Define metrics: readability (Flesch-Kincaid), cognitive density (unique concepts/paragraph), actionability (contains action items)",
+            "Create components/editor/QualityTracker.tsx sidebar widget",
+            "Calculate basic metrics client-side (word count, sentence length)",
+            "For advanced metrics: debounced API call to Claude for analysis",
+            "Display scores as progress bars with labels",
+            "Color code: green (good), yellow (average), red (needs work)",
+            "Add tooltips explaining each metric",
+            "Run type checks"
+          ],
+          "completed": false
+        },
+        {
+          "id": "F6-003",
+          "name": "Keyboard Shortcuts System",
+          "description": "Implement global and contextual keyboard shortcuts",
+          "priority": "medium",
+          "steps": [
+            "Create hooks/useKeyboardShortcuts.ts",
+            "Global shortcuts: Cmd+N (new note), Cmd+K (search), Cmd+/ (shortcuts help)",
+            "Editor shortcuts: Cmd+S (save), Cmd+B (bold), Cmd+I (italic)",
+            "Create components/ui/ShortcutsDialog.tsx help modal",
+            "Use event listeners with proper cleanup",
+            "Prevent conflicts with browser shortcuts",
+            "Add visual indicators in UI for available shortcuts",
+            "Run type checks"
+          ],
+          "completed": false
+        },
+        {
+          "id": "F6-004",
+          "name": "Data Export",
+          "description": "Allow users to export their data as markdown files",
+          "priority": "medium",
+          "steps": [
+            "Create app/api/export/route.ts endpoint",
+            "Fetch all user notes with tags and metadata",
+            "Generate markdown files with YAML frontmatter (title, date, tags, mood)",
+            "Create ZIP archive using archiver or similar",
+            "Stream ZIP file as download response",
+            "Create components/settings/ExportData.tsx button",
+            "Add export formats: Markdown (default), JSON, CSV",
+            "Run type checks"
+          ],
+          "completed": false
+        },
+        {
+          "id": "F6-005",
+          "name": "Dark Mode Support",
+          "description": "Implement system and manual dark mode toggle",
+          "priority": "medium",
+          "steps": [
+            "Configure Tailwind dark mode: 'class' strategy",
+            "Create hooks/useTheme.ts with system preference detection",
+            "Store preference in localStorage and user preferences",
+            "Create components/ui/ThemeToggle.tsx",
+            "Update all component styles for dark mode variants",
+            "Ensure charts and graphs support dark mode",
+            "Test accessibility contrast ratios in both modes",
+            "Run type checks"
+          ],
+          "completed": false
+        },
+        {
+          "id": "F6-006",
+          "name": "Mobile Responsive Polish",
+          "description": "Ensure all pages work beautifully on mobile devices",
+          "priority": "high",
+          "steps": [
+            "Audit all pages on mobile viewport (375px width)",
+            "Convert sidebar to bottom sheet on mobile",
+            "Make editor toolbar sticky on mobile",
+            "Implement swipe gestures for navigation",
+            "Optimize touch targets (min 44x44px)",
+            "Test voice recording on mobile browsers",
+            "Add PWA manifest for home screen installation",
+            "Run type checks"
+          ],
+          "completed": false
+        }
+      ]
+    }
+  ],
+  "technicalNotes": {
+    "stateManagement": "Use React Query (TanStack Query) for server state, React Context for UI state",
+    "formHandling": "Use react-hook-form with Zod validation",
+    "testing": "Vitest for unit tests, Playwright for E2E"
+  }
+}
