@@ -1,0 +1,37 @@
+# Flint Development Progress
+
+## Completed Tasks
+
+### 2026-02-01 - Task F1-001: TypeScript Strict Mode & Type Checking
+**Status:** ✅ Completed
+**Commit:** bd2aea6
+
+**What was done:**
+1. Updated tsconfig.json to enable additional strict type checks:
+   - Added `noUncheckedIndexedAccess: true` to catch potential undefined array/object access
+   - Added `noImplicitReturns: true` to ensure all code paths return values
+   - Kept existing `strict: true` setting
+
+2. Added typecheck script to package.json:
+   - Added `"typecheck": "tsc --noEmit"` to scripts section
+   - Can now run `bun run typecheck` for CI/pre-commit validation
+
+3. Fixed all existing type errors:
+   - Fixed components/ui/resizable.tsx import errors
+   - Changed from namespace import to named imports: `Group`, `Panel`, `Separator`
+   - Updated all component type references to use correct exports from react-resizable-panels
+
+4. Verified all type checks pass successfully:
+   - Ran `bun run typecheck` with zero errors
+
+**Next Task:** F1-002 - GitHub OAuth Authentication
+
+---
+
+## Pending Tasks
+- F1-002: GitHub OAuth Authentication
+- F1-003: Protected & Public Route Separation
+- F1-004: Core Database Schema - Notes & Journals
+- F1-005: Row Level Security (RLS) for Neon
+- F1-006: Full-Text Search Index Setup
+- And all subsequent phase tasks...
