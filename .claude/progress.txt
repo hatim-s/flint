@@ -1,0 +1,68 @@
+## Progress Log - Flint Development
+
+### 2026-02-02 - Core Database Schema Implementation (F1-004)
+
+**Task:** F1-004 - Core Database Schema - Notes & Journals
+
+**Completed:**
+- Created comprehensive database schema using Drizzle ORM
+- Implemented 7 new tables with proper relationships:
+  1. `notes` - Core notes/journal entries table with rich metadata support
+     - Fields: id, userId, title, content, contentPlain, noteType (enum), sourceUrl, moodScore, qualityScore, templateId, timestamps, metadata (jsonb)
+     - Indexes on userId, noteType, and createdAt for optimal query performance
+  
+  2. `tags` - User-defined tags for categorization
+     - Unique constraint on userId + name combination
+     - Customizable colors for visual organization
+  
+  3. `note_tags` - Many-to-many junction table between notes and tags
+     - Composite primary key on noteId + tagId
+     - Indexes for efficient bi-directional queries
+  
+  4. `people` - Contact list for @mentions feature
+     - Flexible metadata field for avatars, bios, etc.
+  
+  5. `note_mentions` - Junction table linking notes to people
+     - Enables tracking of people mentioned in notes
+  
+  6. `note_links` - Relationship graph for the Serendipity Engine
+     - Supports multiple link types: 'reference', 'ai_suggested', 'manual'
+     - Strength field for AI-computed similarity scores
+     - Unique constraint prevents duplicate relationships
+  
+  7. `templates` - Reusable note/journal templates
+     - Filtered by noteType for context-appropriate suggestions
+
+**Technical Details:**
+- Created modular schema structure in `db/schema/` directory
+- Defined comprehensive Drizzle relations for type-safe queries
+- Generated migration file: `drizzle/0001_daffy_the_order.sql`
+- Successfully applied migration to Neon PostgreSQL database
+- All tables include proper cascade deletes for data integrity
+- All type checks passed successfully
+
+**Database Structure:**
+- 2 PostgreSQL enums: `note_type`, `link_type`
+- 11 total tables (4 auth + 7 application)
+- 21 indexes for query optimization
+- Full referential integrity with foreign key constraints
+
+**Files Created/Modified:**
+- `db/schema/notes.ts` - Notes table schema
+- `db/schema/tags.ts` - Tags table schema
+- `db/schema/noteTags.ts` - Note-tag junction table
+- `db/schema/people.ts` - People/contacts schema
+- `db/schema/noteMentions.ts` - Note-people junction table
+- `db/schema/noteLinks.ts` - Note relationships for Serendipity Engine
+- `db/schema/templates.ts` - Template system schema
+- `db/schema/index.ts` - Centralized exports and relations
+- `db/schema.ts` - Updated to export all schemas
+- `drizzle/0001_daffy_the_order.sql` - Migration file
+
+**Next Steps:**
+The database foundation is now complete. Ready for:
+- F1-005: Row Level Security (RLS) implementation
+- F1-006: Full-text search index setup
+- F1-002: GitHub OAuth authentication
+- F2-xxx: Building the API endpoints and UI components
+

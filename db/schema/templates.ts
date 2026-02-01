@@ -1,0 +1,25 @@
+import { pgTable, text, timestamp, boolean, index } from "drizzle-orm/pg-core";
+import { user } from "@/auth/schema";
+import { noteTypeEnum } from "./notes";
+
+export const templates = pgTable(
+  "templates",
+  {
+    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    name: text("name").notNull(),
+    noteType: noteTypeEnum("note_type").notNull(),
+    content: text("content").notNull(), // Template markdown content
+    isDefault: boolean("is_default").default(false).notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("templates_userId_idx").on(table.userId),
+    index("templates_noteType_idx").on(table.noteType),
+  ]
+);
+
+export type Template = typeof templates.$inferSelect;
+export type NewTemplate = typeof templates.$inferInsert;
