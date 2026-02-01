@@ -1,8 +1,6 @@
 # ralph.sh
 # Usage: ./ralph.sh <iterations>
 
-set -e
-
 if [ -z "$1" ]; then
   echo "Usage: $0 <iterations>"
   exit 1
@@ -11,14 +9,13 @@ fi
 # For each iteration, run Claude Code with the following prompt.
 # This prompt is basic, we'll expand it later.
 for ((i=1; i<=$1; i++)); do
-  result=$(opencode --log-level DEBUG --prompt \
-"@.claude/prd.json @docs/ARCHITECTURE.md @docs/USERFLOW.md @docs/PRODUCT.md @docs/FLINT.md @.claude/progress.txt \
+  result=$(opencode --log-level DEBUG --prompt "@.claude/prd.json @docs/ARCHITECTURE.md @docs/USERFLOW.md @docs/PRODUCT.md @docs/FLINT.md @.claude/progress.txt \
 1. Decide which task to work on next. \
 This should be the one YOU decide has the highest priority, \
 - not necessarily the first in the list. \
 Whenever there is a confusion, alaways refer back to docs/*.md. \
 2. Check any feedback loops, such as types and tests. \
-3. Append your progress to the progress.txt file. \
+3. Append your progress to the progress.txt file and mark the changes in prd.json as completed: true \
 4. Make a git commit of that feature. \
 ONLY WORK ON A SINGLE FEATURE. \
 If, while implementing the feature, you notice that all work \

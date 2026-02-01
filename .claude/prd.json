@@ -21,7 +21,7 @@
             "Add typecheck to pre-commit hook using husky or lefthook",
             "Verify CI pipeline includes typecheck step"
           ],
-          "completed": false
+          "completed": true
         },
         {
           "id": "F1-002",
