@@ -256,7 +256,7 @@
             "Add breadcrumb navigation: Dashboard > Notes > [Note Title]",
             "Run type checks"
           ],
-          "completed": false
+          "completed": true
         }
       ]
     },
