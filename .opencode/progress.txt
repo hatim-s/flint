@@ -28,8 +28,50 @@
 
 ---
 
+### 2026-02-04 - Task F1-002: GitHub OAuth Authentication
+**Status:** Completed
+**Commit:** 4c5da64
+
+**What was done:**
+1. Updated auth/index.ts to add GitHub OAuth provider configuration:
+   - Added socialProviders.github with clientId and clientSecret from env vars
+   - Configured session settings (7 days expiry, 1 day refresh, 5 min cookie cache)
+   - Exported Session and User types for type safety
+
+2. Added GITHUB_CLIENT_ID and GITHUB_CLIENT_SECRET placeholders to .env.local:
+   - Included instructions for creating GitHub OAuth App
+   - Callback URL: http://localhost:3000/api/auth/callback/github
+
+3. Created API route for Better Auth:
+   - app/api/auth/[...all]/route.ts - Catch-all route handling all auth endpoints
+   - Uses toNextJsHandler from better-auth/next-js
+
+4. Created auth client lib/auth-client.ts:
+   - Uses createAuthClient from better-auth/react
+   - Exports signIn, signOut, signUp, useSession, getSession helpers
+
+5. Created login page app/(auth)/login/page.tsx:
+   - Clean card-based UI with "Continue with GitHub" button
+   - Loading state with spinner during OAuth flow
+   - Error handling for failed sign-ins
+   - Redirects to /dashboard after successful authentication
+
+6. User avatar and name extraction:
+   - Better Auth automatically extracts GitHub profile data (name, avatar_url)
+   - Stored in user table's name and image fields
+
+**Learnings:**
+- Better Auth handles OAuth callbacks through the catch-all [...all] route automatically
+- No need for separate callback route - the flow is: login -> GitHub -> /api/auth/callback/github -> session creation -> redirect
+- Social provider configuration is straightforward - just clientId and clientSecret
+- Type exports (Session, User) from auth config help with type safety across the app
+- Cookie cache with session.cookieCache reduces database queries for session validation
+
+**Next Task:** F1-003 - Protected & Public Route Separation
+
+---
+
 ## Pending Tasks
-- F1-002: GitHub OAuth Authentication
 - F1-003: Protected & Public Route Separation
 - F1-004: Core Database Schema - Notes & Journals
 - F1-005: Row Level Security (RLS) for Neon
