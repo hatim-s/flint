@@ -105,7 +105,7 @@ export async function searchNotes(
   await setCurrentUser(userId);
 
   // Build the WHERE clause conditions
-  const conditions: any[] = [
+  const conditions: unknown[] = [
     sql`to_tsvector('english', COALESCE(${notes.contentPlain}, '') || ' ' || COALESCE(${notes.title}, '')) @@ plainto_tsquery('english', ${sanitizedQuery})`,
   ];
 
@@ -181,7 +181,7 @@ export async function countSearchResults(
   await setCurrentUser(userId);
 
   // Build WHERE clause (same as searchNotes)
-  const conditions: any[] = [
+  const conditions: unknown[] = [
     sql`to_tsvector('english', COALESCE(${notes.contentPlain}, '') || ' ' || COALESCE(${notes.title}, '')) @@ plainto_tsquery('english', ${sanitizedQuery})`,
   ];
 
