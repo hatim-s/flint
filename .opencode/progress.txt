@@ -71,8 +71,50 @@
 
 ---
 
+### 2026-02-04 - Task F1-003: Protected & Public Route Separation
+**Status:** Completed
+**Commit:** 9d1da6b
+
+**What was done:**
+1. Created middleware.ts at project root with session validation:
+   - Validates Better Auth session via /api/auth/get-session endpoint
+   - Handles both cookie existence check and session validity verification
+   - Configures matcher to exclude static files and Next.js internals
+
+2. Defined public routes:
+   - PUBLIC_ROUTES: ['/', '/login', '/signup']
+   - PUBLIC_API_ROUTES: ['/api/auth'] - Better Auth endpoints
+
+3. Implemented redirect logic:
+   - Unauthenticated users on protected routes -> /login with callbackUrl
+   - Authenticated users on /login -> /dashboard
+   - Preserves intended destination via callbackUrl query param
+
+4. Created route groups:
+   - app/(auth)/ - Login and signup pages
+   - app/(protected)/ - Dashboard and other protected pages
+   - Both with minimal layout.tsx files
+
+5. Updated login page:
+   - Now reads callbackUrl from search params
+   - Redirects to original destination after successful OAuth
+
+6. Created basic dashboard page:
+   - Displays user info (name, avatar) from session
+   - Sign out functionality with redirect to login
+   - Uses Better Auth's useSession hook
+
+**Learnings:**
+- Middleware can fetch internal API routes to validate sessions
+- Better Auth's get-session endpoint returns null for invalid sessions
+- Using callbackUrl preserves user intent during auth redirects
+- Route groups (auth), (protected) organize code without affecting URLs
+
+**Next Task:** F1-004 - Core Database Schema - Notes & Journals
+
+---
+
 ## Pending Tasks
-- F1-003: Protected & Public Route Separation
 - F1-004: Core Database Schema - Notes & Journals
 - F1-005: Row Level Security (RLS) for Neon
 - F1-006: Full-Text Search Index Setup

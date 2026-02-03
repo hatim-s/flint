@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Github, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,7 +16,8 @@ import { signIn } from "@/lib/auth-client";
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard";
 
   const handleGitHubSignIn = async () => {
     setIsLoading(true);
@@ -25,7 +26,7 @@ export default function LoginPage() {
     try {
       await signIn.social({
         provider: "github",
-        callbackURL: "/dashboard",
+        callbackURL: callbackUrl,
       });
     } catch (err) {
       setError("Failed to sign in with GitHub. Please try again.");
