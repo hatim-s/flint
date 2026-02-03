@@ -414,10 +414,119 @@ DELETE /api/notes/{id}
 
 ---
 
+### 2026-02-04 - Task F2-001: Markdown Editor Setup - TipTap Integration
+**Status:** ✅ Completed
+**Commit:** (pending)
+
+**What was done:**
+1. Installed TipTap packages (removed @tiptap/starter-kit to avoid version conflicts):
+   - Core: @tiptap/react@3.19.0, @tiptap/pm@3.19.0, @tiptap/core@3.19.0
+   - Extensions: Document, Paragraph, Text, Heading, Bold, Italic, Strike, Code, Blockquote
+   - Lists: BulletList, OrderedList, ListItem, TaskList, TaskItem
+   - Special: CodeBlock, Link, Image, Highlight, Typography, HardBreak, HorizontalRule
+   - Utilities: Dropcursor, Gapcursor, History, Placeholder
+   - Markdown: tiptap-markdown@0.9.0 for bidirectional markdown support
+
+2. Created components/editor/TipTapEditor.tsx:
+   - Main editor component with useEditor hook
+   - All extensions configured with proper HTML attributes for styling
+   - Markdown support via tiptap-markdown extension
+   - getMarkdownFromEditor() helper to extract markdown from editor storage
+   - Props: content, onChange, placeholder, editable, className
+   - Auto-updates content when prop changes (with initial mount protection)
+   - Exports helper functions: getMarkdown(), setMarkdown(), useEditor
+   - Exports Editor type for parent components
+
+3. Created components/editor/EditorToolbar.tsx:
+   - Comprehensive formatting toolbar with all common markdown operations
+   - Buttons: Bold, Italic, Strike, Code, Highlight
+   - Headings: H1, H2, H3
+   - Lists: Bullet, Ordered, Task/Checklist
+   - Blocks: Quote, Code Block, Horizontal Rule
+   - Media: Link, Image (with URL prompts)
+   - Visual feedback: Active state styling for current format
+   - Tooltips with keyboard shortcuts
+   - Uses shadcn/ui components (Button, Separator, Tooltip)
+   - Lucide icons for all toolbar buttons
+
+4. Configured Tailwind Typography:
+   - Added @tailwindcss/typography plugin via @plugin directive
+   - Added custom CSS for TipTap editor in app/globals.css
+   - ProseMirror styles: outline removal, placeholder styling
+   - Task list styles: custom checkboxes with proper alignment
+   - Code block styles: themed background and syntax highlighting support
+   - Highlight/mark styles: light/dark mode support
+   - Prose classes configured in editor: prose-sm to prose-xl responsive
+
+5. Created components/editor/index.tsx:
+   - Central export file for all editor components
+   - Exports: TipTapEditor, EditorToolbar, useEditor, getMarkdown, setMarkdown
+   - Export types: Editor
+
+6. Removed old placeholder components:
+   - Deleted components/editor.tsx (old TipTap demo file with StarterKit dependency)
+
+7. Verified type safety:
+   - Ran `bun run typecheck` with zero errors
+   - All components properly typed
+   - Editor hook returns correctly typed Editor instance
+
+**Technical Decisions:**
+- Removed @tiptap/starter-kit to avoid version conflicts between bundled @tiptap/core
+- Using individual extensions gives more control and avoids dependency conflicts
+- Markdown extension provides bidirectional conversion (paste markdown, export markdown)
+- Storage API used for markdown extraction: editor.storage.markdown.getMarkdown()
+- Tailwind v4 @plugin syntax for typography instead of config file
+- Custom CSS for TipTap-specific styles (placeholder, task lists, code blocks)
+- Toolbar is separate component to allow flexible layout (can be positioned anywhere)
+- All extensions configured with Tailwind classes for consistent theming
+
+**Component Structure:**
+```
+components/editor/
+├── TipTapEditor.tsx       # Main editor component
+├── EditorToolbar.tsx      # Formatting toolbar
+└── index.tsx              # Central exports
+```
+
+**Usage Example:**
+```typescript
+import { TipTapEditor, EditorToolbar, useEditor } from '@/components/editor';
+
+function NoteEditor() {
+  const [markdown, setMarkdown] = useState('');
+  
+  return (
+    <div>
+      <EditorToolbar editor={editor} />
+      <TipTapEditor 
+        content={markdown}
+        onChange={setMarkdown}
+        placeholder="Start writing..."
+        editable={true}
+      />
+    </div>
+  );
+}
+```
+
+**Learnings:**
+- @tiptap/starter-kit bundles its own @tiptap/core which causes type conflicts
+- Individual extensions provide better version control and smaller bundle size
+- tiptap-markdown storage API is accessed via type assertion on editor.storage
+- Tailwind v4 uses @plugin directive instead of tailwind.config.js
+- TipTap's placeholder extension requires custom CSS for proper styling
+- Task lists need special styling for checkboxes to align properly
+- Editor content updates need protection against infinite loops (useRef for initial mount)
+
+**Next Task:** F2-002 - Tag System with Autocomplete
+
+---
+
 ## Pending Tasks
 - Phase 1 Complete! ✅
 - Phase 2: Editor & Core Note Operations
-  - F2-001: Markdown Editor Setup - TipTap Integration
+  - F2-001: Markdown Editor Setup - TipTap Integration ✅ COMPLETE
   - F2-002: Tag System with Autocomplete
   - F2-003: People Mentions with @mention
   - F2-004: Note CRUD API Routes ✅ COMPLETE

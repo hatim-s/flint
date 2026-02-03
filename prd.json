@@ -142,7 +142,7 @@
             "Add keyboard shortcuts display tooltip",
             "Run type checks"
           ],
-          "completed": false
+          "completed": true
         },
         {
           "id": "F2-002",
