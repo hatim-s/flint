@@ -511,7 +511,7 @@
             "Create loading skeletons for each quadrant",
             "Run type checks"
           ],
-          "completed": false
+          "completed": true
         },
         {
           "id": "F5-002",

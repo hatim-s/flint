@@ -907,3 +907,105 @@ app/api/templates/
 
 ---
 
+### 2026-02-04 - Task F5-001: Dashboard Layout
+**Status:** ✅ Completed
+**Commit:** (pending)
+
+**What was done:**
+1. Created app/(protected)/dashboard/page.tsx with comprehensive dashboard layout:
+   - 4-quadrant responsive grid layout (2x2 on desktop, stacked on mobile)
+   - Quadrant 1 (top-left): Mood Trends placeholder
+   - Quadrant 2 (top-right): Writing Streak placeholder
+   - Quadrant 3 (bottom-left): Recent Notes placeholder
+   - Quadrant 4 (bottom-right): Weekly Summary placeholder
+   - All quadrants use shadcn/ui Card components with proper styling
+
+2. Implemented dynamic dashboard header:
+   - Time-based greeting: "Good morning/afternoon/evening"
+   - Personalized with user's first name
+   - Full formatted date display (e.g., "Monday, February 4, 2026")
+   - Helper functions: getGreeting() and getFormattedDate()
+
+3. Added quick action buttons:
+   - "New Note" button (primary action with Plus icon)
+   - "New Journal" button (outline variant with BookOpen icon)
+   - "Voice Capture" button (disabled placeholder with Mic icon, "Coming soon" tooltip)
+   - All buttons trigger CreateNoteModal (voice capture for future implementation)
+   - Responsive layout: wrap on mobile, inline on desktop
+
+4. Created loading skeleton component:
+   - QuadrantSkeleton component for future loading states
+   - Uses shadcn/ui Skeleton component
+   - Matches card layout structure
+   - Ready for integration when widgets are implemented
+
+5. Implemented responsive design:
+   - Mobile: Single column stack (grid-cols-1)
+   - Desktop: 2x2 grid (lg:grid-cols-2)
+   - Proper spacing and padding with Tailwind responsive classes
+   - Header responsive: name hidden on mobile (sm:inline)
+   - Action buttons wrap gracefully on small screens
+
+6. Integrated existing features:
+   - Better Auth session management with useSession hook
+   - Global keyboard shortcut (Cmd+N / Ctrl+N) to open CreateNoteModal
+   - User avatar and name display in header
+   - Sign out functionality
+   - Consistent design with existing pages
+
+7. Added keyboard shortcut hint:
+   - Visual hint showing Cmd+N / Ctrl+N shortcut
+   - Styled with kbd tags for proper keyboard key display
+   - Border and background styling for visual distinction
+
+8. Verified implementation:
+   - Ran `bun run typecheck` with zero errors
+   - All components properly typed with TypeScript
+   - Responsive layout tested with Tailwind breakpoints
+
+**Technical Decisions:**
+- Used shadcn/ui Card components for consistent design system
+- Lucide React icons for all action buttons (Plus, BookOpen, Mic, LogOut)
+- Placeholder text for widgets to be implemented in F5-002 through F5-005
+- Time-based greeting adds personalization and context awareness
+- Quick action buttons provide immediate access to core features
+- Voice Capture button included but disabled to show planned functionality
+- Grid layout with proper responsive breakpoints for optimal mobile/desktop experience
+- Keyboard shortcut preserved from existing home page for consistency
+
+**Component Structure:**
+```
+app/(protected)/dashboard/
+└── page.tsx                # Main dashboard page with 4-quadrant layout
+```
+
+**Features Implemented:**
+✅ 4-quadrant grid layout with responsive design
+✅ Time-based greeting (morning/afternoon/evening)
+✅ Formatted date display
+✅ User info display (avatar, name, sign out)
+✅ Quick action buttons (New Note, New Journal, Voice Capture placeholder)
+✅ Global keyboard shortcut (Cmd+N / Ctrl+N)
+✅ Loading skeleton component (ready for future use)
+✅ Placeholder content for all 4 widgets
+✅ Mobile-responsive layout (stacks vertically)
+✅ Desktop 2x2 grid layout
+✅ Consistent styling with shadcn/ui
+✅ Type-safe implementation
+✅ Dark mode support
+
+**Learnings:**
+- Placeholder widgets allow incremental development of dashboard features
+- Time-based greetings add personality without complexity
+- First name extraction (split by space) works well for most names
+- Quick action buttons should be visually distinct (primary vs outline variants)
+- Disabled buttons with tooltips communicate future functionality
+- Responsive grid layout requires careful planning of breakpoints
+- Card components provide natural visual separation for dashboard quadrants
+- Loading skeletons improve perceived performance during data fetching
+- Keyboard shortcut hints improve discoverability
+
+**Next Task:** F5-002 - Mood Trend Chart or F5-003 - Streak Calendar
+
+---
+
