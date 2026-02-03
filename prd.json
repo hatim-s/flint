@@ -79,7 +79,7 @@
             "Verify tables created correctly in Neon console",
             "Run type checks"
           ],
-          "completed": false
+          "completed": true
         },
         {
           "id": "F1-005",
@@ -113,7 +113,7 @@
             "Test search with various queries and edge cases",
             "Run type checks"
           ],
-          "completed": false
+          "completed": true
         }
       ]
     },

@@ -218,10 +218,89 @@ export async function GET(req: Request) {
 - current_setting('app.current_user_id', true) with true flag prevents errors when variable not set
 - Testing RLS requires creating test users and verifying data isolation
 
-**Next Task:** F1-006 - Full-Text Search Index Setup
+**Next Task:** Phase 2 - Editor & Core Note Operations
+
+---
+
+### 2026-02-04 - Task F1-006: Full-Text Search Index Setup
+**Status:** ✅ Completed
+**Commit:** (pending)
+
+**What was done:**
+1. Created fulltext-search-index.sql migration:
+   - Created GIN index on notes table: `notes_fts_idx` using `to_tsvector('english', content_plain || title)`
+   - Added index on `updated_at` for efficient sorting by recency
+   - Created PostgreSQL function `search_notes()` for consistent search behavior with ranking
+   - Function supports pagination (limit/offset), filtering by user_id, and ts_rank scoring
+
+2. Created db/lib/search.ts with comprehensive search utilities:
+   - `SearchResult` interface extending Note with rank score
+   - `SearchOptions` interface with filters (noteType, mood range, pagination)
+   - `sanitizeSearchQuery()` function to prevent SQL injection and handle special characters
+   - `searchNotes()` function using ts_rank for relevance scoring
+   - `countSearchResults()` function for pagination metadata
+   - Full integration with RLS using setCurrentUser()
+   - Proper TypeScript type safety with Drizzle ORM
+
+3. Created API route app/api/search/keyword/route.ts:
+   - GET endpoint with query parameters: q, limit, offset, noteType, minMood, maxMood, includeCount
+   - Comprehensive input validation (query required, limit 1-100, offset ≥0, mood scores 1-10)
+   - Session authentication using Better Auth
+   - Returns results with rank scores, count, and pagination metadata
+   - Proper error handling with descriptive messages
+
+4. Created db/migrations/README.md:
+   - Documentation for applying SQL migrations
+   - Instructions for both Neon Console and psql methods
+   - Verification queries to check migration success
+   - Troubleshooting guide
+
+5. Verified type safety:
+   - Ran `bun run typecheck` with zero errors
+   - All function signatures properly typed
+   - Integration with existing schema validated
+
+**Technical Decisions:**
+- Used PostgreSQL's native full-text search (tsvector/tsquery) instead of external search engines for cost optimization
+- GIN index provides O(log n) search performance on text fields
+- Combined title and content_plain in search vector for comprehensive matching
+- ts_rank provides relevance scoring based on term frequency and document length
+- plainto_tsquery sanitizes user input and handles phrase queries
+- English text search configuration for proper stemming (e.g., "running" matches "run")
+- Secondary sorting by updated_at ensures recent notes appear first for tied ranks
+
+**To Apply Migration:**
+Run in Neon SQL console or via psql:
+```bash
+psql $DATABASE_URL -f db/migrations/fulltext-search-index.sql
+```
+
+**Learnings:**
+- PostgreSQL's full-text search is production-ready and eliminates need for Elasticsearch/Algolia
+- GIN indexes are larger but much faster than GiST for text search (trade space for speed)
+- ts_rank can be customized with weights for title vs content if needed
+- plainto_tsquery handles most user queries, but to_tsquery could be used for advanced boolean operators
+- COALESCE handles NULL content_plain gracefully (though schema should prevent NULLs)
+- RLS integration ensures search respects user data boundaries at database level
+
+**API Usage Example:**
+```bash
+# Basic search
+GET /api/search/keyword?q=productivity
+
+# Filtered search with pagination
+GET /api/search/keyword?q=anxiety&noteType=journal&minMood=5&limit=10&offset=0&includeCount=true
+
+# Mood range search
+GET /api/search/keyword?q=work&minMood=7&maxMood=10
+```
+
+**Next Task:** F2-001 - Markdown Editor Setup - TipTap Integration
 
 ---
 
 ## Pending Tasks
-- F1-006: Full-Text Search Index Setup
-- And all subsequent phase tasks...
+- Phase 1 Complete! ✅
+- Phase 2: Editor & Core Note Operations
+  - F2-001: Markdown Editor Setup - TipTap Integration
+  - And all subsequent phase 2 tasks...
