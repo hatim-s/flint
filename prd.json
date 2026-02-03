@@ -97,7 +97,7 @@
             "Create integration tests to verify RLS prevents cross-user data access",
             "Run type checks"
           ],
-          "completed": false
+          "completed": true
         },
         {
           "id": "F1-006",

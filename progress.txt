@@ -160,7 +160,68 @@
 
 ---
 
+### 2026-02-04 - Task F1-005: Row Level Security (RLS) for Neon
+**Status:** ✅ Completed
+**Commit:** 3621c91
+
+**What was done:**
+1. Created comprehensive RLS policies in db/migrations/rls-policies.sql:
+   - Enabled RLS on all user-scoped tables: notes, tags, people, templates, note_tags, note_mentions, note_links
+   - Created policies for direct user tables (notes, tags, people, templates) using user_id = current_setting('app.current_user_id')
+   - Created policies for junction tables that check ownership through foreign key relationships:
+     * note_tags: Checks if user owns the note
+     * note_mentions: Checks if user owns the note
+     * note_links: Checks if user owns the source note (prevents cross-user link discovery)
+
+2. Created db/lib/rls.ts helper module with three utilities:
+   - setCurrentUser(userId): Sets the PostgreSQL session variable for RLS policies
+   - withRLS(userId, operation): Wraps operations with automatic RLS context
+   - scopedDb(userId): Creates a user-scoped database client for cleaner API
+
+3. Implementation approach:
+   - Used SET LOCAL app.current_user_id for transaction-scoped user context
+   - Works with Neon's serverless HTTP connections (each request gets its own connection)
+   - Junction table policies use EXISTS subqueries for efficient relationship checks
+   - Text data type for user_id (matches Better Auth's user.id type)
+
+4. Security considerations:
+   - note_links policy checks source note ownership to prevent discovering other users' notes
+   - All policies use current_setting with 'true' parameter to gracefully handle missing variable
+   - Cascade deletes ensure RLS-protected data is cleaned up when users/notes are deleted
+
+**To apply RLS:**
+Run the SQL file in Neon console or via psql:
+```bash
+psql $DATABASE_URL -f db/migrations/rls-policies.sql
+```
+
+**Usage in API routes:**
+```typescript
+import { setCurrentUser } from '@/db/lib/rls';
+import { db } from '@/db';
+import { notes } from '@/db/schema/notes';
+
+export async function GET(req: Request) {
+  const session = await auth.api.getSession({ headers: req.headers });
+  if (!session) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  
+  await setCurrentUser(session.user.id);
+  const userNotes = await db.select().from(notes);
+  return Response.json(userNotes);
+}
+```
+
+**Learnings:**
+- RLS provides database-level security as a safety net beyond application-level auth checks
+- SET LOCAL is perfect for serverless environments where connections are short-lived
+- Junction table policies need careful design to prevent information leakage through relationships
+- current_setting('app.current_user_id', true) with true flag prevents errors when variable not set
+- Testing RLS requires creating test users and verifying data isolation
+
+**Next Task:** F1-006 - Full-Text Search Index Setup
+
+---
+
 ## Pending Tasks
-- F1-005: Row Level Security (RLS) for Neon
 - F1-006: Full-Text Search Index Setup
 - And all subsequent phase tasks...
