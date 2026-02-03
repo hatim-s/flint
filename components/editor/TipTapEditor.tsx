@@ -27,6 +27,8 @@ import TaskItem from '@tiptap/extension-task-item';
 import Highlight from '@tiptap/extension-highlight';
 import Typography from '@tiptap/extension-typography';
 import { Markdown } from 'tiptap-markdown';
+import Mention from '@tiptap/extension-mention';
+import { tagMentionSuggestion } from './tagMentionSuggestion';
 import { useEffect, useRef } from 'react';
 
 interface EditorProps {
@@ -135,6 +137,12 @@ export function TipTapEditor({
         breaks: true,
         transformPastedText: true,
         transformCopiedText: true,
+      }),
+      Mention.configure({
+        HTMLAttributes: {
+          class: 'inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-sm font-medium text-primary',
+        },
+        suggestion: tagMentionSuggestion,
       }),
     ],
     content,

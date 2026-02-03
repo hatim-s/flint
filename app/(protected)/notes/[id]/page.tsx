@@ -142,6 +142,19 @@ export default function NoteEditorPage({ params }: PageProps) {
 
       const updatedNote = await response.json();
       setNote(updatedNote);
+      
+      // Sync tags after saving note
+      try {
+        await fetch(`/api/notes/${noteId}/tags`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content }),
+        });
+      } catch (tagError) {
+        console.error('Error syncing tags:', tagError);
+        // Don't fail the save if tag sync fails
+      }
+      
       setSaveStatus('saved');
       toast.success('Note saved');
     } catch (error) {
