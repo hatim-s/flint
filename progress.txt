@@ -658,3 +658,134 @@ components/editor/
   - F2-006: Template System
   - F2-007: Note Editor Page ✅ COMPLETE
 
+
+### 2026-02-04 - Task F2-005: Note Creation Modal & Flow
+**Status:** ✅ Completed
+**Commit:** (pending)
+
+**What was done:**
+1. Created components/notes/CreateNoteModal.tsx - Complete 3-step modal flow:
+   - Step 1: Type Selection
+     * Two large card options: "Journal Entry" (Clock icon) vs "Knowledge Note" (Brain icon)
+     * Clear descriptions: "Time-based, emotional, ephemeral" vs "Timeless, interlinkable, permanent"
+     * Visual distinction with color-coded icons (orange for journal, blue for note)
+   - Step 2: Basic Info
+     * Title input (required) with validation
+     * Source URL input (optional) for external content
+     * Back button to return to type selection
+     * Loading state during template fetch
+   - Step 3: Template Selection
+     * Fetches templates filtered by selected noteType from API
+     * Displays available templates with preview (first 100 chars)
+     * Highlights selected template with border and background
+     * "Skip to Blank" option to create empty note
+     * "Create Note" button (disabled if template required but not selected)
+   
+2. Created app/api/templates/route.ts - Templates API endpoint:
+   - GET /api/templates - List templates with optional noteType filter
+     * Query params: noteType (optional, 'note' or 'journal')
+     * Returns array of user's templates filtered by type
+     * RLS-protected to ensure users only see their own templates
+   - POST /api/templates - Create new template
+     * Validates input with Zod schema (name, noteType, content, isDefault)
+     * Creates template associated with current user
+     * Returns 201 Created with template data
+   - Full authentication checks using Better Auth session
+   - Proper error handling with descriptive messages
+   
+3. Created components/notes/index.tsx:
+   - Central export file for notes components
+   - Makes importing cleaner across the app
+   
+4. Updated app/(protected)/home/page.tsx - Dashboard integration:
+   - Added "New Note" button in header with Plus icon
+   - Integrated CreateNoteModal with state management
+   - Implemented global keyboard shortcut handler:
+     * Cmd+N (Mac) / Ctrl+N (Windows/Linux) to open modal
+     * Prevents default browser behavior
+     * Event listener cleanup on unmount
+   - Added visual hint showing keyboard shortcut to users
+   - Modal state properly managed (resets on close)
+   
+5. Multi-step form features:
+   - Progress indicator showing current step (3 colored bars)
+   - Form state preservation across steps
+   - Validation before proceeding to next step
+   - Back navigation to modify previous selections
+   - Loading states during async operations (template fetch, note creation)
+   - Error handling with toast notifications
+   
+6. Note creation flow:
+   - Calls POST /api/notes with form data
+   - Includes: title, content (from template or empty), noteType, sourceUrl, templateId
+   - Sets default neutral mood (5) for journal entries
+   - Redirects to note editor (/notes/[id]) after successful creation
+   - Success/error feedback via toast notifications
+   
+7. Verified type safety:
+   - Ran `bun run typecheck` with zero errors
+   - All components properly typed with TypeScript
+   - Form state and API responses fully typed
+   
+**Technical Decisions:**
+- Multi-step modal provides clear user flow without overwhelming with all options at once
+- Type selection first ensures appropriate templates and defaults are applied
+- Template preview helps users choose the right starting point
+- "Skip to Blank" option respects user preference for minimal structure
+- Keyboard shortcut (Cmd+N) follows common convention from other note apps
+- Progress indicator provides visual feedback on where user is in the flow
+- Form state resets on modal close to ensure clean state for next creation
+- Loading states during template fetch prevent confusion about UI responsiveness
+- Toast notifications provide non-blocking feedback
+- Templates API is ready for future expansion (F2-006 Template System)
+
+**Component Structure:**
+```
+components/notes/
+├── CreateNoteModal.tsx    # 3-step modal component
+└── index.tsx              # Central exports
+
+app/api/templates/
+└── route.ts               # Templates CRUD API
+```
+
+**User Flow:**
+1. User clicks "New Note" button or presses Cmd+N/Ctrl+N
+2. Modal opens → Step 1: Choose Journal Entry or Knowledge Note
+3. → Step 2: Enter title (required) and optional source URL
+4. → Step 3: Choose template or skip to blank
+5. Note created → Redirected to editor to start writing
+6. Total time: ~10 seconds from intent to writing
+
+**Features Implemented:**
+✅ Intent Modulation: Journal vs Knowledge Note selection
+✅ Multi-step form with progress indicator
+✅ Title and source URL input with validation
+✅ Template selection with preview
+✅ Skip to blank option
+✅ Global keyboard shortcut (Cmd+N / Ctrl+N)
+✅ Templates API (GET and POST endpoints)
+✅ Note creation with template content
+✅ Redirect to editor after creation
+✅ Loading and error states
+✅ Toast notifications for feedback
+✅ Modal state management and reset
+✅ RLS-protected template access
+✅ Type-safe implementation
+
+**Learnings:**
+- Multi-step modals improve UX by breaking complex forms into digestible chunks
+- Progress indicators reduce cognitive load and show users where they are
+- Global keyboard shortcuts require proper event cleanup to prevent memory leaks
+- Cmd key (metaKey) and Ctrl key need separate checks for cross-platform support
+- Template previews help users make informed decisions without overwhelming detail
+- "Skip" options respect user agency and reduce friction for power users
+- Toast notifications are better than alerts for non-blocking feedback
+- Form state reset on modal close prevents stale data issues
+- API endpoints should be created even if full feature isn't implemented (templates)
+- Starting with empty array for templates allows graceful handling when none exist
+
+**Next Task:** F2-002 - Tag System with Autocomplete or F2-006 - Template System
+
+---
+

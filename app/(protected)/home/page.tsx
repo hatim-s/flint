@@ -3,10 +3,26 @@
 import { useSession, signOut } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LogOut } from "lucide-react";
+import { LogOut, Plus } from "lucide-react";
+import { CreateNoteModal } from "@/components/notes";
+import { useState, useEffect } from "react";
 
 export default function DashboardPage() {
   const { data: session, isPending } = useSession();
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  // Global keyboard shortcut: Cmd+N / Ctrl+N
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'n') {
+        e.preventDefault();
+        setIsCreateModalOpen(true);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   if (isPending) {
     return (
@@ -49,14 +65,32 @@ export default function DashboardPage() {
       </header>
       <main className="flex-1 p-8">
         <div className="mx-auto max-w-7xl">
-          <h2 className="text-2xl font-bold">
-            Welcome back{user?.name ? `, ${user.name}` : ""}!
-          </h2>
-          <p className="mt-2 text-muted-foreground">
-            Your AI-native note-taking second brain
-          </p>
+          <div className="flex items-start justify-between">
+            <div>
+              <h2 className="text-2xl font-bold">
+                Welcome back{user?.name ? `, ${user.name}` : ""}!
+              </h2>
+              <p className="mt-2 text-muted-foreground">
+                Your AI-native note-taking second brain
+              </p>
+            </div>
+            <Button onClick={() => setIsCreateModalOpen(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              New Note
+            </Button>
+          </div>
+
+          {/* Dashboard content will go here */}
+          <div className="mt-8">
+            <p className="text-sm text-muted-foreground">
+              Press <kbd className="px-2 py-1 text-xs bg-muted rounded">Cmd+N</kbd> or{" "}
+              <kbd className="px-2 py-1 text-xs bg-muted rounded">Ctrl+N</kbd> to create a new note
+            </p>
+          </div>
         </div>
       </main>
+
+      <CreateNoteModal open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen} />
     </div>
   );
 }
