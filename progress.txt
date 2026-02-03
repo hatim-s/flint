@@ -114,8 +114,53 @@
 
 ---
 
+### 2026-02-04 - Task F1-004: Core Database Schema - Notes & Journals
+**Status:** ✅ Completed
+**Commit:** (pending)
+
+**What was done:**
+1. Created comprehensive database schema using Drizzle ORM:
+   - db/schema/notes.ts: Notes table with id, userId, title, content, contentPlain, noteType (enum: 'note'|'journal'), sourceUrl, moodScore, qualityScore, templateId, timestamps, metadata (jsonb)
+   - db/schema/tags.ts: Tags table with id, userId, name, color, createdAt
+   - db/schema/noteTags.ts: Junction table with composite primary key (noteId, tagId)
+   - db/schema/people.ts: People table for @mentions with id, userId, name, email, metadata
+   - db/schema/noteMentions.ts: Junction table with composite primary key (noteId, personId)
+   - db/schema/noteLinks.ts: Note relationships with id, sourceNoteId, targetNoteId, linkType (enum: 'reference'|'ai_suggested'|'manual'), strength, createdAt
+   - db/schema/templates.ts: Templates table with id, userId, name, noteType, content, isDefault, createdAt
+
+2. Added proper database features:
+   - Foreign key constraints with onDelete: 'cascade' for data integrity
+   - Indexes on frequently queried columns (userId, noteType, createdAt, etc.)
+   - Unique constraints (tags per user, note links)
+   - JSONB fields for flexible metadata storage
+   - PostgreSQL enums for noteType and linkType
+
+3. Set up relations in db/schema/index.ts:
+   - Defined all Drizzle relations between tables for type-safe queries
+   - Exported all schemas from a central index file
+   - Extended user relations to include notes, tags, people, templates
+
+4. Generated and pushed migrations:
+   - Created migration file: drizzle/0001_daffy_the_order.sql
+   - Successfully pushed schema to Neon database using `bun run db:push`
+   - Verified schema is in sync (no changes detected on subsequent push)
+
+5. Verified type safety:
+   - Ran `bun run typecheck` with zero errors
+   - All inferred types working correctly (Note, NewNote, Tag, etc.)
+
+**Learnings:**
+- Drizzle's type inference is excellent - $inferSelect and $inferInsert provide full type safety
+- JSONB fields with $type<T>() allow structured metadata while maintaining flexibility
+- Composite primary keys perfect for junction tables (no separate id needed)
+- Cascade deletes ensure referential integrity when users/notes are deleted
+- Indexes on foreign keys and commonly filtered columns improve query performance
+
+**Next Task:** F1-005 - Row Level Security (RLS) for Neon
+
+---
+
 ## Pending Tasks
-- F1-004: Core Database Schema - Notes & Journals
 - F1-005: Row Level Security (RLS) for Neon
 - F1-006: Full-Text Search Index Setup
 - And all subsequent phase tasks...
