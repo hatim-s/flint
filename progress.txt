@@ -783,3 +783,127 @@ app/api/templates/
 
 ---
 
+### 2026-02-04 - Task F2-006: Template System
+**Status:** ✅ Completed
+**Commit:** (pending)
+
+**What was done:**
+1. Created db/seed/templates.ts with comprehensive default templates:
+   - **Journal Templates (4 types):**
+     * Daily Reflection: Gratitude, highlights, challenges, stressors, tomorrow's focus
+     * Morning Pages: Freeform stream-of-consciousness writing
+     * Weekly Review: Wins, challenges, lessons learned, next week's goals
+     * Evening Wind Down: Accomplishments, energy level, social connections, self-care, priorities
+   - **Knowledge Note Templates (6 types):**
+     * Literature Note: Source info, key takeaways, quotes, reflections, connections, action items
+     * Meeting Notes: Attendees, agenda, discussion points, decisions, action items, follow-up
+     * Idea Capture: Problem, solution, why it matters, potential approaches, next steps
+     * Learning Note: Concept overview, key points, examples, connections, practice, questions
+     * Research Note: Research question, background, sources, findings, insights, contradictions, synthesis
+     * Project Planning: Overview, goals, stakeholders, timeline, resources, risks, next actions
+   - All templates include appropriate template variables ({{date}}, {{time}}, {{mood}}, {{source}})
+
+2. Implemented template variable system in db/seed/templates.ts:
+   - Created fillTemplateVariables() helper function
+   - Supports dynamic variables: {{date}}, {{time}}, {{mood}}, {{source}}
+   - Auto-fills with current date/time or provided values
+   - Gracefully handles missing/optional variables
+   - Uses locale-aware date/time formatting
+
+3. Created components/templates/TemplateCard.tsx:
+   - Visual card component for template display and selection
+   - Icon mapping based on template name (Clock, Calendar, Book, Users, Lightbulb, etc.)
+   - Color-coded by noteType (orange for journal, blue for notes)
+   - Shows template preview (first 150 chars) with line clamping
+   - "Default" badge for built-in templates
+   - Hover and selected states for better UX
+   - Responsive design with proper spacing
+
+4. Created components/templates/TemplateEditor.tsx:
+   - Comprehensive modal for creating/editing custom templates
+   - Form fields: name, noteType (radio group), content (textarea), isDefault (switch)
+   - Template variables help panel showing all available variables
+   - Validation: name and content required
+   - API integration for POST (create) and PUT (update) operations
+   - Loading states during save
+   - Toast notifications for success/error feedback
+   - Auto-resets form state on close
+   - Markdown-friendly textarea with monospace font
+
+5. Created components/templates/index.tsx:
+   - Central export file for all template components
+   - Clean imports across the app
+
+6. Updated app/(protected)/notes/[id]/page.tsx:
+   - Added "Save as Template" button in header with BookTemplate icon
+   - Integrated TemplateEditor dialog
+   - Pre-fills editor with current note's title, content, and noteType
+   - Opens template editor modal on button click
+   - Success feedback when template is saved
+
+7. Created app/api/templates/[id]/route.ts:
+   - GET /api/templates/[id] - Fetch single template by ID
+   - PUT /api/templates/[id] - Update existing template (partial updates supported)
+   - DELETE /api/templates/[id] - Delete template
+   - All endpoints RLS-protected (users can only access their own templates)
+   - Proper authentication checks with Better Auth
+   - Validates template ownership before any operation
+   - Returns 404 if template not found or not owned by user
+   - Zod validation for update payload
+
+8. Updated components/notes/CreateNoteModal.tsx:
+   - Integrated fillTemplateVariables() into note creation flow
+   - Template content now auto-fills with current date, time, mood, and source URL
+   - Variables replaced at note creation time (not edit time)
+   - Provides dynamic, personalized starting content
+   - Maintains backward compatibility with empty templates
+
+9. Verified type safety:
+   - Ran `bun run typecheck` with zero errors
+   - All components and API routes properly typed
+   - Template types properly inferred from Drizzle schema
+   - Full type safety across the template system
+
+**Technical Decisions:**
+- 10 diverse templates covering common use cases for both journals and notes
+- Template variables use simple {{variable}} syntax for user-friendliness
+- fillTemplateVariables() is pure function - testable and reusable
+- Template content stored as raw markdown with variables intact
+- Variables filled at note creation time (not template save time) for flexibility
+- TemplateCard component uses intelligent icon mapping based on template name
+- Color coding helps users distinguish journal vs note templates at a glance
+- "Save as Template" preserves user's work and encourages template reuse
+- Template editor supports both create and edit modes with same component
+- API follows RESTful conventions with proper HTTP methods and status codes
+
+**Features Implemented:**
+✅ Default template seed data (10 templates: 4 journal, 6 note)
+✅ Template variable system ({{date}}, {{time}}, {{mood}}, {{source}})
+✅ fillTemplateVariables() helper with auto-fill logic
+✅ TemplateCard component with icons and previews
+✅ TemplateEditor component for custom template creation/editing
+✅ "Save as Template" button in note editor
+✅ Templates API: GET, POST (already existed), PUT, DELETE endpoints
+✅ Template selection with variable filling in CreateNoteModal
+✅ RLS-protected template access
+✅ Type-safe implementation
+✅ Dark mode support for all components
+✅ Loading and error states
+✅ Toast notifications for feedback
+
+**Learnings:**
+- Template variables should be simple and intuitive (no complex syntax)
+- Pre-filling variables at creation time gives users a head start while remaining editable
+- Icon mapping makes template selection more visual and faster
+- Color coding by noteType helps users mentally separate journals from notes
+- "Save as Template" encourages users to build their own template library over time
+- Template previews help users choose without reading full content
+- Separate [id] route for RESTful CRUD operations is cleaner than query params
+- Template content should remain raw with variables intact for maximum flexibility
+- isDefault flag enables highlighting built-in templates vs custom ones
+- Template system becomes more valuable as users create custom templates
+
+**Next Task:** F2-003 - People Mentions with @mention
+
+---
+

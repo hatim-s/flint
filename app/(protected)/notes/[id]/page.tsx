@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback, use } from 'react';
 import { useRouter } from 'next/navigation';
 import { TipTapEditor, LiveTrackers } from '@/components/editor';
+import { TemplateEditor } from '@/components/templates';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -26,7 +27,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Trash2, Save, Loader2, CheckCircle2, Home, FileText } from 'lucide-react';
+import { Trash2, Save, Loader2, CheckCircle2, Home, FileText, BookTemplate } from 'lucide-react';
 import { toast } from 'sonner';
 import type { Note } from '@/db/schema/notes';
 
@@ -50,6 +51,7 @@ export default function NoteEditorPage({ params }: PageProps) {
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('saved');
   const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isTemplateEditorOpen, setIsTemplateEditorOpen] = useState(false);
 
   // Fetch note data
   useEffect(() => {
@@ -256,6 +258,16 @@ export default function NoteEditorPage({ params }: PageProps) {
 
               <Separator orientation="vertical" className="h-6" />
 
+              {/* Save as Template Button */}
+              <Button
+                onClick={() => setIsTemplateEditorOpen(true)}
+                size="sm"
+                variant="ghost"
+              >
+                <BookTemplate className="h-4 w-4 mr-2" />
+                Save as Template
+              </Button>
+
               {/* Manual Save Button */}
               <Button
                 onClick={saveNote}
@@ -348,6 +360,26 @@ export default function NoteEditorPage({ params }: PageProps) {
           </div>
         </div>
       </div>
+
+      {/* Template Editor Dialog */}
+      {note && (
+        <TemplateEditor
+          open={isTemplateEditorOpen}
+          onOpenChange={setIsTemplateEditorOpen}
+          template={{
+            id: '',
+            userId: '',
+            name: title || 'Untitled Template',
+            noteType: note.noteType,
+            content: content,
+            isDefault: false,
+            createdAt: new Date(),
+          }}
+          onSave={() => {
+            toast.success('Template saved successfully');
+          }}
+        />
+      )}
     </div>
   );
 }

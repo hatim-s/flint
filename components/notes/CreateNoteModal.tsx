@@ -10,6 +10,7 @@ import { Card } from '@/components/ui/card';
 import { Spinner } from '@/components/ui/spinner';
 import { Clock, Brain, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
+import { fillTemplateVariables } from '@/db/seed/templates';
 
 type NoteType = 'note' | 'journal';
 
@@ -93,12 +94,27 @@ export function CreateNoteModal({ open, onOpenChange }: CreateNoteModalProps) {
 
     setIsCreating(true);
     try {
+      // Get template content and fill variables
+      let content = '';
+      if (!skipTemplate && selectedTemplateId) {
+        const template = templates.find(t => t.id === selectedTemplateId);
+        if (template) {
+          // Fill template variables with current values
+          content = fillTemplateVariables(template.content, {
+            date: undefined, // Will use current date
+            time: undefined, // Will use current time
+            mood: noteType === 'journal' ? 5 : undefined,
+            source: sourceUrl.trim() || undefined,
+          });
+        }
+      }
+
       const response = await fetch('/api/notes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: title.trim(),
-          content: skipTemplate ? '' : (templates.find(t => t.id === selectedTemplateId)?.content || ''),
+          content: content,
           noteType,
           sourceUrl: sourceUrl.trim() || undefined,
           templateId: skipTemplate ? undefined : selectedTemplateId,
