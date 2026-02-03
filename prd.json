@@ -199,7 +199,7 @@
             "Create lib/notes.ts with typed helper functions: createNote, updateNote, deleteNote, getNote, listNotes",
             "Run type checks"
           ],
-          "completed": false
+          "completed": true
         },
         {
           "id": "F2-005",

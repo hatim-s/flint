@@ -295,6 +295,121 @@ GET /api/search/keyword?q=anxiety&noteType=journal&minMood=5&limit=10&offset=0&i
 GET /api/search/keyword?q=work&minMood=7&maxMood=10
 ```
 
+**Next Task:** F2-004 - Note CRUD API Routes
+
+---
+
+### 2026-02-04 - Task F2-004: Note CRUD API Routes
+**Status:** ✅ Completed
+**Commit:** (pending)
+
+**What was done:**
+1. Created lib/notes.ts with comprehensive CRUD operations:
+   - Zod validation schemas: createNoteSchema, updateNoteSchema, listNotesSchema
+   - Helper functions: createNote, getNote, updateNote, deleteNote, listNotes, getNoteCount
+   - stripMarkdown() utility to convert markdown to plain text for search indexing
+   - countWords() utility for metadata tracking
+   - Full RLS integration using setCurrentUser()
+   - Optimistic locking support via updatedAt timestamp comparison
+
+2. Implemented createNote():
+   - Accepts CreateNoteInput with validation
+   - Strips markdown to create contentPlain for full-text search
+   - Calculates word count and stores in metadata
+   - Sets embeddingStatus to 'pending' for future AI processing
+   - Returns created note with all fields
+
+3. Implemented getNote():
+   - Fetches single note by ID with RLS protection
+   - Returns null if not found (respects user ownership)
+
+4. Implemented updateNote():
+   - Partial update support (all fields optional)
+   - Optimistic locking: checks updatedAt matches before update
+   - Re-strips markdown when content changes
+   - Resets embeddingStatus to 'pending' when content changes
+   - Preserves existing metadata and merges with updates
+   - Returns error if note modified by another process
+
+5. Implemented deleteNote():
+   - Verifies note exists and user owns it before deletion
+   - Cascade deletes handled by database (tags, mentions, links)
+
+6. Implemented listNotes() with advanced features:
+   - Cursor-based pagination (efficient for large datasets)
+   - Filtering by: noteType, tags, mood range, date range
+   - Sorting by: createdAt, updatedAt, title (asc/desc)
+   - Tag filtering via junction table joins
+   - Returns: notes array, nextCursor, hasMore flag
+   - Fetches limit+1 to determine if more results exist
+
+7. Created app/api/notes/route.ts:
+   - GET /api/notes: List notes with query parameters
+     * Support for all filters: limit, cursor, noteType, tags, minMood, maxMood, startDate, endDate, sortBy, sortOrder
+     * Returns paginated results with nextCursor
+   - POST /api/notes: Create new note
+     * Validates input with Zod
+     * Returns 201 Created with note data
+   - Session authentication on all endpoints
+   - Proper error handling: 400 for validation, 401 for auth, 500 for server errors
+
+8. Created app/api/notes/[id]/route.ts:
+   - GET /api/notes/[id]: Fetch single note
+     * Returns 404 if note not found or not owned by user
+   - PUT /api/notes/[id]: Update note
+     * Supports partial updates
+     * Returns 409 Conflict if optimistic lock fails
+     * Returns 404 if note not found
+   - DELETE /api/notes/[id]: Delete note
+     * Returns 404 if note not found
+     * Returns 200 with success message
+   - All endpoints use async context.params for Next.js 15 compatibility
+
+9. Verified type safety:
+   - Ran `bun run typecheck` with zero errors
+   - All Zod schemas properly typed
+   - Full type inference from Drizzle schema
+   - Proper error handling with TypeScript
+
+**Technical Decisions:**
+- Cursor-based pagination over offset-based for better performance at scale
+- Strip markdown on server-side to ensure search index consistency
+- Store word count in metadata for analytics/quality tracking
+- Optimistic locking prevents lost updates in concurrent scenarios
+- Set embeddingStatus to 'pending' when content changes to trigger re-embedding
+- Tag filtering requires separate query to get tag IDs first, then filter notes
+- Fetch limit+1 pattern to efficiently determine if more results exist without separate count query
+- Zod validation at API boundary ensures type safety from client to database
+
+**API Endpoints Created:**
+```bash
+# List notes
+GET /api/notes?limit=20&noteType=journal&minMood=7&sortBy=updatedAt&sortOrder=desc
+
+# Create note
+POST /api/notes
+Body: { title, content, noteType, sourceUrl?, moodScore?, templateId?, metadata? }
+
+# Get single note
+GET /api/notes/{id}
+
+# Update note
+PUT /api/notes/{id}
+Body: { title?, content?, noteType?, sourceUrl?, moodScore?, metadata?, updatedAt? }
+
+# Delete note
+DELETE /api/notes/{id}
+```
+
+**Learnings:**
+- Zod 4 requires explicit key type for z.record(): z.record(z.string(), z.unknown())
+- Next.js 15 requires await context.params in route handlers
+- Cursor-based pagination is more complex but scales better than offset
+- Optimistic locking requires client to send updatedAt and server to compare timestamps
+- Junction table queries require subqueries or joins to filter by related data
+- RLS policies automatically handle user isolation at database level
+- TypeScript inference from Drizzle schemas eliminates need for manual type definitions
+
 **Next Task:** F2-001 - Markdown Editor Setup - TipTap Integration
 
 ---
@@ -303,4 +418,9 @@ GET /api/search/keyword?q=work&minMood=7&maxMood=10
 - Phase 1 Complete! ✅
 - Phase 2: Editor & Core Note Operations
   - F2-001: Markdown Editor Setup - TipTap Integration
-  - And all subsequent phase 2 tasks...
+  - F2-002: Tag System with Autocomplete
+  - F2-003: People Mentions with @mention
+  - F2-004: Note CRUD API Routes ✅ COMPLETE
+  - F2-005: Note Creation Modal & Flow
+  - F2-006: Template System
+  - F2-007: Note Editor Page
