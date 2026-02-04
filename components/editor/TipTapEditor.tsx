@@ -29,7 +29,12 @@ import Typography from '@tiptap/extension-typography';
 import { Markdown } from 'tiptap-markdown';
 import Mention from '@tiptap/extension-mention';
 import { tagMentionSuggestion } from './tagMentionSuggestion';
+import { peopleMentionSuggestion } from './peopleMentionSuggestion';
 import { useEffect, useRef } from 'react';
+
+// Create separate mention extensions for tags (#) and people (@)
+const TagMention = Mention.extend({ name: 'tagMention' });
+const PeopleMention = Mention.extend({ name: 'peopleMention' });
 
 interface EditorProps {
   content?: string;
@@ -138,11 +143,17 @@ export function TipTapEditor({
         transformPastedText: true,
         transformCopiedText: true,
       }),
-      Mention.configure({
+      TagMention.configure({
         HTMLAttributes: {
           class: 'inline-flex items-center gap-1 rounded-md bg-primary/10 px-2 py-0.5 text-sm font-medium text-primary',
         },
         suggestion: tagMentionSuggestion,
+      }),
+      PeopleMention.configure({
+        HTMLAttributes: {
+          class: 'inline-flex items-center gap-1 rounded-md bg-blue-500/10 px-2 py-0.5 text-sm font-medium text-blue-600 dark:text-blue-400',
+        },
+        suggestion: peopleMentionSuggestion,
       }),
     ],
     content,

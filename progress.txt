@@ -1009,3 +1009,124 @@ app/(protected)/dashboard/
 
 ---
 
+### 2026-02-04 - Task F2-003: People Mentions with @mention
+**Status:** ✅ Completed
+**Commit:** (pending)
+
+**What was done:**
+1. Created app/api/people/route.ts - Complete people/contacts CRUD API:
+   - GET /api/people - List all user people with optional search filter
+   - POST /api/people - Create new person (or return existing if name+email exists)
+   - DELETE /api/people?id=<personId> - Delete a person
+   - RLS-protected to ensure users only access their own contacts
+   - Returns existing person on duplicate instead of error
+   - Search filter with case-insensitive matching on name
+
+2. Created hooks/usePeople.ts - React hook for people management:
+   - Fetches user's people/contacts with optional search query
+   - createPerson() function to add new contacts
+   - deletePerson() function to remove contacts
+   - refetch() to manually refresh people list
+   - Loading and error states
+   - Automatic state updates on create/delete
+   - Deduplication handling for returned existing people
+
+3. Created components/editor/PeopleSuggestion.tsx - Dropdown component:
+   - Displays filtered list of people based on query
+   - Keyboard navigation (up/down arrows, enter to select)
+   - User icon with name and optional email display
+   - Two-line layout: name (bold) + email (smaller text)
+   - Empty state message when no people found
+   - Styled with Tailwind classes for light/dark mode
+   - forwardRef pattern for TipTap integration
+
+4. Created components/editor/peopleMentionSuggestion.tsx - Configuration:
+   - Implements TipTap suggestion interface for people
+   - '@' trigger character for people mentions
+   - Fetches people from API with search filtering
+   - ReactRenderer integration for suggestion component
+   - Tippy.js popover positioning and lifecycle management
+   - Keyboard event handling (escape, arrow keys, enter)
+   - Same pattern as tagMentionSuggestion
+
+5. Updated components/editor/TipTapEditor.tsx:
+   - Added second Mention extension for people using .extend()
+   - Created separate TagMention and PeopleMention extensions
+   - TagMention uses '#' trigger with primary color styling
+   - PeopleMention uses '@' trigger with blue color styling
+   - Both extensions work independently without conflicts
+   - Configured HTML attributes for distinct pill styling
+
+6. Created lib/people.ts - Person extraction and syncing utilities:
+   - extractPeopleFromContent() - Regex-based @mention extraction
+   - Supports names with spaces (e.g., "John Smith")
+   - Regex: /@([a-zA-Z0-9_-]+(?:\s+[a-zA-Z0-9_-]+)*)/g
+   - syncNoteMentions() - Syncs note_mentions junction table
+   - getNoteMentions() - Fetches people for a specific note
+   - Auto-creates people that don't exist during sync
+   - Handles mention addition and removal in junction table
+
+7. Created app/api/notes/[id]/mentions/route.ts - Mention sync API:
+   - GET /api/notes/[id]/mentions - Get people mentioned in note
+   - POST /api/notes/[id]/mentions - Sync mentions based on content
+   - Extracts @mentions from content and updates junction table
+   - Returns updated people list after sync
+   - RLS-protected to ensure data isolation
+
+8. Updated app/(protected)/notes/[id]/page.tsx - Auto-sync on save:
+   - Added mention syncing after note save (after tag sync)
+   - Calls /api/notes/[id]/mentions endpoint with note content
+   - Non-blocking: doesn't fail save if mention sync fails
+   - Silent sync in background
+   - Runs alongside tag sync for complete metadata updates
+
+9. Verified type safety:
+   - Ran `bun run typecheck` with zero errors
+   - All components and APIs properly typed
+   - Person extraction logic validated
+   - Full integration tested
+
+**Technical Decisions:**
+- Used @ trigger for people mentions to distinguish from # tags
+- More lenient regex pattern for people names (supports spaces)
+- Separate Mention extension instances using .extend() to avoid conflicts
+- Blue color scheme for people mentions (vs primary color for tags)
+- Auto-create people on-the-fly during sync for frictionless UX
+- Return existing person on POST to handle race conditions
+- Non-blocking mention sync prevents save failures
+- Junction table uses composite primary key for efficiency
+- Two-line suggestion display (name + email) for better identification
+
+**Features Implemented:**
+✅ People API (GET, POST, DELETE endpoints)
+✅ usePeople hook for client-side people management
+✅ People suggestion dropdown with keyboard navigation
+✅ @ trigger for inline people mentions
+✅ TipTap Mention extension integration for people
+✅ Person extraction from markdown content
+✅ Auto-sync mentions on note save
+✅ Junction table syncing (add/remove mentions)
+✅ Blue-styled people pills in editor
+✅ Auto-create people that don't exist
+✅ Search/filter people by name
+✅ Support for names with spaces ("John Smith")
+✅ RLS-protected people access
+✅ Type-safe implementation
+✅ Dark mode support for dropdown
+✅ Email display in suggestions
+
+**Learnings:**
+- TipTap allows multiple Mention extensions using .extend() with different names
+- People names need more lenient regex than tags (spaces, multiple words)
+- Blue vs primary color helps visually distinguish people from tag mentions
+- Displaying email in suggestions improves identification for common names
+- Auto-creating people during extraction is better UX than forcing pre-creation
+- Non-blocking sync ensures note saves always succeed even if metadata fails
+- Two-line layout in suggestions provides more context without overwhelming
+- Separate mention configurations prevent conflicts between @ and # triggers
+- Junction table pattern is identical for tags and people (reusable design)
+
+**Next Task:** F2-007 is already complete, so Phase 2 is now fully complete! Next incomplete: F3-001 - Voice Recording Hook
+
+---
+

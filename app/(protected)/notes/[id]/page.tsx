@@ -157,6 +157,18 @@ export default function NoteEditorPage({ params }: PageProps) {
         // Don't fail the save if tag sync fails
       }
       
+      // Sync people mentions after saving note
+      try {
+        await fetch(`/api/notes/${noteId}/mentions`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ content }),
+        });
+      } catch (mentionError) {
+        console.error('Error syncing mentions:', mentionError);
+        // Don't fail the save if mention sync fails
+      }
+      
       setSaveStatus('saved');
       toast.success('Note saved');
     } catch (error) {
