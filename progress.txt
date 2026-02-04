@@ -1130,3 +1130,80 @@ app/(protected)/dashboard/
 
 ---
 
+### 2026-02-04 - Task F5-004: Recent Notes Widget
+**Status:** ✅ Completed
+**Commit:** (pending)
+
+**What was done:**
+1. Verified existing RecentNotes component implementation:
+   - Component already existed at components/dashboard/RecentNotes.tsx
+   - Comprehensive implementation with all required features
+   - Uses date-fns for relative time formatting
+   - Fetches last 5 notes via /api/notes endpoint
+   - Proper loading and error states with skeleton UI
+   
+2. Integrated RecentNotes into dashboard page:
+   - Imported RecentNotes component into app/(protected)/dashboard/page.tsx
+   - Replaced Quadrant 3 placeholder with functional RecentNotes widget
+   - Passed onCreateNote callback to trigger modal from empty state
+   - Component displays in bottom-left quadrant of 4-quadrant grid
+
+3. Component features:
+   - Lists last 5 notes ordered by updatedAt (most recent first)
+   - Each note card shows: title, preview (100 chars), noteType badge, relative timestamp
+   - Hover states with accent background and primary color text
+   - Click to navigate to note editor
+   - "View all" button to navigate to notes list page
+   - Empty state with "Create your first note" CTA button
+   - Loading skeleton with 5 placeholder cards
+   - Error handling with error message display
+
+4. Verified implementation:
+   - Ran `bun run typecheck` with zero errors
+   - All TypeScript types properly inferred
+   - Component properly integrated with existing dashboard layout
+
+**Technical Decisions:**
+- Used existing API endpoint /api/notes with query params (limit=5, sortBy=updatedAt, sortOrder=desc)
+- date-fns provides human-readable relative timestamps ("2 hours ago", "3 days ago")
+- Skeleton component provides smooth loading experience
+- line-clamp-1 and line-clamp-2 for text truncation
+- Empty state includes onCreateNote callback to open modal
+- "View all" navigates to /notes (notes list page - to be implemented)
+- Responsive design: works on mobile and desktop
+
+**Component Structure:**
+```
+components/dashboard/
+└── RecentNotes.tsx        # Recent notes widget
+```
+
+**Features Implemented:**
+✅ Fetch last 5 notes ordered by updatedAt
+✅ Display note cards with title, preview, badge, timestamp
+✅ Click handler to navigate to note editor
+✅ "View all" link to notes list page
+✅ Empty state with CTA button
+✅ Loading skeleton with 5 placeholder cards
+✅ Error handling
+✅ Relative time formatting with date-fns
+✅ Hover and active states
+✅ RLS-protected via existing API
+✅ Type-safe implementation
+✅ Dark mode support
+✅ Responsive design
+
+**Learnings:**
+- Dashboard widgets should be self-contained with their own data fetching
+- Empty states should guide users to take action (CTA buttons)
+- Loading skeletons improve perceived performance
+- Relative timestamps are more intuitive than absolute dates
+- Preview text helps users identify notes without titles
+- Click targets should be entire card for better UX
+- date-fns formatDistanceToNow provides excellent relative time display
+- Skeleton count should match expected results (5 notes)
+
+**Next Task:** F5-002 - Mood Trend Chart or F5-003 - Streak Calendar
+
+---
+

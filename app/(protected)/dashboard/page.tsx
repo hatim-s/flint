@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LogOut, Plus, BookOpen, Clock, Mic } from "lucide-react";
 import { CreateNoteModal } from "@/components/notes";
+import { RecentNotes } from "@/components/dashboard/RecentNotes";
 import { useState, useEffect } from "react";
 
 // Helper function to get time-based greeting
@@ -186,17 +187,7 @@ export default function DashboardPage() {
             </Card>
 
             {/* Quadrant 3: Recent Notes (Bottom-Left) */}
-            <Card className="lg:row-span-1">
-              <CardHeader>
-                <CardTitle>Recent Notes</CardTitle>
-                <CardDescription>Your latest thoughts and ideas</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-center h-64 text-sm text-muted-foreground">
-                  Recent notes list coming soon
-                </div>
-              </CardContent>
-            </Card>
+            <RecentNotes onCreateNote={() => setIsCreateModalOpen(true)} />
 
             {/* Quadrant 4: Weekly Summary (Bottom-Right) */}
             <Card className="lg:row-span-1">
