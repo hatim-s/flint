@@ -9,6 +9,7 @@ import { LogOut, Plus, BookOpen, Clock, Mic } from "lucide-react";
 import { CreateNoteModal } from "@/components/notes";
 import { RecentNotes } from "@/components/dashboard/RecentNotes";
 import { MoodChart } from "@/components/dashboard/MoodChart";
+import { StreakCalendar } from "@/components/dashboard/StreakCalendar";
 import { useState, useEffect } from "react";
 
 // Helper function to get time-based greeting
@@ -165,17 +166,7 @@ export default function DashboardPage() {
             <MoodChart />
 
             {/* Quadrant 2: Calendar/Streaks (Top-Right) */}
-            <Card className="lg:row-span-1">
-              <CardHeader>
-                <CardTitle>Writing Streak</CardTitle>
-                <CardDescription>Keep the momentum going</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-center h-64 text-sm text-muted-foreground">
-                  Streak calendar coming soon
-                </div>
-              </CardContent>
-            </Card>
+            <StreakCalendar />
 
             {/* Quadrant 3: Recent Notes (Bottom-Left) */}
             <RecentNotes onCreateNote={() => setIsCreateModalOpen(true)} />

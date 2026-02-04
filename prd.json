@@ -549,7 +549,7 @@
             "Add tooltip on hover showing date and note count",
             "Run type checks"
           ],
-          "completed": false
+          "completed": true
         },
         {
           "id": "F5-004",

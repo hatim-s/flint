@@ -1321,3 +1321,129 @@ Response: {
 
 **Next Task:** F5-003 - Streak Calendar or F3-001 - Voice Recording Hook
 
+
+### 2026-02-04 - Task F5-003: Streak Calendar
+**Status:** ✅ Completed
+**Commit:** (pending)
+
+**What was done:**
+1. Created app/api/analytics/activity/route.ts - Activity/streak analytics API:
+    - GET /api/analytics/activity - Fetch user activity data
+    - Returns notes grouped by date for last 90 days
+    - Calculates current streak (consecutive days with notes counting backwards)
+    - Calculates longest streak (maximum consecutive days with notes in range)
+    - Calculates total notes count
+    - Activity levels (0-4) based on note count: 0 (0 notes), 1 (1+), 2 (2+), 3 (4+), 4 (6+)
+    - Returns all dates in range with activity level for calendar grid
+    - RLS-protected to ensure users only see their own data
+    - Proper authentication checks using Better Auth
+    - Error handling with descriptive messages
+
+2. Created components/dashboard/StreakCalendar.tsx - GitHub-style contribution calendar:
+    - Displays 90-day calendar grid grouped by month and week
+    - GitHub-style color intensity based on activity level (0-4)
+    - Activity levels: green shades from light (1 note) to dark (6+ notes)
+    - Current streak display with flame icon and large counter
+    - Longest streak display with calendar icon
+    - Interactive tooltip on hover showing date, note count, and activity level
+    - Loading skeleton component during data fetch
+    - Error state display with user-friendly message
+    - Full-screen backdrop blur when tooltip is active
+    - Responsive design: 3x3 grid cells for each day
+
+3. Updated app/(protected)/dashboard/page.tsx - Integrated StreakCalendar widget:
+    - Replaced Quadrant 2 placeholder with functional StreakCalendar component
+    - Imported StreakCalendar from components/dashboard
+    - Removed placeholder content from streak calendar card
+    - Calendar displays in top-right quadrant of 4-quadrant grid
+
+4. Updated components/dashboard/index.tsx - Added StreakCalendar to exports
+
+5. Verified implementation:
+    - Ran `bun run typecheck` with zero errors
+    - All TypeScript types properly inferred
+    - Component properly integrated with existing dashboard layout
+
+**Technical Decisions:**
+- Used 90-day range for calendar (GitHub contribution style)
+- GitHub-style color coding helps users visualize activity patterns at a glance
+- Activity levels based on note count buckets: 0, 1, 2, 4, 6+
+- Current streak counts backwards from today to encourage consistency
+- Longest streak calculated from full date range for motivation
+- Tooltip provides rich context (date, note count, activity level)
+- Backdrop blur ensures tooltip is readable regardless of content
+- Flame icon adds visual emphasis to streak counter
+- Calendar grouped by month for better organization
+- Week-based grid (3x3 cells) matches GitHub's familiar pattern
+- Responsive design works on mobile and desktop
+
+**Component Structure:**
+```
+app/api/analytics/
+└── activity/
+    └── route.ts           # Activity/streak analytics API
+
+components/dashboard/
+├── MoodChart.tsx          # Mood trend visualization
+├── RecentNotes.tsx         # Recent notes widget
+├── StreakCalendar.tsx      # GitHub-style streak calendar
+└── index.tsx              # Central exports
+```
+
+**API Endpoint:**
+```bash
+GET /api/analytics/activity
+Response: {
+  data: [
+    {
+      date: "2026-02-01",
+      noteCount: 3,
+      level: 2
+    }
+  ],
+  currentStreak: 7,
+  longestStreak: 14,
+  totalNotes: 45,
+  dateRange: { start: "2025-11-06T...", end: "2026-02-04T..." }
+}
+```
+
+**Activity Levels:**
+- Level 0: 0 notes (gray/muted)
+- Level 1: 1 note (light green)
+- Level 2: 2 notes (medium green)
+- Level 3: 3-5 notes (dark green)
+- Level 4: 6+ notes (very dark green)
+
+**Features Implemented:**
+✅ Activity/streak analytics API
+✅ Current streak calculation (backwards from today)
+✅ Longest streak calculation
+✅ GitHub-style contribution calendar
+✅ Activity level color coding (0-4)
+✅ 90-day calendar range
+✅ Month and week grouping
+✅ Current streak display with flame icon
+✅ Longest streak display
+✅ Interactive tooltip with rich context
+✅ Loading skeleton
+✅ Error handling
+✅ Empty state (no data scenario)
+✅ Responsive design
+✅ Type-safe implementation
+✅ Dark mode support
+
+**Learnings:**
+- GitHub-style calendars help users visualize consistency patterns
+- Streak counters motivate users to maintain daily habits
+- Activity levels based on note count buckets are intuitive
+- Color intensity provides immediate visual feedback
+- Grouping by month makes the calendar easier to scan
+- Backdrop blur ensures tooltips are readable over any content
+- Counting streaks backwards from today shows "how long you've been going"
+- Longest streak provides aspirational goal
+- 90-day range balances detail with overview
+- Small cell size (3x3) allows fitting 90 days in compact space
+
+**Next Task:** F3-001 - Voice Recording Hook or F4-001 - Voyage AI Embeddings Integration
+
