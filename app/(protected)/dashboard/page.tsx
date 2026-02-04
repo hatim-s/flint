@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LogOut, Plus, BookOpen, Clock, Mic } from "lucide-react";
 import { CreateNoteModal } from "@/components/notes";
 import { RecentNotes } from "@/components/dashboard/RecentNotes";
+import { MoodChart } from "@/components/dashboard/MoodChart";
 import { useState, useEffect } from "react";
 
 // Helper function to get time-based greeting
@@ -161,17 +162,7 @@ export default function DashboardPage() {
           {/* 4-Quadrant Grid Layout */}
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             {/* Quadrant 1: Mood Trends (Top-Left) */}
-            <Card className="lg:row-span-1">
-              <CardHeader>
-                <CardTitle>Mood Trends</CardTitle>
-                <CardDescription>Your emotional patterns over time</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-center h-64 text-sm text-muted-foreground">
-                  Mood chart coming soon
-                </div>
-              </CardContent>
-            </Card>
+            <MoodChart />
 
             {/* Quadrant 2: Calendar/Streaks (Top-Right) */}
             <Card className="lg:row-span-1">

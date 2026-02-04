@@ -530,7 +530,7 @@
             "Add tooltip showing date, mood score, and note count",
             "Run type checks"
           ],
-          "completed": false
+          "completed": true
         },
         {
           "id": "F5-003",

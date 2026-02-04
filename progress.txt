@@ -1207,3 +1207,117 @@ components/dashboard/
 
 ---
 
+
+### 2026-02-04 - Task F5-002: Mood Trend Chart
+**Status:** ✅ Completed
+**Commit:** (pending)
+
+**What was done:**
+1. Created app/api/analytics/mood-trends/route.ts - Mood trends analytics API:
+    - GET /api/analytics/mood-trends?days=N - Fetch mood trends for last N days
+    - Query parameter validation: days must be between 7 and 90 (default: 30)
+    - Groups notes by date with average mood score and note count
+    - Calculates 7-day moving average for smoother trend visualization
+    - Filters out notes without mood scores
+    - Returns data sorted chronologically for chart display
+    - Includes date range metadata in response
+    - RLS-protected to ensure users only see their own mood data
+    - Proper authentication checks using Better Auth
+    - Zod validation for query parameters
+    - Error handling with descriptive messages
+
+2. Created components/dashboard/MoodChart.tsx - Mood trend visualization component:
+    - Responsive line chart using recharts library
+    - Displays two lines: average mood (solid purple) and 7-day moving average (dashed blue)
+    - Y-axis domain fixed to 1-10 scale for mood scores
+    - Color-coded mood indicators: green (7-10), yellow (4-6), red (1-3)
+    - Interactive tooltip with date, mood score, moving average, and note count
+    - Date formatter shows month/day format for x-axis labels
+    - Loading skeleton component during data fetch
+    - Error state display with user-friendly message
+    - Empty state when no mood data exists
+    - Responsive container that adapts to card width
+
+3. Updated app/(protected)/dashboard/page.tsx - Integrated MoodChart widget:
+    - Replaced Quadrant 1 placeholder with functional MoodChart component
+    - Imported MoodChart from components/dashboard
+    - Removed placeholder content from mood trends card
+    - Chart displays in top-left quadrant of 4-quadrant grid
+
+4. Created components/dashboard/index.tsx - Central exports for dashboard components:
+    - Exports MoodChart and RecentNotes components
+    - Cleaner imports across the application
+
+5. Verified implementation:
+    - Ran `bun run typecheck` with zero errors
+    - All TypeScript types properly inferred
+    - Component properly integrated with existing dashboard layout
+
+**Technical Decisions:**
+- Used recharts for charting as it's already in dependencies
+- Fixed Y-axis domain (1-10) for consistent mood score display
+- 7-day moving average provides smoother trend visualization
+- Color-coded mood dots in tooltip help identify good/bad days
+- Responsive container ensures chart adapts to screen size
+- Loading skeleton matches expected chart dimensions
+- Empty state encourages users to start journaling
+- Moving average uses dashed line style to distinguish from daily values
+- Tooltip provides rich context (date, mood, average, note count)
+
+**Component Structure:**
+```
+app/api/analytics/
+└── mood-trends/
+    └── route.ts           # Mood trends analytics API
+
+components/dashboard/
+├── MoodChart.tsx          # Mood trend visualization
+├── RecentNotes.tsx         # Recent notes widget
+└── index.tsx              # Central exports
+```
+
+**API Endpoint:**
+```bash
+GET /api/analytics/mood-trends?days=30
+Response: {
+  data: [
+    {
+      date: "2026-02-01",
+      avgMood: 7.5,
+      noteCount: 3,
+      movingAverage: 6.83
+    }
+  ],
+  days: 30,
+  dateRange: { start: "2026-01-05T...", end: "2026-02-04T..." }
+}
+```
+
+**Features Implemented:**
+✅ Mood trends API with date-based grouping
+✅ 7-day moving average calculation
+✅ Query parameter validation (7-90 days)
+✅ RLS-protected mood data access
+✅ Line chart with recharts
+✅ Dual line display (daily + moving average)
+✅ Color-coded mood indicators
+✅ Interactive tooltip with rich context
+✅ Loading skeleton
+✅ Error handling
+✅ Empty state
+✅ Responsive design
+✅ Type-safe implementation
+✅ Dark mode support
+
+**Learnings:**
+- recharts ResponsiveContainer provides automatic chart resizing
+- Tooltip custom function allows rich HTML formatting in popups
+- Moving averages smooth out daily fluctuations for better trend visibility
+- Date grouping with SQL DATE() function handles timezone correctly
+- Fixed Y-axis domain helps users understand the 1-10 mood scale
+- Color coding in tooltips improves data comprehension
+- Empty states should guide users to take action (journaling)
+- API should return metadata (days, dateRange) for frontend context
+
+**Next Task:** F5-003 - Streak Calendar or F3-001 - Voice Recording Hook
+
