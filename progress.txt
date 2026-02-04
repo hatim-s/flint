@@ -1548,3 +1548,123 @@ Response: {
 
 **Next Task:** F4-002 - Upstash Vector Store Setup
 
+
+### 2026-02-04 - Task F4-002: Upstash Vector Store Setup
+**Status:** ✅ Completed
+**Commit:** (pending)
+
+**What was done:**
+1. Created lib/vector.ts - Upstash Vector integration:
+    - Configuration with environment variable validation
+    - VectorIndex instance creation with REST URL and token
+    - NoteVectorMetadata interface for note embeddings
+    - EMBEDDING_DIMENSIONS constant (512 for voyage-3-lite)
+    
+    - indexNote() function:
+      * Upsert single note embedding
+      * Accepts noteId, embedding vector, and metadata
+      * Error handling with logging
+    
+    - indexNotes() function:
+      * Batch upsert up to 128 notes at once
+      * Maps items to Upstash vector format
+      * Optimized for bulk operations
+    
+    - semanticSearch() function:
+      * Query by vector with similarity scoring
+      * Filters: userId, noteType, tags
+      * Configurable: topK, includeMetadata
+      * Returns sorted results by similarity score
+      * Builds filter expressions dynamically
+    
+    - findRelatedNotes() function:
+      * Fetches note's embedding first
+      * Queries for similar notes
+      * Excludes original note from results
+      * Returns top K related notes
+      * Graceful error handling (returns empty array)
+    
+    - deleteNoteVector() function:
+      * Delete single note embedding by ID
+      * Used when notes are deleted
+    
+    - deleteNoteVectors() function:
+      * Batch delete for multiple notes
+      * Efficient cleanup operations
+    
+    - getVectorStats() function:
+      * Placeholder for statistics
+      * Can be extended with actual API when available
+
+2. Created docs/upstash-vector-setup.md - Setup documentation:
+    - Prerequisites for creating Upstash Vector index
+    - Index configuration (512 dimensions, Cosine metric)
+    - Environment variable setup guide
+    - Usage examples for all functions
+    - API function documentation
+    - Troubleshooting guide
+
+3. Verified implementation:
+    - Ran `bun run typecheck` with zero errors
+    - All TypeScript types properly defined
+    - Environment variable validation working
+
+**Technical Decisions:**
+- Used voyage-3-lite dimensions (512) for index configuration
+- Cosine similarity metric is standard for text embeddings
+- Used `as any` type assertions for Upstash metadata compatibility
+- Dynamic filter building supports complex queries
+- Batch processing reduces API calls for bulk operations
+- Graceful error handling (returns empty arrays) vs throwing
+- findRelatedNotes fetches one extra result to exclude original
+- Filter expressions use Upstash's query syntax
+
+**Upstash Configuration:**
+- Index Name: `flint-notes` (or your preferred name)
+- Dimensions: 512 (matches voyage-3-lite)
+- Metric: Cosine similarity
+- Indexing: Enabled (for faster queries)
+
+**Vector Metadata:**
+```typescript
+{
+  userId: string;      // User ownership for RLS
+  noteId: string;     // Reference to note table
+  title: string;       // For display in search results
+  noteType: "note" | "journal";
+  tags: string[];      // For filtering
+  createdAt: string;   // For sorting/filters
+  updatedAt: string;   // For tracking changes
+}
+```
+
+**Features Implemented:**
+✅ Upstash Vector index configuration
+✅ Single note indexing (indexNote)
+✅ Batch note indexing (indexNotes)
+✅ Semantic search with filters (semanticSearch)
+✅ Related notes discovery (findRelatedNotes)
+✅ Single vector deletion (deleteNoteVector)
+✅ Batch vector deletion (deleteNoteVectors)
+✅ User ID filtering for RLS
+✅ Note type filtering
+✅ Tag filtering
+✅ Configurable topK results
+✅ Metadata inclusion control
+✅ Type-safe implementation
+✅ Error handling with logging
+✅ Setup documentation (upstash-vector-setup.md)
+✅ Troubleshooting guide
+
+**Learnings:**
+- Upstash Vector requires exact index dimensions (512 for voyage-3-lite)
+- Filter expressions use SQL-like syntax (userId = 'X' AND noteType = 'Y')
+- Metadata type is flexible (Dict) so `as any` needed for TypeScript
+- Batch upsert is significantly faster than individual calls
+- Find related notes needs to exclude original note (fetch topK+1)
+- Graceful error handling returns empty arrays instead of throwing for non-critical ops
+- Index must be created in Upstash console before using code
+- REST URL and token are different from Redis connection
+
+**Next Task:** F4-003 - Automatic Embedding on Note Save
+
