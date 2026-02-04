@@ -1447,3 +1447,104 @@ Response: {
 
 **Next Task:** F3-001 - Voice Recording Hook or F4-001 - Voyage AI Embeddings Integration
 
+
+### 2026-02-04 - Task F4-001: Voyage AI Embeddings Integration
+**Status:** ✅ Completed
+**Commit:** (pending)
+
+**What was done:**
+1. Created lib/embeddings.ts - Voyage AI embeddings library:
+    - Configuration for Voyage AI API with environment variable validation
+    - Supported models: voyage-3-lite (default), voyage-3, voyage-2
+    - getEmbedding() function for single text embedding generation
+      * Truncates input to 4000 characters to stay within token limits
+      * Validates input with Zod schema
+      * Returns embedding vector as number array
+      * Error handling for API and validation errors
+    - getEmbeddings() function for batch processing
+      * Processes up to 128 texts per batch
+      * Handles large arrays by batching automatically
+      * Uses input_type: "document" for better accuracy
+    - cosineSimilarity() helper function
+      * Calculates cosine similarity between two vectors
+      * Returns score from -1 to 1 (higher is more similar)
+      * Proper null checks and type safety
+    - Full TypeScript type safety with Zod schemas
+    - Environment variable validation on module load
+
+2. Created app/api/embed/route.ts - Embedding generation API endpoint:
+    - POST /api/embed - Generate embedding for text
+    - Request body validation with Zod:
+      * text: required, min 1 char, max 4000 chars
+      * model: optional, must be valid Voyage AI model
+    - Authentication required (Better Auth session)
+    - Calls getEmbedding() from lib/embeddings.ts
+    - Returns embedding vector, model used, and approximate token count
+    - Error handling with descriptive messages:
+      * 400: Invalid request (validation error)
+      * 401: Unauthorized (no session)
+      * 500: Server error (API failure)
+    - Type-safe implementation
+
+3. Verified implementation:
+    - Ran `bun run typecheck` with zero errors
+    - All TypeScript types properly inferred
+    - Zod validation schemas working correctly
+    - API route properly typed
+
+**Technical Decisions:**
+- Used voyage-3-lite as default model (fastest, 50M tokens free tier)
+- 4000 character limit ensures we stay within token budget
+- Batch processing supports up to 128 texts for efficiency
+- Cosine similarity provided as utility for comparing embeddings
+- Zod validation at API boundary ensures type safety
+- Environment variable validation on module load fails fast if misconfigured
+- Approximate token count (chars / 4) for usage tracking
+- Type assertion for model parameter needed for Voyage API compatibility
+
+**API Endpoint:**
+```bash
+POST /api/embed
+Request: {
+  "text": "Your text here",
+  "model": "voyage-3-lite" // optional
+}
+Response: {
+  "embedding": [0.1, -0.2, 0.3, ...], // 1024-dim vector
+  "model": "voyage-3-lite",
+  "usage": { "total_tokens": 125 }
+}
+```
+
+**Embedding Dimensions:**
+- voyage-3-lite: 512 dimensions (fast, cost-efficient)
+- voyage-3: 1024 dimensions (high quality)
+- voyage-2: 768 dimensions (balanced)
+
+**Features Implemented:**
+✅ Voyage AI integration with environment validation
+✅ Single text embedding (getEmbedding)
+✅ Batch embedding support (getEmbeddings)
+✅ Model configuration (voyage-3-lite, voyage-3, voyage-2)
+✅ 4000 character truncation for token limits
+✅ Zod validation schemas
+✅ POST /api/embed API endpoint
+✅ Request body validation
+✅ Authentication checks
+✅ Error handling (400, 401, 500)
+✅ Cosine similarity helper function
+✅ Type-safe implementation
+✅ Approximate token usage tracking
+
+**Learnings:**
+- Voyage AI requires exact model names in API calls
+- 4000 chars is safe limit for voyage-3-lite (fits within 4K tokens)
+- Batch processing can significantly reduce API calls for bulk operations
+- Cosine similarity is standard metric for semantic search
+- Environment variable validation should happen at module load
+- Approximate token count helps users understand usage without parsing response
+- Zod validation at API boundary catches malformed requests early
+- Type assertions sometimes necessary for third-party API types
+
+**Next Task:** F4-002 - Upstash Vector Store Setup
+
