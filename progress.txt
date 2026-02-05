@@ -2075,3 +2075,156 @@ app/(protected)/search/
 
 ---
 
+### 2026-02-05 - Task F3-001: Voice Recording Hook
+**Status:** Completed
+**Commit:** (pending)
+
+**What was done:**
+1. Created hooks/useVoiceRecorder.ts - Comprehensive voice recording hook:
+   - RecordingState type: 'idle' | 'recording' | 'paused' | 'stopped'
+   - VoiceRecorderError type for error handling: 'permission_denied' | 'not_supported' | 'no_audio_device' | 'recording_failed'
+   - VoiceRecorderOptions interface for configuration (mimeType, audioBitsPerSecond, enableVisualization, fftSize)
+   - VoiceRecorderReturn interface for all hook return values
+
+2. Implemented core recording functionality:
+   - startRecording(): Request microphone permission, create MediaRecorder with audio/webm
+   - pauseRecording(): Pause recording with duration preservation
+   - resumeRecording(): Resume recording from paused state
+   - stopRecording(): Stop recording and return audio Blob
+   - reset(): Reset to initial state, cleanup resources
+   
+3. State management:
+   - state: Current recording state (idle/recording/paused/stopped)
+   - isRecording: Boolean helper (state === 'recording')
+   - isPaused: Boolean helper (state === 'paused')
+   - duration: Recording duration in seconds
+   - formattedDuration: Formatted string (MM:SS)
+   - audioBlob: Recorded audio after stop
+   - audioUrl: Object URL for playback
+   - audioLevel: Current audio level (0-1) for visualization
+   - error: Current error state
+   - errorMessage: User-friendly error message
+
+4. Real-time duration counter:
+   - Uses setInterval for accurate timing
+   - Handles pause/resume correctly with pausedDuration tracking
+   - Starts from correct offset when resuming
+
+5. Audio level visualization using Web Audio API:
+   - AudioContext for audio processing
+   - AnalyserNode with configurable FFT size
+   - requestAnimationFrame for smooth visualization updates
+   - Calculates average frequency level (0-1 normalized)
+   - Stops during pause, resumes when recording
+
+6. Permission and error handling:
+   - Checks browser support (MediaRecorder, getUserMedia)
+   - Handles permission denied (NotAllowedError)
+   - Handles no audio device (NotFoundError)
+   - Handles recording failures
+   - User-friendly error messages for each error type
+   - isSupported boolean for early detection
+
+7. Cleanup on unmount:
+   - Stops duration interval
+   - Cancels animation frame
+   - Closes AudioContext
+   - Stops all media tracks
+   - Revokes object URLs to prevent memory leaks
+
+8. Created hooks/index.ts - Central exports file:
+   - Exports useTags, usePeople, useVoiceRecorder hooks
+   - Exports types: RecordingState, VoiceRecorderError, VoiceRecorderOptions, VoiceRecorderReturn
+
+9. Verified type safety:
+   - Ran `bun run typecheck` with zero errors
+   - All types properly defined and exported
+   - Full TypeScript coverage
+
+**Technical Decisions:**
+- Used audio/webm as default mime type (wide browser support)
+- Fallback mime type detection for unsupported browsers
+- 128kbps audio bit rate for good quality/size balance
+- 256 FFT size for visualization (fast, sufficient detail)
+- Smoothing time constant 0.8 for audio level (prevents jitter)
+- Data collection every 1 second for responsive stopping
+- Echo cancellation, noise suppression, auto gain control enabled
+- Object URL for audio playback (more efficient than base64)
+- Refs for MediaRecorder, stream, chunks (avoid state overhead)
+- Exponential backoff not needed (single operation, user-initiated)
+
+**Component Structure:**
+```
+hooks/
+├── useVoiceRecorder.ts    # Voice recording hook
+├── useTags.ts             # Tags management hook
+├── usePeople.ts           # People/contacts hook
+└── index.ts               # Central exports
+```
+
+**Usage Example:**
+```typescript
+import { useVoiceRecorder } from '@/hooks';
+
+function VoiceButton() {
+  const {
+    isRecording,
+    formattedDuration,
+    audioLevel,
+    error,
+    errorMessage,
+    startRecording,
+    stopRecording,
+    isSupported,
+  } = useVoiceRecorder();
+
+  if (!isSupported) {
+    return <p>Recording not supported</p>;
+  }
+
+  return (
+    <div>
+      <button onClick={isRecording ? stopRecording : startRecording}>
+        {isRecording ? 'Stop' : 'Record'}
+      </button>
+      {isRecording && <span>{formattedDuration}</span>}
+      {error && <p>{errorMessage}</p>}
+      <AudioLevelMeter level={audioLevel} />
+    </div>
+  );
+}
+```
+
+**Features Implemented:**
+- MediaRecorder API integration with audio/webm
+- Recording states: idle, recording, paused, stopped
+- Start, pause, resume, stop recording controls
+- Real-time duration counter with MM:SS formatting
+- Audio level visualization (0-1) using AnalyserNode
+- Browser support detection (isSupported)
+- Permission denied handling with user message
+- No audio device handling
+- Recording failure handling
+- Cleanup on unmount (streams, intervals, URLs)
+- Audio blob and URL for playback
+- Configurable options (mimeType, bitrate, visualization, fftSize)
+- Type-safe implementation with full exports
+- Central hooks index for clean imports
+
+**Learnings:**
+- MediaRecorder API has good browser support but mime type varies
+- Web Audio API's AnalyserNode provides real-time audio visualization
+- requestAnimationFrame is essential for smooth visualization
+- Pause/resume requires tracking elapsed time separately
+- AudioContext should be closed on cleanup to free resources
+- Object URLs must be revoked to prevent memory leaks
+- Error types vary by browser (DOMException names differ)
+- SET LOCAL works for RLS in serverless context
+- Echo cancellation improves recording quality significantly
+- 256 FFT size provides good balance of speed and detail
+- Data collection interval affects responsiveness of stop action
+
+**Next Task:** F3-002 - Groq Transcription API Integration
+
+---
+
