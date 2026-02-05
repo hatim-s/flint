@@ -322,7 +322,7 @@
             "Style component to be non-intrusive, floating button design",
             "Run type checks"
           ],
-          "completed": false
+          "completed": true
         },
         {
           "id": "F3-004",

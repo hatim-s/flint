@@ -27,8 +27,9 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Trash2, Save, Loader2, CheckCircle2, Home, FileText, BookTemplate } from 'lucide-react';
+import { Trash2, Save, Loader2, CheckCircle2, Home, FileText, BookTemplate, Mic } from 'lucide-react';
 import { toast } from 'sonner';
+import { VoiceCapture } from '@/components/voice';
 import type { Note } from '@/db/schema/notes';
 
 type SaveStatus = 'saved' | 'saving' | 'unsaved' | 'error';
@@ -178,6 +179,14 @@ export default function NoteEditorPage({ params }: PageProps) {
     }
   }, [noteId, title, content, moodScore, note]);
 
+  // Handle voice transcription insertion
+  const handleVoiceInsert = useCallback((text: string) => {
+    // Append transcription to content with a newline
+    const separator = content.trim() ? '\n\n' : '';
+    setContent(content + separator + text);
+    setSaveStatus('unsaved');
+  }, [content]);
+
   // Delete function
   const handleDelete = async () => {
     try {
@@ -269,6 +278,12 @@ export default function NoteEditorPage({ params }: PageProps) {
               </div>
 
               <Separator orientation="vertical" className="h-6" />
+
+              {/* Voice Capture Button */}
+              <VoiceCapture
+                onInsert={handleVoiceInsert}
+                position="inline"
+              />
 
               {/* Save as Template Button */}
               <Button

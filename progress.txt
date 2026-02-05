@@ -2370,3 +2370,127 @@ Response: { endpoint, method, fields, response }
 
 ---
 
+### 2026-02-05 - Task F3-003: Voice Capture UI Component
+**Status:** Completed
+**Commit:** (pending)
+
+**What was done:**
+1. Created components/voice/VoiceCapture.tsx - Comprehensive voice capture component:
+   - State machine with 6 states: idle, recording, paused, processing, preview, error
+   - Integrates useVoiceRecorder hook for recording functionality
+   - Uses /api/transcribe endpoint for Groq Whisper transcription
+   
+2. Implemented recording UI states:
+   - Idle: Microphone button ready to record (inline or floating position)
+   - Recording: Large pulsing red indicator with animated ping
+   - Paused: Yellow indicator with pause icon
+   - Processing: Spinner with "Transcribing..." message
+   - Error: Red error display with retry option
+   - Preview: Modal with editable transcription text
+   
+3. Recording features:
+   - Recording timer display showing MM:SS duration
+   - Audio waveform visualization (12-bar dynamic visualization)
+   - Waveform bars respond to audio level in real-time
+   - Cancel button to abort recording
+   - Pause/Resume toggle during recording
+   - Done button to stop and start transcription
+   
+4. Transcription preview modal:
+   - Dialog with editable textarea for transcription text
+   - Audio playback button to listen to recording
+   - Re-record option to start over
+   - Cancel button to discard
+   - Insert button to add transcription to note
+   
+5. Created components/voice/index.tsx - Central exports file
+
+6. Integrated VoiceCapture into note editor page (app/(protected)/notes/[id]/page.tsx):
+   - Added VoiceCapture component to header action buttons
+   - Created handleVoiceInsert callback to append transcription to content
+   - Transcription appends with newline separator to existing content
+   - Triggers unsaved state to enable auto-save
+
+7. Styling:
+   - Position prop: 'inline' for toolbar, 'floating' for fixed FAB
+   - Floating position creates fixed button at bottom-right with shadow
+   - Inline position integrates cleanly with existing UI
+   - Dark mode support throughout
+   - Responsive design for mobile and desktop
+   
+8. Verified type safety:
+   - Ran `bun run typecheck` with zero errors
+   - All TypeScript types properly inferred
+   - Full integration with existing components
+
+**Technical Decisions:**
+- State machine pattern for clear UI state management
+- Waveform uses 12 bars with position-based offset and audio level scaling
+- Random variation added to waveform for natural appearance
+- Preview modal allows editing transcription before insertion
+- Audio playback uses HTMLAudioElement with object URL
+- Non-blocking error handling - errors don't break the flow
+- Inline position for note editor, floating position available for other contexts
+- Transcription appends to content with newline separator
+
+**Component Structure:**
+```
+components/voice/
+├── VoiceCapture.tsx    # Main voice capture component
+└── index.tsx           # Central exports
+```
+
+**Usage Example:**
+```typescript
+import { VoiceCapture } from '@/components/voice';
+
+// In note editor
+<VoiceCapture
+  onInsert={(text) => setContent(content + '\n\n' + text)}
+  position="inline"
+/>
+
+// As floating button
+<VoiceCapture
+  onInsert={handleInsert}
+  position="floating"
+/>
+```
+
+**Features Implemented:**
+- VoiceCapture component with state machine
+- Idle state with microphone button
+- Recording state with pulsing indicator
+- Paused state with pause indicator
+- Processing state with spinner
+- Error state with retry option
+- Preview modal with transcription editing
+- Audio waveform visualization (12 bars)
+- Recording timer display (MM:SS)
+- Cancel and Done buttons
+- Pause/Resume toggle
+- Audio playback in preview
+- Re-record option
+- Insert button to add to note
+- Inline and floating position modes
+- Browser support detection
+- Permission error handling
+- Type-safe implementation
+- Dark mode support
+- Integration with note editor page
+
+**Learnings:**
+- State machine pattern makes complex UI states manageable
+- Waveform visualization adds professional feel to recording UI
+- Position-based bar offsets create wave effect without complex math
+- Audio playback with HTMLAudioElement is simple and reliable
+- Separating position modes (inline/floating) increases component reusability
+- Preview modal with editing improves user control over transcription
+- appendContent pattern preserves existing work while adding new content
+- Non-blocking error handling improves UX (user can always cancel/retry)
+- Integrating into header buttons keeps UI consistent with other actions
+
+**Next Task:** F3-004 - Voice-to-Note Quick Capture or F4-006 - Serendipity Engine
+
+---
+
