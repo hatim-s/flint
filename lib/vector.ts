@@ -1,4 +1,7 @@
 import { Index } from "@upstash/vector";
+import { config } from 'dotenv';
+
+config({ path: '.env.local' });
 
 const UPSTASH_VECTOR_URL = process.env.UPSTASH_VECTOR_REST_URL;
 const UPSTASH_VECTOR_TOKEN = process.env.UPSTASH_VECTOR_REST_TOKEN;
@@ -116,11 +119,11 @@ export async function semanticSearch(
   try {
     // Build filter expression for Upstash
     const filters: string[] = [`userId = '${userId}'`];
-    
+
     if (filterNoteType) {
       filters.push(`noteType = '${filterNoteType}'`);
     }
-    
+
     if (filterTags && filterTags.length > 0) {
       const tagFilters = filterTags.map((tag) => `'${tag}'`);
       filters.push(`tags IN [${tagFilters.join(", ")}]`);

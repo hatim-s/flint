@@ -1,4 +1,7 @@
 import Groq from 'groq-sdk';
+import { config } from 'dotenv';
+
+config({ path: '.env.local' });
 
 /**
  * Groq SDK client for speech-to-text transcription
@@ -163,10 +166,10 @@ export async function transcribeAudio(
       };
     } catch (error) {
       lastError = error as Error;
-      
+
       // Check if it's a rate limit error (429) or server error (5xx)
-      const isRetryable = 
-        lastError.message.includes('429') || 
+      const isRetryable =
+        lastError.message.includes('429') ||
         lastError.message.includes('rate limit') ||
         lastError.message.includes('500') ||
         lastError.message.includes('502') ||

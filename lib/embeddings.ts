@@ -1,4 +1,7 @@
 import { z } from "zod";
+import { config } from 'dotenv';
+
+config({ path: '.env.local' });
 
 // Voyage AI configuration
 const VOYAGE_API_KEY = process.env.VOYAGEAI_API_KEY;
@@ -98,7 +101,7 @@ export async function getEmbedding(
       console.error("Voyage AI validation error:", error.issues);
       throw new Error("Invalid embedding request");
     }
-    
+
     console.error("Error generating embedding with Voyage AI:", error);
     throw error;
   }
@@ -121,7 +124,7 @@ export async function getEmbeddings(
 
   for (let i = 0; i < texts.length; i += batchSize) {
     const batch = texts.slice(i, i + batchSize);
-    
+
     // Use input_type: "document" for batch processing
     const response = await fetch(`${VOYAGE_API_URL}/embeddings`, {
       method: "POST",
