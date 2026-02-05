@@ -11,7 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { signIn } from "@/lib/auth-client";
+import { signIn } from "@/auth/client";
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);

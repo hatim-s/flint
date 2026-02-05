@@ -45,7 +45,7 @@ export async function indexNote(
     await vectorIndex.upsert({
       id: noteId,
       vector: embedding,
-      metadata: metadata as any,
+      metadata: metadata as unknown as Record<string, unknown>,
     });
   } catch (error) {
     console.error("Error indexing note:", noteId, error);
@@ -70,10 +70,10 @@ export async function indexNotes(
     const vectors = items.map((item) => ({
       id: item.noteId,
       vector: item.embedding,
-      metadata: item.metadata as any,
+      metadata: item.metadata as unknown as Record<string, unknown>,
     }));
 
-    await vectorIndex.upsert(vectors as any);
+    await vectorIndex.upsert(vectors);
   } catch (error) {
     console.error("Error batch indexing notes:", error);
     throw new Error("Failed to batch index notes");
