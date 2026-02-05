@@ -5,10 +5,11 @@
  */
 
 import { db } from "@/db";
+import { notes } from "@/db/schema/notes";
 import { people, type Person } from "@/db/schema/people";
 import { noteMentions } from "@/db/schema/noteMentions";
 import { eq, and, inArray } from "drizzle-orm";
-import { setCurrentUser } from "@/db/lib/rls";
+import { rlsExecutor } from "@/db/lib/rls";
 
 /**
  * Extracts people/contact names from markdown content
@@ -48,7 +49,17 @@ export async function syncNoteMentions(
   noteId: string,
   content: string
 ): Promise<void> {
-  await setCurrentUser(userId);
+  const rls = rlsExecutor(userId);
+
+  const [ownedNote] = await db
+    .select({ id: notes.id })
+    .from(notes)
+    .where(rls.where(notes, eq(notes.id, noteId)))
+    .limit(1);
+
+  if (!ownedNote) {
+    throw new Error("Note not found");
+  }
 
   // Extract person names from content
   const personNames = extractPeopleFromContent(content);
@@ -69,7 +80,7 @@ export async function syncNoteMentions(
     const [existingPerson] = await db
       .select()
       .from(people)
-      .where(and(eq(people.userId, userId), eq(people.name, personName)))
+      .where(rls.where(people, eq(people.name, personName)))
       .limit(1);
 
     if (existingPerson) {
@@ -78,12 +89,11 @@ export async function syncNoteMentions(
       // Create new person
       const [newPerson] = await db
         .insert(people)
-        .values({
-          userId,
+        .values(rls.values({
           name: personName,
           email: null,
           metadata: {},
-        })
+        }))
         .returning();
 
       if (newPerson) {
@@ -140,7 +150,7 @@ export async function getNoteMentions(
   userId: string,
   noteId: string
 ): Promise<Person[]> {
-  await setCurrentUser(userId);
+  const rls = rlsExecutor(userId);
 
   const result = await db
     .select({
@@ -153,7 +163,13 @@ export async function getNoteMentions(
     })
     .from(people)
     .innerJoin(noteMentions, eq(noteMentions.personId, people.id))
-    .where(eq(noteMentions.noteId, noteId));
+    .innerJoin(notes, eq(noteMentions.noteId, notes.id))
+    .where(
+      and(
+        rls.where(people),
+        rls.where(notes, eq(notes.id, noteId))
+      )
+    );
 
   return result;
 }

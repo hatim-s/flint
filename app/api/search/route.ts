@@ -11,6 +11,7 @@ import { searchNotes as keywordSearch } from "@/db/lib/search";
 import { semanticSearch } from "@/lib/vector";
 import { db } from "@/db";
 import { notes } from "@/db/schema/notes";
+import { rlsExecutor } from "@/db/lib/rls";
 import { inArray } from "drizzle-orm";
 import { NextRequest } from "next/server";
 import { z } from "zod";
@@ -153,6 +154,7 @@ export async function GET(request: NextRequest) {
     } = params.data;
 
     const userId = session.user.id;
+    const rls = rlsExecutor(userId);
 
     // Parse tags if provided
     const tags = tagsParam ? tagsParam.split(",").map((t) => t.trim()) : undefined;
@@ -244,7 +246,7 @@ export async function GET(request: NextRequest) {
     const notesData = await db
       .select()
       .from(notes)
-      .where(inArray(notes.id, sortedNoteIds));
+      .where(rls.where(notes, inArray(notes.id, sortedNoteIds)));
 
     // 6. Construct response with scores
     const results: HybridSearchResult[] = sortedNoteIds

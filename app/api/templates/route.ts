@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { db } from '@/db';
 import { templates } from '@/db/schema/templates';
-import { setCurrentUser } from '@/db/lib/rls';
+import { rlsExecutor } from '@/db/lib/rls';
 import { eq, and } from 'drizzle-orm';
 import { z } from 'zod';
 
@@ -36,12 +36,10 @@ export async function GET(req: NextRequest) {
     }
 
     const { noteType } = queryResult.data;
-
-    // Set RLS context
-    await setCurrentUser(session.user.id);
+    const rls = rlsExecutor(session.user.id);
 
     // Build query
-    const conditions = [eq(templates.userId, session.user.id)];
+    const conditions = [rls.where(templates)];
     if (noteType) {
       conditions.push(eq(templates.noteType, noteType));
     }
@@ -97,20 +95,17 @@ export async function POST(req: NextRequest) {
     }
 
     const data = validationResult.data;
-
-    // Set RLS context
-    await setCurrentUser(session.user.id);
+    const rls = rlsExecutor(session.user.id);
 
     // Create template
     const [template] = await db
       .insert(templates)
-      .values({
-        userId: session.user.id,
+      .values(rls.values({
         name: data.name,
         noteType: data.noteType,
         content: data.content,
         isDefault: data.isDefault,
-      })
+      }))
       .returning();
 
     return Response.json({ template }, { status: 201 });

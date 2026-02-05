@@ -2663,3 +2663,6 @@ Response: { success: true, deleted: { ... } }
 
 ---
 
+
+**Learnings (2026-02-05):**
+- Neon/serverless connections do not reliably persist session variables, so RLS must be enforced by app-side owner filters on every query.

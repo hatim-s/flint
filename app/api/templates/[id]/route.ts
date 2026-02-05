@@ -2,8 +2,8 @@ import { NextRequest } from 'next/server';
 import { auth } from '@/auth';
 import { db } from '@/db';
 import { templates } from '@/db/schema/templates';
-import { setCurrentUser } from '@/db/lib/rls';
-import { eq, and } from 'drizzle-orm';
+import { rlsExecutor } from '@/db/lib/rls';
+import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 
 // GET /api/templates/[id] - Get single template
@@ -22,15 +22,13 @@ export async function GET(
     if (!session?.user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
-    // Set RLS context
-    await setCurrentUser(session.user.id);
+    const rls = rlsExecutor(session.user.id);
 
     // Fetch template
     const [template] = await db
       .select()
       .from(templates)
-      .where(and(eq(templates.id, id), eq(templates.userId, session.user.id)))
+      .where(rls.where(templates, eq(templates.id, id)))
       .limit(1);
 
     if (!template) {
@@ -83,15 +81,13 @@ export async function PUT(
     }
 
     const data = validationResult.data;
-
-    // Set RLS context
-    await setCurrentUser(session.user.id);
+    const rls = rlsExecutor(session.user.id);
 
     // Check if template exists and user owns it
     const [existingTemplate] = await db
       .select()
       .from(templates)
-      .where(and(eq(templates.id, id), eq(templates.userId, session.user.id)))
+      .where(rls.where(templates, eq(templates.id, id)))
       .limit(1);
 
     if (!existingTemplate) {
@@ -102,7 +98,7 @@ export async function PUT(
     const [updatedTemplate] = await db
       .update(templates)
       .set(data)
-      .where(and(eq(templates.id, id), eq(templates.userId, session.user.id)))
+      .where(rls.where(templates, eq(templates.id, id)))
       .returning();
 
     return Response.json(updatedTemplate);
@@ -131,15 +127,13 @@ export async function DELETE(
     if (!session?.user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
-    // Set RLS context
-    await setCurrentUser(session.user.id);
+    const rls = rlsExecutor(session.user.id);
 
     // Check if template exists and user owns it
     const [existingTemplate] = await db
       .select()
       .from(templates)
-      .where(and(eq(templates.id, id), eq(templates.userId, session.user.id)))
+      .where(rls.where(templates, eq(templates.id, id)))
       .limit(1);
 
     if (!existingTemplate) {
@@ -149,7 +143,7 @@ export async function DELETE(
     // Delete template
     await db
       .delete(templates)
-      .where(and(eq(templates.id, id), eq(templates.userId, session.user.id)));
+      .where(rls.where(templates, eq(templates.id, id)));
 
     return Response.json({ message: 'Template deleted successfully' });
   } catch (error) {

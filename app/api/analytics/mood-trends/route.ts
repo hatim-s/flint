@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { setCurrentUser } from "@/db/lib/rls";
+import { rlsExecutor } from "@/db/lib/rls";
 import { db } from "@/db";
 import { notes } from "@/db/schema/notes";
 import { sql, desc, gte, and } from "drizzle-orm";
@@ -34,9 +34,7 @@ export async function GET(req: NextRequest) {
 
     const { days } = queryValidation.data;
     const userId = session.user.id;
-
-    // Set RLS context
-    await setCurrentUser(userId);
+    const rls = rlsExecutor(userId);
 
     // Calculate date range (last N days)
     const startDate = new Date();
@@ -52,6 +50,7 @@ export async function GET(req: NextRequest) {
       .from(notes)
       .where(
         and(
+          rls.where(notes),
           gte(notes.createdAt, startDate),
           sql`${notes.moodScore} IS NOT NULL`
         )

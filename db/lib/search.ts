@@ -8,7 +8,7 @@
 import { db } from "@/db";
 import { notes, type Note } from "@/db/schema/notes";
 import { sql } from "drizzle-orm";
-import { setCurrentUser } from "./rls";
+import { rlsExecutor } from "./rls";
 
 /**
  * Search result with ranking score
@@ -101,11 +101,11 @@ export async function searchNotes(
     return [];
   }
 
-  // Set RLS context for the current user
-  await setCurrentUser(userId);
+  const rls = rlsExecutor(userId);
 
   // Build the WHERE clause conditions
   const conditions: unknown[] = [
+    rls.where(notes),
     sql`to_tsvector('english', COALESCE(${notes.contentPlain}, '') || ' ' || COALESCE(${notes.title}, '')) @@ plainto_tsquery('english', ${sanitizedQuery})`,
   ];
 
@@ -177,11 +177,11 @@ export async function countSearchResults(
     return 0;
   }
 
-  // Set RLS context
-  await setCurrentUser(userId);
+  const rls = rlsExecutor(userId);
 
   // Build WHERE clause (same as searchNotes)
   const conditions: unknown[] = [
+    rls.where(notes),
     sql`to_tsvector('english', COALESCE(${notes.contentPlain}, '') || ' ' || COALESCE(${notes.title}, '')) @@ plainto_tsquery('english', ${sanitizedQuery})`,
   ];
 

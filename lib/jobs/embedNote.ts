@@ -15,8 +15,8 @@ import { db } from "@/db";
 import { notes, type Note } from "@/db/schema/notes";
 import { noteTags } from "@/db/schema/noteTags";
 import { tags } from "@/db/schema/tags";
-import { eq } from "drizzle-orm";
-import { setCurrentUser } from "@/db/lib/rls";
+import { eq, and } from "drizzle-orm";
+import { rlsExecutor } from "@/db/lib/rls";
 
 interface EmbedNoteResult {
   success: boolean;
@@ -37,15 +37,13 @@ export async function embedNote(
   retryCount: number = 0,
   maxRetries: number = 3
 ): Promise<EmbedNoteResult> {
+  const rls = rlsExecutor(userId);
   try {
-    // Set RLS context
-    await setCurrentUser(userId);
-
     // Fetch the note
     const [note] = await db
       .select()
       .from(notes)
-      .where(eq(notes.id, noteId))
+      .where(rls.where(notes, eq(notes.id, noteId)))
       .limit(1);
 
     if (!note) {
@@ -77,7 +75,12 @@ export async function embedNote(
       })
       .from(noteTags)
       .innerJoin(tags, eq(noteTags.tagId, tags.id))
-      .where(eq(noteTags.noteId, noteId));
+      .where(
+        and(
+          eq(noteTags.noteId, noteId),
+          rls.where(tags)
+        )
+      );
 
     const tagNames = noteTags_.map(nt => nt.tagName);
 
@@ -102,7 +105,7 @@ export async function embedNote(
           embeddedAt: new Date().toISOString(),
         },
       })
-      .where(eq(notes.id, noteId));
+      .where(rls.where(notes, eq(notes.id, noteId)));
 
     console.log(`✅ Successfully embedded note ${noteId}`);
 
@@ -125,11 +128,10 @@ export async function embedNote(
 
     // All retries exhausted, mark as failed
     try {
-      await setCurrentUser(userId);
       const [note] = await db
         .select()
         .from(notes)
-        .where(eq(notes.id, noteId))
+        .where(rls.where(notes, eq(notes.id, noteId)))
         .limit(1);
 
       if (note) {
@@ -143,7 +145,7 @@ export async function embedNote(
               lastEmbedAttempt: new Date().toISOString(),
             },
           })
-          .where(eq(notes.id, noteId));
+          .where(rls.where(notes, eq(notes.id, noteId)));
       }
     } catch (updateError) {
       console.error(`Failed to update note status after failed embedding:`, updateError);
@@ -196,14 +198,14 @@ export async function reembedNote(
   userId: string
 ): Promise<EmbedNoteResult> {
   console.log(`🔄 Re-embedding note ${noteId}`);
+  const rls = rlsExecutor(userId);
   
   // Reset embedding status first
   try {
-    await setCurrentUser(userId);
     const [note] = await db
       .select()
       .from(notes)
-      .where(eq(notes.id, noteId))
+      .where(rls.where(notes, eq(notes.id, noteId)))
       .limit(1);
 
     if (note) {
@@ -215,7 +217,7 @@ export async function reembedNote(
             embeddingStatus: "pending" as const,
           },
         })
-        .where(eq(notes.id, noteId));
+        .where(rls.where(notes, eq(notes.id, noteId)));
     }
   } catch (error) {
     console.error(`Failed to reset embedding status:`, error);

@@ -5,7 +5,7 @@ import { getEmbedding } from "@/lib/embeddings";
 import { db } from "@/db";
 import { notes } from "@/db/schema/notes";
 import { noteLinks } from "@/db/schema/noteLinks";
-import { setCurrentUser } from "@/db/lib/rls";
+import { rlsExecutor } from "@/db/lib/rls";
 import { eq, inArray, and, or } from "drizzle-orm";
 
 interface RouteContext {
@@ -31,15 +31,13 @@ export async function GET(
     const { id: noteId } = await context.params;
     const { searchParams } = new URL(request.url);
     const limit = Math.min(Math.max(parseInt(searchParams.get("limit") || "5"), 1), 10);
-
-    // Set RLS context
-    await setCurrentUser(session.user.id);
+    const rls = rlsExecutor(session.user.id);
 
     // First verify the note exists and belongs to the user
     const [note] = await db
       .select({ id: notes.id })
       .from(notes)
-      .where(eq(notes.id, noteId))
+      .where(rls.where(notes, eq(notes.id, noteId)))
       .limit(1);
 
     if (!note) {
@@ -66,7 +64,7 @@ export async function GET(
         updatedAt: notes.updatedAt,
       })
       .from(notes)
-      .where(inArray(notes.id, relatedNoteIds));
+      .where(rls.where(notes, inArray(notes.id, relatedNoteIds)));
 
     // Check for existing links (both directions)
     const existingLinks = await db
@@ -170,9 +168,7 @@ export async function POST(
 
     const { searchParams } = new URL(request.url);
     const limit = Math.min(Math.max(parseInt(searchParams.get("limit") || "5"), 1), 10);
-
-    // Set RLS context
-    await setCurrentUser(session.user.id);
+    const rls = rlsExecutor(session.user.id);
 
     // Generate embedding for the current content
     const embedding = await getEmbedding(content);
@@ -203,27 +199,35 @@ export async function POST(
         updatedAt: notes.updatedAt,
       })
       .from(notes)
-      .where(inArray(notes.id, relatedNoteIds));
+      .where(rls.where(notes, inArray(notes.id, relatedNoteIds)));
 
-    // Check for existing links
-    const existingLinks = await db
-      .select({
-        sourceNoteId: noteLinks.sourceNoteId,
-        targetNoteId: noteLinks.targetNoteId,
-      })
-      .from(noteLinks)
-      .where(
-        or(
-          and(
-            eq(noteLinks.sourceNoteId, noteId),
-            inArray(noteLinks.targetNoteId, relatedNoteIds)
-          ),
-          and(
-            eq(noteLinks.targetNoteId, noteId),
-            inArray(noteLinks.sourceNoteId, relatedNoteIds)
+    const [ownedNote] = await db
+      .select({ id: notes.id })
+      .from(notes)
+      .where(rls.where(notes, eq(notes.id, noteId)))
+      .limit(1);
+
+    // Check for existing links (only if note exists for this user)
+    const existingLinks = ownedNote
+      ? await db
+          .select({
+            sourceNoteId: noteLinks.sourceNoteId,
+            targetNoteId: noteLinks.targetNoteId,
+          })
+          .from(noteLinks)
+          .where(
+            or(
+              and(
+                eq(noteLinks.sourceNoteId, noteId),
+                inArray(noteLinks.targetNoteId, relatedNoteIds)
+              ),
+              and(
+                eq(noteLinks.targetNoteId, noteId),
+                inArray(noteLinks.sourceNoteId, relatedNoteIds)
+              )
+            )
           )
-        )
-      );
+      : [];
 
     const linkedNoteIds = new Set(
       existingLinks.map((link) =>

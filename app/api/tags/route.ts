@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/db';
 import { tags } from '@/db/schema/tags';
 import { auth } from '@/auth';
-import { setCurrentUser } from '@/db/lib/rls';
+import { rlsExecutor } from '@/db/lib/rls';
 import { z } from 'zod';
-import { eq, and, ilike } from 'drizzle-orm';
+import { eq, ilike } from 'drizzle-orm';
 
 // Validation schema for creating/updating tags
 const createTagSchema = z.object({
@@ -25,9 +25,7 @@ export async function GET(req: NextRequest) {
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
-    // Set RLS context
-    await setCurrentUser(session.user.id);
+    const rls = rlsExecutor(session.user.id);
 
     // Get search query param
     const searchParams = req.nextUrl.searchParams;
@@ -37,16 +35,11 @@ export async function GET(req: NextRequest) {
     let query = db.select().from(tags);
     
     // Apply search filter if provided
-    if (search && search.trim()) {
-      query = query.where(
-        and(
-          eq(tags.userId, session.user.id),
-          ilike(tags.name, `%${search.trim()}%`)
-        )
-      ) as typeof query;
-    } else {
-      query = query.where(eq(tags.userId, session.user.id)) as typeof query;
-    }
+    const whereClause = search && search.trim()
+      ? rls.where(tags, ilike(tags.name, `%${search.trim()}%`))
+      : rls.where(tags);
+
+    query = query.where(whereClause) as typeof query;
 
     // Execute query with ordering
     const userTags = await query.orderBy(tags.name);
@@ -85,15 +78,13 @@ export async function POST(req: NextRequest) {
     }
 
     const { name, color } = validationResult.data;
-
-    // Set RLS context
-    await setCurrentUser(session.user.id);
+    const rls = rlsExecutor(session.user.id);
 
     // Check if tag with this name already exists for this user
     const existingTags = await db
       .select()
       .from(tags)
-      .where(and(eq(tags.userId, session.user.id), eq(tags.name, name)))
+      .where(rls.where(tags, eq(tags.name, name)))
       .limit(1);
 
     if (existingTags.length > 0) {
@@ -104,11 +95,10 @@ export async function POST(req: NextRequest) {
     // Create new tag
     const newTag = await db
       .insert(tags)
-      .values({
-        userId: session.user.id,
+      .values(rls.values({
         name,
         color,
-      })
+      }))
       .returning();
 
     return NextResponse.json(newTag[0], { status: 201 });
@@ -144,13 +134,12 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    // Set RLS context
-    await setCurrentUser(session.user.id);
+    const rls = rlsExecutor(session.user.id);
 
     // Delete the tag (RLS ensures user owns it)
     const deleted = await db
       .delete(tags)
-      .where(and(eq(tags.id, tagId), eq(tags.userId, session.user.id)))
+      .where(rls.where(tags, eq(tags.id, tagId)))
       .returning();
 
     if (deleted.length === 0) {

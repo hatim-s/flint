@@ -10,7 +10,7 @@ import { notes, type Note, type NewNote } from "@/db/schema/notes";
 import { noteTags } from "@/db/schema/noteTags";
 import { tags } from "@/db/schema/tags";
 import { eq, and, desc, asc, gte, lte, sql, inArray } from "drizzle-orm";
-import { setCurrentUser } from "@/db/lib/rls";
+import { rlsExecutor } from "@/db/lib/rls";
 import { z } from "zod";
 
 /**
@@ -102,7 +102,7 @@ export async function createNote(
   userId: string,
   input: CreateNoteInput
 ): Promise<Note> {
-  await setCurrentUser(userId);
+  const rls = rlsExecutor(userId);
 
   // Strip markdown for plain text search
   const contentPlain = stripMarkdown(input.content);
@@ -115,8 +115,7 @@ export async function createNote(
     ...input.metadata,
   };
 
-  const newNote: NewNote = {
-    userId,
+  const newNote: NewNote = rls.values({
     title: input.title,
     content: input.content,
     contentPlain,
@@ -126,7 +125,7 @@ export async function createNote(
     qualityScore: input.qualityScore ?? null,
     templateId: input.templateId ?? null,
     metadata,
-  };
+  }) as NewNote;
 
   const [note] = await db.insert(notes).values(newNote).returning();
 
@@ -144,12 +143,12 @@ export async function getNote(
   userId: string,
   noteId: string
 ): Promise<Note | null> {
-  await setCurrentUser(userId);
+  const rls = rlsExecutor(userId);
 
   const [note] = await db
     .select()
     .from(notes)
-    .where(eq(notes.id, noteId))
+    .where(rls.where(notes, eq(notes.id, noteId)))
     .limit(1);
 
   return note ?? null;
@@ -163,7 +162,7 @@ export async function updateNote(
   noteId: string,
   input: UpdateNoteInput
 ): Promise<Note> {
-  await setCurrentUser(userId);
+  const rls = rlsExecutor(userId);
 
   // First, verify the note exists and get current updatedAt for optimistic locking
   const existingNote = await getNote(userId, noteId);
@@ -213,7 +212,7 @@ export async function updateNote(
   const [updatedNote] = await db
     .update(notes)
     .set(updateData)
-    .where(eq(notes.id, noteId))
+    .where(rls.where(notes, eq(notes.id, noteId)))
     .returning();
 
   if (!updatedNote) {
@@ -230,7 +229,7 @@ export async function deleteNote(
   userId: string,
   noteId: string
 ): Promise<void> {
-  await setCurrentUser(userId);
+  const rls = rlsExecutor(userId);
 
   // Verify note exists first
   const existingNote = await getNote(userId, noteId);
@@ -238,7 +237,7 @@ export async function deleteNote(
     throw new Error("Note not found");
   }
 
-  await db.delete(notes).where(eq(notes.id, noteId));
+  await db.delete(notes).where(rls.where(notes, eq(notes.id, noteId)));
 }
 
 /**
@@ -248,7 +247,7 @@ export async function listNotes(
   userId: string,
   options: ListNotesInput = { limit: 20, sortBy: "updatedAt", sortOrder: "desc" }
 ): Promise<{ notes: Note[]; nextCursor: string | null; hasMore: boolean }> {
-  await setCurrentUser(userId);
+  const rls = rlsExecutor(userId);
 
   // Build WHERE conditions
   const conditions = [];
@@ -280,7 +279,7 @@ export async function listNotes(
     const cursorNote = await db
       .select()
       .from(notes)
-      .where(eq(notes.id, options.cursor))
+      .where(rls.where(notes, eq(notes.id, options.cursor)))
       .limit(1);
 
     if (cursorNote[0]) {
@@ -302,10 +301,7 @@ export async function listNotes(
       .select()
       .from(tags)
       .where(
-        and(
-          eq(tags.userId, userId),
-          inArray(tags.name, options.tags)
-        )
+        rls.where(tags, inArray(tags.name, options.tags))
       );
 
     const tagIds = tagRecords.map(t => t.id);
@@ -341,7 +337,7 @@ export async function listNotes(
 
   // Fetch one extra to determine if there are more results
   const results = await query
-    .where(whereClause)
+    .where(rls.where(notes, whereClause))
     .orderBy(orderBy)
     .limit(options.limit + 1);
 
@@ -365,7 +361,7 @@ export async function getNoteCount(
   userId: string,
   noteType?: "note" | "journal"
 ): Promise<number> {
-  await setCurrentUser(userId);
+  const rls = rlsExecutor(userId);
 
   const conditions = noteType ? [eq(notes.noteType, noteType)] : [];
   const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
@@ -373,7 +369,7 @@ export async function getNoteCount(
   const result = await db
     .select({ count: sql<number>`count(*)` })
     .from(notes)
-    .where(whereClause);
+    .where(rls.where(notes, whereClause));
 
   return result[0]?.count ?? 0;
 }

@@ -3,7 +3,7 @@ import { auth } from "@/auth";
 import { db } from "@/db";
 import { notes } from "@/db/schema/notes";
 import { noteLinks } from "@/db/schema/noteLinks";
-import { setCurrentUser } from "@/db/lib/rls";
+import { rlsExecutor } from "@/db/lib/rls";
 import { eq, and, or } from "drizzle-orm";
 import { z } from "zod";
 
@@ -44,6 +44,7 @@ export async function POST(
     }
 
     const { targetNoteId, linkType, strength } = validationResult.data;
+    const rls = rlsExecutor(session.user.id);
 
     // Prevent self-linking
     if (sourceNoteId === targetNoteId) {
@@ -53,20 +54,17 @@ export async function POST(
       );
     }
 
-    // Set RLS context
-    await setCurrentUser(session.user.id);
-
     // Verify both notes exist and belong to the user
     const [sourceNote] = await db
       .select({ id: notes.id })
       .from(notes)
-      .where(eq(notes.id, sourceNoteId))
+      .where(rls.where(notes, eq(notes.id, sourceNoteId)))
       .limit(1);
 
     const [targetNote] = await db
       .select({ id: notes.id })
       .from(notes)
-      .where(eq(notes.id, targetNoteId))
+      .where(rls.where(notes, eq(notes.id, targetNoteId)))
       .limit(1);
 
     if (!sourceNote) {
@@ -149,8 +147,24 @@ export async function DELETE(
       );
     }
 
-    // Set RLS context
-    await setCurrentUser(session.user.id);
+    const rls = rlsExecutor(session.user.id);
+
+    // Verify both notes exist and belong to the user
+    const [sourceNote] = await db
+      .select({ id: notes.id })
+      .from(notes)
+      .where(rls.where(notes, eq(notes.id, sourceNoteId)))
+      .limit(1);
+
+    const [targetNote] = await db
+      .select({ id: notes.id })
+      .from(notes)
+      .where(rls.where(notes, eq(notes.id, targetNoteId)))
+      .limit(1);
+
+    if (!sourceNote || !targetNote) {
+      return NextResponse.json({ error: "Note not found" }, { status: 404 });
+    }
 
     // Find and delete the link (in either direction)
     const deletedLinks = await db

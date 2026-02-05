@@ -5,10 +5,11 @@
  */
 
 import { db } from "@/db";
+import { notes } from "@/db/schema/notes";
 import { tags, type Tag } from "@/db/schema/tags";
 import { noteTags } from "@/db/schema/noteTags";
 import { eq, and, inArray } from "drizzle-orm";
-import { setCurrentUser } from "@/db/lib/rls";
+import { rlsExecutor } from "@/db/lib/rls";
 
 /**
  * Extracts tag names from markdown content
@@ -48,7 +49,17 @@ export async function syncNoteTags(
   noteId: string,
   content: string
 ): Promise<void> {
-  await setCurrentUser(userId);
+  const rls = rlsExecutor(userId);
+
+  const [ownedNote] = await db
+    .select({ id: notes.id })
+    .from(notes)
+    .where(rls.where(notes, eq(notes.id, noteId)))
+    .limit(1);
+
+  if (!ownedNote) {
+    throw new Error("Note not found");
+  }
 
   // Extract tag names from content
   const tagNames = extractTagsFromContent(content);
@@ -69,7 +80,7 @@ export async function syncNoteTags(
     const [existingTag] = await db
       .select()
       .from(tags)
-      .where(and(eq(tags.userId, userId), eq(tags.name, tagName)))
+      .where(rls.where(tags, eq(tags.name, tagName)))
       .limit(1);
 
     if (existingTag) {
@@ -78,11 +89,10 @@ export async function syncNoteTags(
       // Create new tag
       const [newTag] = await db
         .insert(tags)
-        .values({
-          userId,
+        .values(rls.values({
           name: tagName,
           color: generateRandomColor(),
-        })
+        }))
         .returning();
 
       if (newTag) {
@@ -139,7 +149,7 @@ export async function getNoteTags(
   userId: string,
   noteId: string
 ): Promise<Tag[]> {
-  await setCurrentUser(userId);
+  const rls = rlsExecutor(userId);
 
   const result = await db
     .select({
@@ -151,7 +161,13 @@ export async function getNoteTags(
     })
     .from(tags)
     .innerJoin(noteTags, eq(noteTags.tagId, tags.id))
-    .where(eq(noteTags.noteId, noteId));
+    .innerJoin(notes, eq(noteTags.noteId, notes.id))
+    .where(
+      and(
+        rls.where(tags),
+        rls.where(notes, eq(notes.id, noteId))
+      )
+    );
 
   return result;
 }

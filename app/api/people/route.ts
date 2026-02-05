@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { db } from '@/db';
 import { people } from '@/db/schema/people';
-import { setCurrentUser } from '@/db/lib/rls';
+import { rlsExecutor } from '@/db/lib/rls';
 import { eq, ilike, and } from 'drizzle-orm';
 import { z } from 'zod';
 
@@ -24,9 +24,7 @@ export async function GET(req: NextRequest) {
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
-    // Set RLS context
-    await setCurrentUser(session.user.id);
+    const rls = rlsExecutor(session.user.id);
 
     // Get search query parameter
     const searchParams = req.nextUrl.searchParams;
@@ -36,14 +34,11 @@ export async function GET(req: NextRequest) {
     let query = db.select().from(people);
 
     // Apply search filter if provided
-    if (search) {
-      query = query.where(
-        and(
-          eq(people.userId, session.user.id),
-          ilike(people.name, `%${search}%`)
-        )
-      ) as typeof query;
-    }
+    const whereClause = search
+      ? rls.where(people, ilike(people.name, `%${search}%`))
+      : rls.where(people);
+
+    query = query.where(whereClause) as typeof query;
 
     // Execute query with ordering
     const result = await query.orderBy(people.name);
@@ -82,9 +77,7 @@ export async function POST(req: NextRequest) {
     }
 
     const { name, email, metadata } = validation.data;
-
-    // Set RLS context
-    await setCurrentUser(session.user.id);
+    const rls = rlsExecutor(session.user.id);
 
     // Check if person already exists (by name and optionally email)
     const existingQuery = email
@@ -92,12 +85,12 @@ export async function POST(req: NextRequest) {
           .select()
           .from(people)
           .where(
-            and(eq(people.userId, session.user.id), eq(people.name, name), eq(people.email, email))
+            rls.where(people, and(eq(people.name, name), eq(people.email, email)))
           )
       : db
           .select()
           .from(people)
-          .where(and(eq(people.userId, session.user.id), eq(people.name, name)));
+          .where(rls.where(people, eq(people.name, name)));
 
     const existing = await existingQuery;
 
@@ -109,12 +102,11 @@ export async function POST(req: NextRequest) {
     // Create new person
     const [newPerson] = await db
       .insert(people)
-      .values({
-        userId: session.user.id,
+      .values(rls.values({
         name,
         email: email || null,
         metadata: metadata || {},
-      })
+      }))
       .returning();
 
     return NextResponse.json(newPerson, { status: 201 });
@@ -150,13 +142,12 @@ export async function DELETE(req: NextRequest) {
       );
     }
 
-    // Set RLS context
-    await setCurrentUser(session.user.id);
+    const rls = rlsExecutor(session.user.id);
 
     // Delete the person
     const result = await db
       .delete(people)
-      .where(and(eq(people.id, personId), eq(people.userId, session.user.id)))
+      .where(rls.where(people, eq(people.id, personId)))
       .returning();
 
     if (result.length === 0) {
