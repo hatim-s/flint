@@ -2228,3 +2228,145 @@ function VoiceButton() {
 
 ---
 
+### 2026-02-05 - Task F3-002: Groq Transcription API Integration
+**Status:** Completed
+**Commit:** (pending)
+
+**What was done:**
+1. Added GROQ_API_KEY to .env.local:
+   - Placeholder entry with instructions for obtaining Groq API key
+   - Link to https://console.groq.com/ for API key generation
+   - Used for Whisper speech-to-text transcription
+
+2. Created lib/groq.ts - Groq SDK initialization and transcription helpers:
+   - Groq SDK client initialization with environment variable
+   - SUPPORTED_AUDIO_TYPES array: webm, ogg, mp3, mp4, m4a, wav, flac
+   - MAX_FILE_SIZE constant: 25MB limit for transcription
+   
+   - isSupportedAudioType() function:
+     * Validates audio MIME types for transcription
+     * Extracts base MIME type without codec info
+     * Case-insensitive matching
+   
+   - validateAudioFile() function:
+     * Validates file size against 25MB limit
+     * Validates MIME type against supported types
+     * Returns { valid: boolean, error?: string }
+   
+   - transcribeAudio() function:
+     * Calls Groq's whisper-large-v3 model
+     * Accepts File object with audio data
+     * Options: language hint, custom prompt, response format
+     * Retry logic with exponential backoff (3 retries)
+     * Backoff delays: 2s, 4s, 8s
+     * Handles rate limits (429) and server errors (5xx)
+     * Non-retryable errors thrown immediately
+     * Returns: { text, language?, duration? }
+   
+   - TranscriptionResult interface:
+     * text: Transcribed text
+     * language: Detected or specified language
+     * duration: Audio duration in seconds
+
+3. Created app/api/transcribe/route.ts - POST endpoint for transcription:
+   - POST /api/transcribe - Transcribe audio file to text
+   - Accepts multipart/form-data with 'audio' file field
+   - Optional fields: language (ISO 639-1), prompt (domain terms)
+   
+   - Authentication via Better Auth session
+   - GROQ_API_KEY configuration validation
+   - File validation: existence, size, MIME type
+   
+   - Success response: { text, language?, duration? }
+   - Error responses:
+     * 400: Missing file, invalid file size/type
+     * 401: Unauthorized (no session)
+     * 429: Rate limit exceeded
+     * 503: API key not configured or invalid
+     * 500: Generic transcription failure
+   
+   - GET /api/transcribe - Returns API documentation:
+     * Supported audio types
+     * Maximum file size
+     * Field descriptions
+     * Response format
+
+4. Verified type safety:
+   - Ran `bun run typecheck` with zero errors
+   - All TypeScript types properly defined
+   - Full integration with existing auth system
+
+**Technical Decisions:**
+- Used whisper-large-v3 model for highest quality transcription
+- 25MB limit aligns with Groq's API limits
+- Exponential backoff: 2^attempt * 1000ms (2s, 4s, 8s)
+- Retry only on rate limits (429) and server errors (5xx)
+- Non-retryable errors fail fast (invalid key, bad request)
+- verbose_json response format provides language detection and duration
+- GROQ_API_KEY validation prevents confusing errors
+- File validation before API call saves bandwidth and time
+- groq-sdk already in dependencies (v0.37.0)
+
+**API Endpoint:**
+```bash
+# Transcribe audio file
+POST /api/transcribe
+Content-Type: multipart/form-data
+Body:
+  - audio: File (required, max 25MB)
+  - language: string (optional, e.g., "en", "es")
+  - prompt: string (optional, for domain terms)
+
+Response:
+{
+  "text": "Transcribed text here...",
+  "language": "en",
+  "duration": 45.5
+}
+
+# Get API documentation
+GET /api/transcribe
+Response: { endpoint, method, fields, response }
+```
+
+**Error Responses:**
+- 400: "Missing audio file", "File size exceeds maximum", "Unsupported audio type"
+- 401: "Unauthorized"
+- 429: "Transcription rate limit exceeded"
+- 503: "Transcription service not configured", "Invalid Groq API key"
+- 500: "Failed to transcribe audio"
+
+**Features Implemented:**
+- Groq SDK client initialization
+- SUPPORTED_AUDIO_TYPES validation
+- MAX_FILE_SIZE (25MB) validation
+- validateAudioFile() helper function
+- transcribeAudio() with whisper-large-v3 model
+- Retry logic with exponential backoff (3 attempts)
+- Rate limit (429) and server error (5xx) handling
+- POST /api/transcribe endpoint
+- Multipart form-data parsing
+- File size and type validation
+- Language detection from audio
+- Audio duration extraction
+- Authentication checks
+- API configuration validation
+- GET /api/transcribe documentation endpoint
+- Type-safe implementation
+
+**Learnings:**
+- Groq SDK already in dependencies - no installation needed
+- whisper-large-v3 is Groq's most accurate transcription model
+- Exponential backoff (2s, 4s, 8s) handles transient failures well
+- File validation before API call prevents unnecessary requests
+- verbose_json format provides useful metadata (language, duration)
+- MIME type validation should strip codec info for comparison
+- Retrying non-retryable errors wastes time and quota
+- API documentation endpoint helps developers understand usage
+- 25MB is generous for voice notes (typically < 1MB)
+- Language hint improves accuracy for known languages
+
+**Next Task:** F3-003 - Voice Capture UI Component
+
+---
+
