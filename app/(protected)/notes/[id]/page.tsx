@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, use } from 'react';
 import { useRouter } from 'next/navigation';
-import { TipTapEditor, LiveTrackers } from '@/components/editor';
+import { TipTapEditor, LiveTrackers, RelatedNotes } from '@/components/editor';
 import { TemplateEditor } from '@/components/templates';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -376,12 +376,19 @@ export default function NoteEditorPage({ params }: PageProps) {
             </div>
 
             {/* Sidebar (30%) */}
-            <div className="overflow-y-auto">
+            <div className="overflow-y-auto space-y-4">
               <LiveTrackers
                 moodScore={moodScore}
                 onMoodChange={setMoodScore}
                 wordCount={wordCount}
                 noteType={note.noteType}
+              />
+              
+              {/* Serendipity Engine - Related Notes */}
+              <RelatedNotes
+                noteId={noteId}
+                content={content}
+                debounceMs={30000}
               />
             </div>
           </div>

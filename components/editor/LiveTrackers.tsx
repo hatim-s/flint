@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Slider } from '@/components/ui/slider';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
-import { Smile, FileText, Link2 } from 'lucide-react';
+import { Smile, FileText } from 'lucide-react';
 
 interface LiveTrackersProps {
   moodScore: number;
@@ -94,21 +94,6 @@ export function LiveTrackers({
         </CardContent>
       </Card>
 
-      {/* Related Notes - Placeholder for Serendipity Engine */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Link2 className="h-4 w-4" />
-            Related Notes
-          </CardTitle>
-          <CardDescription>AI-suggested connections</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="text-sm text-muted-foreground text-center py-4">
-            Related notes will appear here as you write
-          </div>
-        </CardContent>
-      </Card>
     </div>
   );
 }

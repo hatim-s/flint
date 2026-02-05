@@ -2494,3 +2494,172 @@ import { VoiceCapture } from '@/components/voice';
 
 ---
 
+### 2026-02-05 - Task F4-006: Serendipity Engine - Related Notes
+**Status:** Completed
+**Commit:** a856a42
+
+**What was done:**
+1. Created app/api/notes/[id]/related/route.ts - Related notes API endpoint:
+   - GET /api/notes/[id]/related - Fetch semantically related notes using stored embeddings
+     * Uses findRelatedNotes() from lib/vector.ts to query Upstash Vector
+     * Returns top 5 similar notes with similarity scores (as percentage)
+     * Includes note metadata: title, preview (150 chars), noteType, timestamps
+     * Checks for existing note_links to show linked status
+     * Strips markdown from preview for clean display
+     * Returns hasEmbedding flag to indicate if note has been embedded
+   
+   - POST /api/notes/[id]/related - Find related notes from content (real-time)
+     * Accepts content in request body for live suggestions while editing
+     * Generates embedding on-the-fly using getEmbedding()
+     * Requires minimum 50 characters of content
+     * Same response format as GET endpoint
+     * Useful for finding related notes before current note is saved/embedded
+   
+   - RLS-protected with setCurrentUser()
+   - Proper authentication checks using Better Auth
+   - Comprehensive error handling
+
+2. Created app/api/notes/[id]/link/route.ts - Note linking API:
+   - POST /api/notes/[id]/link - Create bidirectional link between notes
+     * Validates targetNoteId, linkType, strength parameters
+     * Prevents self-linking
+     * Checks for existing links in both directions
+     * Returns 409 Conflict if link already exists
+     * Creates link with linkType: 'manual' and configurable strength
+   
+   - DELETE /api/notes/[id]/link?targetNoteId=X - Remove link between notes
+     * Removes links in either direction
+     * Returns 404 if link not found
+   
+   - RLS-protected and authenticated
+
+3. Created components/editor/RelatedNotes.tsx - Serendipity Engine sidebar component:
+   - Displays up to 5 semantically related notes
+   - Each note card shows:
+     * Title with icon (BookOpen for journal, FileText for note)
+     * Preview text (150 chars, markdown stripped)
+     * Similarity score badge with color coding (green 80%+, yellow 60%+, etc.)
+     * Link/Unlink button with status indicator
+     * External link to open note in new tab
+   
+   - Loading skeleton while fetching
+   - Empty state with helpful message when no related notes found
+   - Refresh button to manually update suggestions
+   - Debounced content-based refresh (default 30 seconds)
+   - Smooth hover states and transitions
+   - Dark mode support
+
+4. Integrated into note editor page:
+   - Added RelatedNotes component to sidebar alongside LiveTrackers
+   - Passes noteId and content props for real-time updates
+   - 30-second debounce prevents excessive API calls while typing
+   - Component updates automatically as user edits note
+
+5. Updated components/editor/LiveTrackers.tsx:
+   - Removed placeholder "Related Notes" section
+   - Cleaned up unused Link2 import
+
+6. Updated components/editor/index.tsx:
+   - Added RelatedNotes to exports
+
+7. Verified type safety:
+   - Ran `bun run typecheck` with zero errors
+   - All TypeScript types properly inferred
+   - Full integration with existing components
+
+**Technical Decisions:**
+- Dual API approach: GET uses stored embedding, POST generates on-the-fly for real-time
+- 30-second debounce balances responsiveness with API efficiency
+- Similarity shown as percentage (0-100) for user-friendly display
+- Color-coded badges: green (80%+), light green (60%+), yellow (40%+), orange (<40%)
+- Link/Unlink operates bidirectionally (checks both directions)
+- Preview strips markdown for cleaner display
+- hasEmbedding flag helps UI show appropriate empty states
+- Minimum 50 chars required for POST to avoid poor quality embeddings
+
+**Component Structure:**
+```
+app/api/notes/[id]/
+├── related/
+│   └── route.ts       # GET (stored) + POST (real-time) related notes
+└── link/
+    └── route.ts       # POST (create) + DELETE (remove) note links
+
+components/editor/
+├── RelatedNotes.tsx   # Serendipity Engine sidebar component
+├── LiveTrackers.tsx   # Mood/stats trackers (updated)
+└── index.tsx          # Updated exports
+```
+
+**API Endpoints:**
+```bash
+# Get related notes (using stored embedding)
+GET /api/notes/{id}/related?limit=5
+Response: {
+  related: [
+    {
+      id: "note-123",
+      title: "Related Note Title",
+      preview: "First 150 chars of content...",
+      noteType: "note",
+      similarity: 85,
+      createdAt: "2026-02-01T...",
+      updatedAt: "2026-02-05T...",
+      isLinked: false
+    }
+  ],
+  hasEmbedding: true
+}
+
+# Find related notes from content (real-time while editing)
+POST /api/notes/{id}/related?limit=5
+Body: { content: "Current note content..." }
+Response: Same as GET
+
+# Create link between notes
+POST /api/notes/{id}/link
+Body: { targetNoteId: "note-456", linkType: "manual", strength: 1.0 }
+Response: { id: "link-789", sourceNoteId: "...", targetNoteId: "...", ... }
+
+# Remove link
+DELETE /api/notes/{id}/link?targetNoteId=note-456
+Response: { success: true, deleted: { ... } }
+```
+
+**Features Implemented:**
+- GET /api/notes/[id]/related endpoint (stored embedding)
+- POST /api/notes/[id]/related endpoint (real-time content)
+- POST /api/notes/[id]/link endpoint (create link)
+- DELETE /api/notes/[id]/link endpoint (remove link)
+- RelatedNotes sidebar component
+- Similarity score with color-coded badges
+- Link/Unlink functionality with visual feedback
+- Loading skeleton during fetch
+- Empty state with helpful message
+- Manual refresh button
+- Debounced content-based updates (30s)
+- Preview text with markdown stripping
+- Note type icons (journal vs note)
+- External link to open related notes
+- isLinked status tracking
+- RLS-protected API access
+- Type-safe implementation
+- Dark mode support
+- Responsive design
+
+**Learnings:**
+- Dual API approach (GET stored + POST real-time) provides best UX
+- 30-second debounce is good balance for content-based updates
+- Similarity percentages are more intuitive than raw scores
+- Color coding helps users quickly identify strong matches
+- Bidirectional link checking prevents duplicate links
+- Preview text should strip markdown for cleaner display
+- hasEmbedding flag helps show appropriate empty states
+- Minimum content length prevents poor quality embeddings
+- Manual refresh gives users control when they want immediate updates
+- Link status tracking in local state avoids refetching after link/unlink
+
+**Next Task:** F5-005 - AI Weekly Summary or F3-004 - Voice-to-Note Quick Capture
+
+---
+

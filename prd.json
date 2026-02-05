@@ -471,7 +471,7 @@
             "Show loading skeleton while fetching",
             "Run type checks"
           ],
-          "completed": false
+          "completed": true
         },
         {
           "id": "F4-007",
