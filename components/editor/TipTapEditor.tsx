@@ -167,6 +167,7 @@ export function TipTapEditor({
         class: 'prose prose-sm sm:prose lg:prose-lg xl:prose-xl dark:prose-invert max-w-none focus:outline-none min-h-[300px] px-4 py-3',
       },
     },
+    immediatelyRender: false,
   });
 
   // Update content when prop changes

@@ -70,7 +70,7 @@ export default function NoteEditorPage({ params }: PageProps) {
           throw new Error('Failed to fetch note');
         }
 
-        const data = await response.json();
+        const data = (await response.json()).data;
         setNote(data);
         setTitle(data.title);
         setContent(data.content);
