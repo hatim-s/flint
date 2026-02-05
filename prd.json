@@ -180,7 +180,7 @@
             "Display mentioned people as clickable pills that link to person profile",
             "Run type checks"
           ],
-          "completed": false
+          "completed": true
         },
         {
           "id": "F2-004",
@@ -434,7 +434,7 @@
             "Add pagination support",
             "Run type checks"
           ],
-          "completed": false
+          "completed": true
         },
         {
           "id": "F4-005",
