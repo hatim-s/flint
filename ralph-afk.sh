@@ -9,7 +9,7 @@ fi
 # For each iteration, run Claude Code with the following prompt.
 # This prompt is basic, we'll expand it later.
 for ((i=1; i<=$1; i++)); do
-  opencode --model opencode/glm-4.7-free --log-level DEBUG --prompt "@prd.json @docs/ARCHITECTURE.md @docs/USERFLOW.md @docs/PRODUCT.md @docs/FLINT.md @progress.txt \
+  opencode --model anthropic/claude-4.5-opus --log-level DEBUG --prompt "@prd.json @docs/ARCHITECTURE.md @docs/USERFLOW.md @docs/PRODUCT.md @docs/FLINT.md @progress.txt \
 1. Decide which task to work on next. \
 This should be the one YOU decide has the highest priority, \
 - not necessarily the first in the list. \
