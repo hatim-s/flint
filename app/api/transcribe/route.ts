@@ -12,6 +12,10 @@ import {
   MAX_FILE_SIZE,
   SUPPORTED_AUDIO_TYPES,
 } from '@/lib/stt';
+import { config } from 'dotenv';
+
+config({ path: '.env.local' });
+
 
 /**
  * POST /api/transcribe
@@ -58,7 +62,7 @@ export async function POST(req: NextRequest) {
     // Validate audio file exists
     if (!audioFile || !(audioFile instanceof File)) {
       return NextResponse.json(
-        { 
+        {
           error: 'Missing audio file. Please upload an audio file in the "audio" field.',
           supportedTypes: SUPPORTED_AUDIO_TYPES,
           maxSize: `${MAX_FILE_SIZE / (1024 * 1024)}MB`,
