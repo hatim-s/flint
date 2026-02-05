@@ -14,6 +14,8 @@ import {
   deleteNote,
   updateNoteSchema,
 } from "@/lib/notes";
+import { embedNote } from "@/lib/jobs/embedNote";
+import { deleteNoteVector } from "@/lib/vector";
 import { ZodError } from "zod";
 
 type RouteContext = {
@@ -100,6 +102,14 @@ export async function PUT(
     // Update note
     const note = await updateNote(session.user.id, id, input);
 
+    // If content was updated, trigger re-embedding (non-blocking)
+    if (input.content !== undefined) {
+      embedNote(note.id, session.user.id).catch((error) => {
+        console.error(`Failed to re-embed note ${note.id}:`, error);
+        // Don't fail the request if embedding fails
+      });
+    }
+
     return NextResponse.json({ data: note });
   } catch (error) {
     if (error instanceof ZodError) {
@@ -156,6 +166,12 @@ export async function DELETE(
 
     // Delete note
     await deleteNote(session.user.id, id);
+
+    // Clean up vector embedding (non-blocking)
+    deleteNoteVector(id).catch((error) => {
+      console.error(`Failed to delete vector for note ${id}:`, error);
+      // Don't fail the request if vector cleanup fails
+    });
 
     return NextResponse.json(
       { message: "Note deleted successfully" },

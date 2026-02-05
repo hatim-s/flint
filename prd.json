@@ -416,7 +416,7 @@
             "Update note metadata with embeddingStatus on completion",
             "Run type checks"
           ],
-          "completed": false
+          "completed": true
         },
         {
           "id": "F4-004",

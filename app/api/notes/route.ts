@@ -13,6 +13,7 @@ import {
   createNoteSchema,
   listNotesSchema,
 } from "@/lib/notes";
+import { embedNote } from "@/lib/jobs/embedNote";
 import { ZodError } from "zod";
 
 /**
@@ -120,6 +121,13 @@ export async function POST(req: NextRequest) {
 
     // Create note
     const note = await createNote(session.user.id, input);
+
+    // Trigger embedding generation (non-blocking for MVP)
+    // In production, use a queue like Inngest for async processing
+    embedNote(note.id, session.user.id).catch((error) => {
+      console.error(`Failed to embed note ${note.id}:`, error);
+      // Don't fail the request if embedding fails
+    });
 
     return NextResponse.json(
       { data: note },

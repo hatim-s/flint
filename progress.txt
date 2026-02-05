@@ -1668,3 +1668,129 @@ Response: {
 
 **Next Task:** F4-003 - Automatic Embedding on Note Save
 
+
+### 2026-02-05 - Task F4-003: Automatic Embedding on Note Save
+**Status:** ✅ Completed
+**Commit:** (pending)
+
+**What was done:**
+1. Created lib/jobs/embedNote.ts - Background job for embedding generation:
+    - embedNote() function for single note embedding with retry logic
+      * Fetches note and prepares text (title + contentPlain)
+      * Generates embedding using Voyage AI getEmbedding()
+      * Fetches associated tags for metadata enrichment
+      * Stores embedding in Upstash Vector with indexNote()
+      * Updates note metadata with embeddingStatus: "complete" and embeddedAt timestamp
+      * Includes retry logic with exponential backoff (3 retries: 1s, 2s, 4s delays)
+      * Marks as "failed" after all retries exhausted
+      * Full error handling with descriptive logging
+    
+    - embedNotes() function for batch embedding:
+      * Processes multiple notes sequentially
+      * 100ms delay between notes to avoid rate limiting
+      * Returns array of results with success/failure counts
+      * Useful for migrations or bulk operations
+    
+    - reembedNote() function for re-embedding:
+      * Resets embeddingStatus to "pending" first
+      * Triggers full embedding flow with retry
+      * Useful when updating embeddings after content changes
+
+2. Updated app/api/notes/route.ts - POST endpoint:
+    - Added embedNote() import from lib/jobs/embedNote
+    - Triggers embedding generation after note creation
+    - Non-blocking: uses .catch() to handle errors without failing request
+    - Embedding runs in background (for MVP, runs synchronously)
+    - Logs errors if embedding fails but doesn't block note creation
+
+3. Updated app/api/notes/[id]/route.ts - PUT and DELETE endpoints:
+    - Added embedNote() and deleteNoteVector() imports
+    - PUT endpoint:
+      * Checks if content was updated (input.content !== undefined)
+      * Triggers re-embedding when content changes
+      * Non-blocking error handling
+    - DELETE endpoint:
+      * Calls deleteNoteVector() to clean up Upstash Vector
+      * Non-blocking: doesn't fail delete if vector cleanup fails
+      * Ensures no orphaned vectors remain
+
+4. Embedding job features:
+    - RLS-protected: uses setCurrentUser() for security
+    - Idempotent: skips re-embedding if already "complete" (unless explicit re-embed)
+    - Retry logic: 3 attempts with exponential backoff (1s, 2s, 4s)
+    - Status tracking: updates metadata with "pending" → "complete" or "failed"
+    - Error metadata: stores embeddingError and lastEmbedAttempt on failure
+    - Tag integration: includes note tags in vector metadata for filtering
+    - Timestamp metadata: stores embeddedAt for tracking
+    - Comprehensive logging: ✅ success, ❌ errors, ⏳ retries, 📊 batch results
+
+5. Verified implementation:
+    - Ran `bun run typecheck` with zero errors
+    - All TypeScript types properly inferred
+    - API routes properly integrated
+    - Error handling tested
+
+**Technical Decisions:**
+- For MVP: synchronous embedding after note save (use Inngest for production async queue)
+- Non-blocking: embedding failures don't block note CRUD operations
+- Retry with exponential backoff: 1s, 2s, 4s delays before giving up
+- Text preparation: combines title + contentPlain for better semantic search
+- Tag metadata: enriches vector with tags for filtered semantic search
+- Status tracking: embeddingStatus in metadata enables monitoring and debugging
+- Vector cleanup: deletes vectors when notes are deleted to prevent orphans
+- Idempotent: checks existing status to avoid unnecessary re-embedding
+- Error logging: descriptive logs help with debugging and monitoring
+
+**Component Structure:**
+```
+lib/jobs/
+└── embedNote.ts           # Embedding generation job
+
+app/api/notes/
+├── route.ts               # POST endpoint triggers embedding
+└── [id]/route.ts          # PUT re-embeds, DELETE cleans up vector
+```
+
+**Embedding Flow:**
+1. User creates/updates note → API endpoint called
+2. Note saved to database with embeddingStatus: "pending"
+3. embedNote() job triggered (non-blocking)
+4. Job fetches note, generates embedding via Voyage AI
+5. Embedding stored in Upstash Vector with metadata
+6. Note metadata updated with embeddingStatus: "complete"
+7. If failure: retry up to 3 times with backoff
+8. If all retries fail: mark as "failed" with error details
+
+**Features Implemented:**
+✅ embedNote() function with retry logic
+✅ embedNotes() batch processing
+✅ reembedNote() for re-embedding
+✅ Automatic embedding on note creation (POST)
+✅ Automatic re-embedding on content update (PUT)
+✅ Vector cleanup on note deletion (DELETE)
+✅ Exponential backoff retry (1s, 2s, 4s)
+✅ Status tracking (pending → complete/failed)
+✅ Error metadata storage
+✅ Tag metadata enrichment
+✅ RLS-protected operations
+✅ Non-blocking error handling
+✅ Idempotent embedding (skip if complete)
+✅ Comprehensive logging
+✅ Type-safe implementation
+
+**Learnings:**
+- Non-blocking embedding prevents note operations from failing due to AI service issues
+- Exponential backoff gives transient errors time to resolve
+- Status tracking in metadata enables monitoring without separate tables
+- Combining title + content improves semantic search quality
+- Including tags in vector metadata enables filtered semantic search
+- Vector cleanup on delete prevents storage bloat
+- Idempotent checks prevent unnecessary API calls and costs
+- For MVP: synchronous is acceptable; async queue needed for production scale
+- Retry logic should have reasonable limits (3 attempts is good balance)
+- Descriptive logging crucial for debugging async operations
+
+**Next Task:** F4-004 - Hybrid Search API or F4-006 - Serendipity Engine - Related Notes
+
+---
+
