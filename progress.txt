@@ -1935,3 +1935,143 @@ GET /api/search?q=work&tags=productivity,career
 
 ---
 
+### 2026-02-05 - Task F4-005: Search UI Page
+**Status:** Completed
+**Commit:** (pending)
+
+**What was done:**
+1. Created components/search/SearchBar.tsx - Debounced search input:
+    - Configurable debounce delay (default 300ms)
+    - Recent searches stored in localStorage (last 5 searches)
+    - Recent searches dropdown with keyboard navigation
+    - Clear button to reset search
+    - Keyboard hints (arrow keys to navigate, enter to select)
+    - Auto-focus support
+    - Clean/clear recent searches functionality
+    - Proper cleanup on unmount
+
+2. Created components/search/SearchFilters.tsx - Filter controls:
+    - Note type toggle: All, Notes, Journal (with icons)
+    - Search mode toggle: Hybrid, Keyword, Semantic
+    - Mood range slider (1-10) with visual feedback
+    - Tag multiselect (dynamically loaded from API)
+    - Active filter badges with remove buttons
+    - "Clear all filters" option
+    - Filter count badge on main button
+    - Collapsible popover interface
+    - Dark mode support
+
+3. Created components/search/SearchResults.tsx - Results display:
+    - Note cards with title, preview, and metadata
+    - Text highlighting for search matches
+    - Context-aware preview (shows text around matches)
+    - Score badge with color coding (green for high relevance)
+    - Note type badges (Note vs Journal icons)
+    - Relative timestamps ("2 days ago")
+    - Mood score display when available
+    - Semantic score indicator for hybrid searches
+    - Keyboard navigation (up/down arrows, enter to open)
+    - Selected item highlighting
+    - Loading skeleton state
+    - Empty state with suggestions
+    - "Start searching" state for initial view
+
+4. Created components/search/index.tsx - Central exports:
+    - Exports SearchBar, SearchFilters, SearchResults
+    - Exports types: SearchFiltersState, SearchResult
+    - Exports defaultFilters constant
+
+5. Created app/(protected)/search/page.tsx - Main search page:
+    - Full-page search experience
+    - Integrates SearchBar, SearchFilters, SearchResults
+    - Fetches available tags for filter dropdown
+    - Calls /api/search hybrid endpoint
+    - Global keyboard shortcuts: Cmd+K to focus, Esc to go back
+    - User avatar and sign out in header
+    - Keyboard navigation hints in footer
+    - Responsive design (mobile and desktop)
+    - Loading states during search
+    - Real-time search as you type
+
+6. Search experience features:
+    - Search-as-you-type with 300ms debounce
+    - Hybrid search by default (combines keyword + semantic)
+    - Filter by note type, mood range, tags, search mode
+    - Recent searches dropdown (localStorage)
+    - Keyboard navigation throughout
+    - Match highlighting in results
+    - Score-based result ranking
+    - Empty state with helpful suggestions
+    - Loading skeletons for better UX
+
+7. Verified implementation:
+    - Ran `bun run typecheck` with zero errors
+    - All TypeScript types properly inferred
+    - Components properly integrated
+    - Dark mode support verified
+
+**Technical Decisions:**
+- Used localStorage for recent searches (simple, no API needed)
+- 300ms debounce balances responsiveness with API efficiency
+- Custom highlight function supports multi-word queries
+- Preview extraction shows context around first match
+- Score color coding (green/blue/yellow/gray) aids quick scanning
+- Keyboard navigation uses global event listener for accessibility
+- Filter state managed in page component, passed to children
+- Tags fetched once on mount to populate filter dropdown
+- Semantic score only shown when hybrid search used
+- Result cards clickable to navigate to note editor
+
+**Component Structure:**
+```
+components/search/
+├── SearchBar.tsx       # Debounced input with recent searches
+├── SearchFilters.tsx   # Filter controls (type, mode, mood, tags)
+├── SearchResults.tsx   # Results display with highlighting
+└── index.tsx           # Central exports
+
+app/(protected)/search/
+└── page.tsx            # Main search page
+```
+
+**Features Implemented:**
+ Search bar with debounced input (300ms)
+ Recent searches dropdown (localStorage)
+ Keyboard navigation for recent searches
+ Note type filter toggle (All/Notes/Journal)
+ Search mode toggle (Hybrid/Keyword/Semantic)
+ Mood range slider (1-10)
+ Tag multiselect filter
+ Active filter badges with remove
+ Note cards with title, preview, metadata
+ Match highlighting in results
+ Context-aware preview text
+ Score badges with color coding
+ Note type and mood score display
+ Keyboard navigation for results
+ Loading skeleton states
+ Empty state with suggestions
+ "Start searching" initial state
+ Global keyboard shortcuts (Cmd+K, Esc)
+ Responsive design
+ Dark mode support
+ Type-safe implementation
+
+**Learnings:**
+- Debounced search requires careful cleanup to prevent stale results
+- localStorage for recent searches is simple and effective
+- Match highlighting needs regex escaping for special characters
+- Context-aware previews require finding match position first
+- Score color coding helps users quickly identify relevance
+- Keyboard navigation needs global listener for accessibility
+- Filter badges provide quick visual feedback on active filters
+- Empty states should guide users with actionable suggestions
+- Loading skeletons improve perceived performance
+- Combining keyboard hints educates users about shortcuts
+- Recent searches should be case-insensitive for deduplication
+- Preview text should strip markdown for cleaner display
+
+**Next Task:** F4-006 - Serendipity Engine - Related Notes or F3-001 - Voice Recording Hook
+
+---
+

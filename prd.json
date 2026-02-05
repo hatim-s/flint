@@ -453,7 +453,7 @@
             "Implement keyboard navigation for results (up/down to navigate, enter to open)",
             "Run type checks"
           ],
-          "completed": false
+          "completed": true
         },
         {
           "id": "F4-006",
