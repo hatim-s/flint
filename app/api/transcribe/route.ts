@@ -11,7 +11,7 @@ import {
   validateAudioFile,
   MAX_FILE_SIZE,
   SUPPORTED_AUDIO_TYPES,
-} from '@/lib/groq';
+} from '@/lib/stt';
 
 /**
  * POST /api/transcribe

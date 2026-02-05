@@ -36,7 +36,7 @@ REACT_APP_NEON_AUTH_URL=https://ep-xxx.neonauth.c-2.us-east-2.aws.neon.build/dbn
 
 ## 3. Auth Client Configuration
 
-Create `src/lib/auth-client.ts`:
+Create `src/auth/client.ts`:
 
 **For `@neondatabase/auth`:**
 
@@ -76,7 +76,7 @@ export const authClient = client.auth;
 ## 4. Use in Components
 
 ```typescript
-import { authClient } from "./lib/auth-client";
+import { authClient } from "./auth/client";
 
 function App() {
   const session = authClient.useSession();
@@ -142,7 +142,7 @@ Create `src/providers.tsx`:
 ```tsx
 import { NeonAuthUIProvider } from "@neondatabase/auth/react/ui";
 import { useNavigate, Link as RouterLink } from "react-router-dom";
-import { authClient } from "./lib/auth-client";
+import { authClient } from "./auth/client";
 import type { ReactNode } from "react";
 
 // Adapter for react-router-dom Link

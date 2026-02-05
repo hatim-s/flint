@@ -46,7 +46,7 @@
    - app/api/auth/[...all]/route.ts - Catch-all route handling all auth endpoints
    - Uses toNextJsHandler from better-auth/next-js
 
-4. Created auth client lib/auth-client.ts:
+4. Created auth client auth/client.ts:
    - Uses createAuthClient from better-auth/react
    - Exports signIn, signOut, signUp, useSession, getSession helpers
 
