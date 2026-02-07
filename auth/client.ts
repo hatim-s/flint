@@ -1,7 +1,7 @@
 import { createAuthClient } from "better-auth/react";
 import { config } from 'dotenv';
 
-config({ path: '.env.local' });
+config({ path: '.env.local', quiet: true });
 
 export const authClient = createAuthClient({
     baseURL: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3005",

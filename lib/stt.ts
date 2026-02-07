@@ -1,7 +1,7 @@
 import Groq from 'groq-sdk';
 import { config } from 'dotenv';
 
-config({ path: '.env.local' });
+config({ path: '.env.local', quiet: true });
 
 /**
  * Groq SDK client for speech-to-text transcription

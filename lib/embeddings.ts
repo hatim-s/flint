@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { config } from 'dotenv';
 
-config({ path: '.env.local' });
+config({ path: '.env.local', quiet: true });
 
 // Voyage AI configuration
 const VOYAGE_API_KEY = process.env.VOYAGEAI_API_KEY;
