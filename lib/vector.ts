@@ -1,7 +1,7 @@
 import { Index } from "@upstash/vector";
 import { config } from 'dotenv';
 
-config({ path: '.env.local' });
+config({ path: '.env.local', quiet: true });
 
 const UPSTASH_VECTOR_URL = process.env.UPSTASH_VECTOR_REST_URL;
 const UPSTASH_VECTOR_TOKEN = process.env.UPSTASH_VECTOR_REST_TOKEN;
