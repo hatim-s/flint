@@ -172,7 +172,7 @@ export function MoodChart({ days = 30 }: MoodChartProps) {
                         <div className="flex items-center gap-2">
                           <div className="w-3 h-3 rounded-full bg-blue-500" />
                           <span>
-                            Moving Average: {data.movingAverage.toFixed(2)}
+                            {/* Moving Average: {data.movingAverage.toFixed(2)} */}
                           </span>
                         </div>
                         <div>
