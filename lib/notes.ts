@@ -293,7 +293,7 @@ export async function listNotes(
   }
 
   // Tag filtering requires a join
-  let query = db.select().from(notes);
+  const query = db.select().from(notes);
 
   if (options.tags && options.tags.length > 0) {
     // Find tag IDs first

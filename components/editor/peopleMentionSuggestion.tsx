@@ -3,26 +3,29 @@ import tippy, { type Instance as TippyInstance } from 'tippy.js';
 import { PeopleSuggestion, type PeopleSuggestionRef } from './PeopleSuggestion';
 import { Person } from '@/db/schema/people';
 import type { SuggestionOptions } from '@tiptap/suggestion';
+import { api } from '@/api/client';
 
 /**
  * Suggestion configuration for people mentions with @ trigger
  */
 export const peopleMentionSuggestion: Omit<SuggestionOptions, 'editor'> = {
   char: '@',
-  
+
   items: async ({ query }): Promise<Person[]> => {
     try {
       const params = new URLSearchParams();
       if (query) {
         params.set('search', query);
       }
-      
-      const response = await fetch(`/api/people?${params.toString()}`);
+
+      const response = await api.people.$get({
+        query: Object.fromEntries(params.entries()),
+      });
       if (!response.ok) {
         console.error('Failed to fetch people');
         return [];
       }
-      
+
       const people: Person[] = await response.json();
       return people;
     } catch (error) {

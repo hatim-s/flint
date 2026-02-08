@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import { Loader2, Info } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import type { Template, NewTemplate } from '@/db/schema/templates';
+import { api } from '@/api/client';
 
 interface TemplateEditorProps {
   open: boolean;
@@ -29,7 +30,7 @@ const TEMPLATE_VARIABLES = [
 
 export function TemplateEditor({ open, onOpenChange, template, onSave }: TemplateEditorProps) {
   const isEditing = !!template;
-  
+
   const [name, setName] = useState(template?.name || '');
   const [noteType, setNoteType] = useState<'note' | 'journal'>(template?.noteType || 'note');
   const [content, setContent] = useState(template?.content || '');
@@ -60,17 +61,14 @@ export function TemplateEditor({ open, onOpenChange, template, onSave }: Templat
       let response;
       if (isEditing && template?.id) {
         // Update existing template
-        response = await fetch(`/api/templates/${template.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(templateData),
+        response = await api.templates[":id"].$put({
+          param: { id: template.id },
+          json: templateData,
         });
       } else {
         // Create new template
-        response = await fetch('/api/templates', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(templateData),
+        response = await api.templates.$post({
+          json: templateData,
         });
       }
 
@@ -79,12 +77,15 @@ export function TemplateEditor({ open, onOpenChange, template, onSave }: Templat
         throw new Error(error.error || 'Failed to save template');
       }
 
-      const savedTemplate = await response.json();
+      const savedTemplateResponse = await response.json();
+      const savedTemplate = isEditing
+        ? savedTemplateResponse
+        : savedTemplateResponse.template;
       toast.success(isEditing ? 'Template updated' : 'Template created');
-      
+
       onSave?.(savedTemplate);
       onOpenChange(false);
-      
+
       // Reset form
       setName('');
       setContent('');

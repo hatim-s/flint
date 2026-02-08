@@ -3,26 +3,29 @@ import tippy, { type Instance as TippyInstance } from 'tippy.js';
 import { TagSuggestion, type TagSuggestionRef } from './TagSuggestion';
 import { Tag } from '@/db/schema/tags';
 import type { SuggestionOptions } from '@tiptap/suggestion';
+import { api } from '@/api/client';
 
 /**
  * Suggestion configuration for tag mentions with # trigger
  */
 export const tagMentionSuggestion: Omit<SuggestionOptions, 'editor'> = {
   char: '#',
-  
+
   items: async ({ query }): Promise<Tag[]> => {
     try {
       const params = new URLSearchParams();
       if (query) {
         params.set('search', query);
       }
-      
-      const response = await fetch(`/api/tags?${params.toString()}`);
+
+      const response = await api.tags.$get({
+        query: Object.fromEntries(params.entries()),
+      });
       if (!response.ok) {
         console.error('Failed to fetch tags');
         return [];
       }
-      
+
       const tags: Tag[] = await response.json();
       return tags;
     } catch (error) {

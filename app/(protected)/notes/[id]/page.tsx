@@ -31,6 +31,7 @@ import { Trash2, Save, Loader2, CheckCircle2, Home, FileText, BookTemplate, Mic 
 import { toast } from 'sonner';
 import { VoiceCapture } from '@/components/voice';
 import type { Note } from '@/db/schema/notes';
+import { api } from '@/api/client';
 
 type SaveStatus = 'saved' | 'saving' | 'unsaved' | 'error';
 
@@ -59,8 +60,10 @@ export default function NoteEditorPage({ params }: PageProps) {
     const fetchNote = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch(`/api/notes/${noteId}`);
-        
+        const response = await api.notes[":id"].$get({
+          param: { id: noteId },
+        });
+
         if (!response.ok) {
           if (response.status === 404) {
             toast.error('Note not found');
@@ -123,15 +126,14 @@ export default function NoteEditorPage({ params }: PageProps) {
     try {
       setSaveStatus('saving');
 
-      const response = await fetch(`/api/notes/${noteId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const response = await api.notes[":id"].$put({
+        param: { id: noteId },
+        json: {
           title,
           content,
           moodScore,
           updatedAt: note.updatedAt, // For optimistic locking
-        }),
+        },
       });
 
       if (!response.ok) {
@@ -143,33 +145,31 @@ export default function NoteEditorPage({ params }: PageProps) {
         throw new Error('Failed to save note');
       }
 
-      const updatedNote = await response.json();
+      const { data: updatedNote } = await response.json();
       setNote(updatedNote);
-      
+
       // Sync tags after saving note
       try {
-        await fetch(`/api/notes/${noteId}/tags`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ content }),
+        await api.notes[":id"].tags.$post({
+          param: { id: noteId },
+          json: { content },
         });
       } catch (tagError) {
         console.error('Error syncing tags:', tagError);
         // Don't fail the save if tag sync fails
       }
-      
+
       // Sync people mentions after saving note
       try {
-        await fetch(`/api/notes/${noteId}/mentions`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ content }),
+        await api.notes[":id"].mentions.$post({
+          param: { id: noteId },
+          json: { content },
         });
       } catch (mentionError) {
         console.error('Error syncing mentions:', mentionError);
         // Don't fail the save if mention sync fails
       }
-      
+
       setSaveStatus('saved');
       toast.success('Note saved');
     } catch (error) {
@@ -192,8 +192,8 @@ export default function NoteEditorPage({ params }: PageProps) {
     try {
       setIsDeleting(true);
 
-      const response = await fetch(`/api/notes/${noteId}`, {
-        method: 'DELETE',
+      const response = await api.notes[":id"].$delete({
+        param: { id: noteId },
       });
 
       if (!response.ok) {
@@ -383,7 +383,7 @@ export default function NoteEditorPage({ params }: PageProps) {
                 wordCount={wordCount}
                 noteType={note.noteType}
               />
-              
+
               {/* Serendipity Engine - Related Notes */}
               <RelatedNotes
                 noteId={noteId}

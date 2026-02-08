@@ -6,6 +6,7 @@ import { useSession, signOut } from "@/auth/client";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LogOut, ArrowLeft, Search as SearchIcon } from "lucide-react";
+import { api } from "@/api/client";
 import {
   SearchBar,
   SearchFilters,
@@ -33,7 +34,7 @@ interface Tag {
 export default function SearchPage() {
   const { data: session, isPending } = useSession();
   const router = useRouter();
-  
+
   // Search state
   const [query, setQuery] = useState("");
   const [filters, setFilters] = useState<SearchFiltersState>(defaultFilters);
@@ -46,7 +47,7 @@ export default function SearchPage() {
   useEffect(() => {
     const fetchTags = async () => {
       try {
-        const response = await fetch("/api/tags");
+        const response = await api.tags.$get();
         if (response.ok) {
           const data = await response.json();
           setAvailableTags(data);
@@ -112,7 +113,9 @@ export default function SearchPage() {
         params.set("maxMood", searchFilters.moodRange[1].toString());
       }
 
-      const response = await fetch(`/api/search?${params.toString()}`);
+      const response = await api.search.$get({
+        query: Object.fromEntries(params.entries()),
+      });
 
       if (!response.ok) {
         throw new Error("Search failed");

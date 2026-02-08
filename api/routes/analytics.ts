@@ -1,9 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { createApp } from "../app";
 import { rlsExecutor } from "@/db/lib/rls";
 import { db } from "@/db";
 import { notes } from "@/db/schema/notes";
-import { sql, gte, and } from "drizzle-orm";
+import { sql, gte, and, desc } from "drizzle-orm";
+import { z } from "zod";
+
 
 interface ActivityDay {
   date: string;
@@ -11,30 +12,25 @@ interface ActivityDay {
   level: number;
 }
 
-// Helper function to get date string in YYYY-MM-DD format
 function toDateString(date: Date): string {
   const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
   return `${year}-${month}-${day}`;
 }
 
-export async function GET(req: NextRequest) {
-  try {
-    // Authenticate user
-    const session = await auth.api.getSession({ headers: req.headers });
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+const moodTrendsQuerySchema = z.object({
+  days: z.coerce.number().min(7).max(90).optional().default(30),
+});
 
-    const userId = session.user.id;
+const app = createApp().get("/analytics/activity", async (c) => {
+  try {
+    const userId = c.get("userId");
     const rls = rlsExecutor(userId);
 
-    // Calculate date range (last 90 days)
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - 90);
 
-    // Query notes grouped by date for last 90 days
     const activityData = await db
       .select({
         date: sql<string>`DATE(${notes.createdAt})`,
@@ -45,7 +41,6 @@ export async function GET(req: NextRequest) {
       .groupBy(sql`DATE(${notes.createdAt})`)
       .orderBy(sql`DATE(${notes.createdAt})`);
 
-    // Create a map of date -> noteCount for easy lookup
     const activityMap = new Map<string, number>();
     activityData.forEach((day) => {
       const dateValue = day.date;
@@ -55,15 +50,13 @@ export async function GET(req: NextRequest) {
       }
     });
 
-    // Generate all dates in range (for calendar grid)
     const allDates: ActivityDay[] = [];
     const currentDate = new Date(startDate);
 
     while (currentDate <= new Date()) {
       const dateStr = toDateString(currentDate);
       const noteCount = activityMap.get(dateStr) || 0;
-      
-      // Calculate activity level (0-4 for GitHub-style coloring)
+
       let level = 0;
       if (noteCount >= 1) level = 1;
       if (noteCount >= 2) level = 2;
@@ -79,15 +72,13 @@ export async function GET(req: NextRequest) {
       currentDate.setDate(currentDate.getDate() + 1);
     }
 
-    // Calculate streaks
     let currentStreak = 0;
     let longestStreak = 0;
     let tempStreak = 0;
     let previousDateStr: string | null = null;
 
-    // Sort dates descending to find current streak
-    const sortedDesc = [...allDates].sort((a, b) => 
-      new Date(b.date).getTime() - new Date(a.date).getTime()
+    const sortedDesc = [...allDates].sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
     );
 
     for (const day of sortedDesc) {
@@ -96,12 +87,11 @@ export async function GET(req: NextRequest) {
           currentStreak = 1;
           previousDateStr = day.date;
         } else {
-          // Get the date before previous date
           const prevDate = new Date(previousDateStr);
           const dayBeforeDate = new Date(prevDate);
           dayBeforeDate.setDate(dayBeforeDate.getDate() - 1);
           const dayBeforeStr = toDateString(dayBeforeDate);
-          
+
           if (day.date === dayBeforeStr) {
             currentStreak++;
           } else {
@@ -114,9 +104,8 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // Calculate longest streak from all dates
-    const sortedAsc = [...allDates].sort((a, b) =>
-      new Date(a.date).getTime() - new Date(b.date).getTime()
+    const sortedAsc = [...allDates].sort(
+      (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
     );
 
     for (const day of sortedAsc) {
@@ -128,7 +117,7 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({
+    return c.json({
       data: allDates,
       currentStreak,
       longestStreak,
@@ -140,9 +129,73 @@ export async function GET(req: NextRequest) {
     });
   } catch (error) {
     console.error("Error fetching activity data:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch activity data" },
-      { status: 500 }
-    );
+    return c.json({ error: "Failed to fetch activity data" }, 500);
   }
-}
+}).get("/analytics/mood-trends", async (c) => {
+  try {
+    const { searchParams } = new URL(c.req.url);
+    const queryValidation = moodTrendsQuerySchema.safeParse(
+      Object.fromEntries(searchParams)
+    );
+
+    if (!queryValidation.success) {
+      return c.json(
+        { error: "Invalid query parameters", details: queryValidation.error.issues },
+        400
+      );
+    }
+
+    const { days } = queryValidation.data;
+    const userId = c.get("userId");
+    const rls = rlsExecutor(userId);
+
+    const startDate = new Date();
+    startDate.setDate(startDate.getDate() - days);
+
+    const moodData = await db
+      .select({
+        date: sql<string>`DATE(${notes.createdAt})`,
+        avgMood: sql<number>`AVG(${notes.moodScore})`,
+        noteCount: sql<number>`COUNT(*)`,
+      })
+      .from(notes)
+      .where(
+        and(
+          rls.where(notes),
+          gte(notes.createdAt, startDate),
+          sql`${notes.moodScore} IS NOT NULL`
+        )
+      )
+      .groupBy(sql`DATE(${notes.createdAt})`)
+      .orderBy(desc(sql`DATE(${notes.createdAt})`));
+
+    const sortedData = moodData.reverse();
+
+    const movingAverageData = sortedData.map((day, index) => {
+      const start = Math.max(0, index - 6);
+      const weekData = sortedData.slice(start, index + 1);
+      const avgMood =
+        weekData.reduce((sum, d) => sum + (d.avgMood || 0), 0) / weekData.length;
+      return {
+        date: day.date,
+        avgMood: Number(day.avgMood) || 0,
+        noteCount: Number(day.noteCount) || 0,
+        movingAverage: Number(avgMood.toFixed(2)),
+      };
+    });
+
+    return c.json({
+      data: movingAverageData,
+      days,
+      dateRange: {
+        start: startDate.toISOString(),
+        end: new Date().toISOString(),
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching mood trends:", error);
+    return c.json({ error: "Failed to fetch mood trends" }, 500);
+  }
+});
+
+export default app;

@@ -9,6 +9,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { Link2, LinkIcon, Unlink, ExternalLink, Sparkles, RefreshCw, FileText, BookOpen } from 'lucide-react';
 import { toast } from 'sonner';
+import { api } from '@/api/client';
 
 interface RelatedNote {
   id: string;
@@ -33,7 +34,7 @@ export function RelatedNotes({ noteId, content, debounceMs = 30000 }: RelatedNot
   const [hasEmbedding, setHasEmbedding] = useState(false);
   const [isLinking, setIsLinking] = useState<string | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  
+
   // Track last content that was used for refresh
   const lastContentRef = useRef<string>('');
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -42,8 +43,11 @@ export function RelatedNotes({ noteId, content, debounceMs = 30000 }: RelatedNot
   const fetchRelatedNotes = useCallback(async () => {
     try {
       setIsLoading(true);
-      const response = await fetch(`/api/notes/${noteId}/related?limit=5`);
-      
+      const response = await api.notes[":id"].related.$get({
+        param: { id: noteId },
+        query: { limit: "5" },
+      });
+
       if (!response.ok) {
         throw new Error('Failed to fetch related notes');
       }
@@ -67,10 +71,10 @@ export function RelatedNotes({ noteId, content, debounceMs = 30000 }: RelatedNot
 
     try {
       setIsRefreshing(true);
-      const response = await fetch(`/api/notes/${noteId}/related?limit=5`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: contentToAnalyze }),
+      const response = await api.notes[":id"].related.$post({
+        param: { id: noteId },
+        query: { limit: "5" },
+        json: { content: contentToAnalyze },
       });
 
       if (!response.ok) {
@@ -120,14 +124,13 @@ export function RelatedNotes({ noteId, content, debounceMs = 30000 }: RelatedNot
   const handleLink = async (targetNoteId: string) => {
     try {
       setIsLinking(targetNoteId);
-      const response = await fetch(`/api/notes/${noteId}/link`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const response = await api.notes[":id"].link.$post({
+        param: { id: noteId },
+        json: {
           targetNoteId,
           linkType: 'manual',
           strength: 1.0,
-        }),
+        },
       });
 
       if (!response.ok) {
@@ -159,10 +162,10 @@ export function RelatedNotes({ noteId, content, debounceMs = 30000 }: RelatedNot
   const handleUnlink = async (targetNoteId: string) => {
     try {
       setIsLinking(targetNoteId);
-      const response = await fetch(
-        `/api/notes/${noteId}/link?targetNoteId=${targetNoteId}`,
-        { method: 'DELETE' }
-      );
+      const response = await api.notes[":id"].link.$delete({
+        param: { id: noteId },
+        query: { targetNoteId },
+      });
 
       if (!response.ok) {
         throw new Error('Failed to unlink notes');
@@ -280,7 +283,7 @@ export function RelatedNotes({ noteId, content, debounceMs = 30000 }: RelatedNot
                     {note.similarity}%
                   </Badge>
                 </div>
-                
+
                 <p className="text-xs text-muted-foreground line-clamp-2 mb-2">
                   {note.preview}
                 </p>

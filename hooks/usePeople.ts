@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { Person } from '@/db/schema/people';
+import { api } from '@/api/client';
 
 interface UsePeopleOptions {
   search?: string;
@@ -33,8 +34,9 @@ export function usePeople(options: UsePeopleOptions = {}): UsePeopleReturn {
         params.append('search', search.trim());
       }
 
-      const url = `/api/people${params.toString() ? `?${params.toString()}` : ''}`;
-      const response = await fetch(url);
+      const response = await api.people.$get({
+        query: Object.fromEntries(params.entries()),
+      });
 
       if (!response.ok) {
         throw new Error('Failed to fetch people');
@@ -53,17 +55,13 @@ export function usePeople(options: UsePeopleOptions = {}): UsePeopleReturn {
     fetchPeople();
   }, [fetchPeople]);
 
-  const createPerson = useCallback(async (data: { 
-    name: string; 
-    email?: string; 
-    metadata?: Record<string, unknown> 
+  const createPerson = useCallback(async (data: {
+    name: string;
+    email?: string;
+    metadata?: Record<string, unknown>
   }): Promise<Person> => {
-    const response = await fetch('/api/people', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(data),
+    const response = await api.people.$post({
+      json: data,
     });
 
     if (!response.ok) {
@@ -72,7 +70,7 @@ export function usePeople(options: UsePeopleOptions = {}): UsePeopleReturn {
     }
 
     const person = await response.json();
-    
+
     // Update local state
     setPeople((prev) => {
       // Check if person already exists (might be returned existing)
@@ -87,8 +85,8 @@ export function usePeople(options: UsePeopleOptions = {}): UsePeopleReturn {
   }, []);
 
   const deletePerson = useCallback(async (personId: string): Promise<void> => {
-    const response = await fetch(`/api/people?id=${personId}`, {
-      method: 'DELETE',
+    const response = await api.people.$delete({
+      query: { id: personId },
     });
 
     if (!response.ok) {
