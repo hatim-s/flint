@@ -5,7 +5,7 @@ import { config } from 'dotenv';
 
 config({ path: '.env.local', quiet: true });
 
-export const auth = betterAuth({
+const auth = betterAuth({
     database: drizzleAdapter(db, {
         provider: "pg",
     }),
@@ -30,5 +30,8 @@ export const auth = betterAuth({
     },
 });
 
-export type Session = typeof auth.$Infer.Session;
-export type User = typeof auth.$Infer.Session.user;
+type Session = typeof auth.$Infer.Session;
+type User = typeof auth.$Infer.Session.user;
+
+export { auth };
+export type { Session, User };

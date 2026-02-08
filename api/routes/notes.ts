@@ -11,7 +11,7 @@ import {
   createNoteSchema,
   listNotesSchema,
   updateNoteSchema,
-} from "@/db/schema/inputs/notes";
+} from "@/db/schema/notes";
 import { ZodError, z } from "zod";
 import { deleteNoteVector, findRelatedNotes, semanticSearch } from "@/lib/vector";
 import { getEmbedding } from "@/lib/embeddings";
@@ -59,10 +59,10 @@ const app = createApp()
         sortBy: searchParams.get("sortBy") as "createdAt" | "updatedAt" | "title" | undefined,
         sortOrder: searchParams.get("sortOrder") as "asc" | "desc" | undefined,
       };
-  
+
       const params = listNotesSchema.parse(rawParams);
       const result = await listNotes(c.get("userId"), params);
-  
+
       return c.json({
         data: result.notes,
         pagination: {
@@ -77,7 +77,7 @@ const app = createApp()
           400
         );
       }
-  
+
       console.error("Error listing notes:", error);
       return c.json({ error: "Internal server error" }, 500);
     }
@@ -86,13 +86,13 @@ const app = createApp()
     try {
       const body = await c.req.json();
       const input = createNoteSchema.parse(body);
-  
+
       const note = await baseCreateNote(c.get("userId"), input);
-  
+
       embedNote(note.id, c.get("userId")).catch((error) => {
         console.error(`Failed to embed note ${note.id}:`, error);
       });
-  
+
       return c.json({ data: note }, 201);
     } catch (error) {
       if (error instanceof ZodError) {
@@ -101,7 +101,7 @@ const app = createApp()
           400
         );
       }
-  
+
       console.error("Error creating note:", error);
       return c.json({ error: "Internal server error" }, 500);
     }
@@ -110,11 +110,11 @@ const app = createApp()
     try {
       const id = c.req.param("id");
       const note = await getNote(c.get("userId"), id);
-  
+
       if (!note) {
         return c.json({ error: "Note not found" }, 404);
       }
-  
+
       return c.json({ data: note });
     } catch (error) {
       console.error("Error fetching note:", error);
@@ -126,15 +126,15 @@ const app = createApp()
       const id = c.req.param("id");
       const body = await c.req.json();
       const input = updateNoteSchema.parse(body);
-  
+
       const note = await baseUpdateNote(c.get("userId"), id, input);
-  
+
       if (input.content !== undefined) {
         embedNote(note.id, c.get("userId")).catch((error) => {
           console.error(`Failed to re-embed note ${note.id}:`, error);
         });
       }
-  
+
       return c.json({ data: note });
     } catch (error) {
       if (error instanceof ZodError) {
@@ -143,17 +143,17 @@ const app = createApp()
           400
         );
       }
-  
+
       if (error instanceof Error) {
         if (error.message === "Note not found") {
           return c.json({ error: "Note not found" }, 404);
         }
-  
+
         if (error.message.includes("modified by another process")) {
           return c.json({ error: "Conflict", message: error.message }, 409);
         }
       }
-  
+
       console.error("Error updating note:", error);
       return c.json({ error: "Internal server error" }, 500);
     }
@@ -162,17 +162,17 @@ const app = createApp()
     try {
       const id = c.req.param("id");
       await baseDeleteNote(c.get("userId"), id);
-  
+
       deleteNoteVector(id).catch((error) => {
         console.error(`Failed to delete vector for note ${id}:`, error);
       });
-  
+
       return c.json({ message: "Note deleted successfully" }, 200);
     } catch (error) {
       if (error instanceof Error && error.message === "Note not found") {
         return c.json({ error: "Note not found" }, 404);
       }
-  
+
       console.error("Error deleting note:", error);
       return c.json({ error: "Internal server error" }, 500);
     }
@@ -182,41 +182,41 @@ const app = createApp()
       const sourceNoteId = c.req.param("id");
       const body = await c.req.json();
       const validationResult = createLinkSchema.safeParse(body);
-  
+
       if (!validationResult.success) {
         return c.json(
           { error: validationResult.error.issues[0]?.message || "Invalid input" },
           400
         );
       }
-  
+
       const { targetNoteId, linkType, strength } = validationResult.data;
       const rls = rlsExecutor(c.get("userId"));
-  
+
       if (sourceNoteId === targetNoteId) {
         return c.json({ error: "Cannot link a note to itself" }, 400);
       }
-  
+
       const [sourceNote] = await db
         .select({ id: notes.id })
         .from(notes)
         .where(rls.where(notes, eq(notes.id, sourceNoteId)))
         .limit(1);
-  
+
       const [targetNote] = await db
         .select({ id: notes.id })
         .from(notes)
         .where(rls.where(notes, eq(notes.id, targetNoteId)))
         .limit(1);
-  
+
       if (!sourceNote) {
         return c.json({ error: "Source note not found" }, 404);
       }
-  
+
       if (!targetNote) {
         return c.json({ error: "Target note not found" }, 404);
       }
-  
+
       const existingLink = await db
         .select({ id: noteLinks.id })
         .from(noteLinks)
@@ -233,7 +233,7 @@ const app = createApp()
           )
         )
         .limit(1);
-  
+
       if (existingLink.length > 0) {
         return c.json(
           {
@@ -243,7 +243,7 @@ const app = createApp()
           409
         );
       }
-  
+
       const [newLink] = await db
         .insert(noteLinks)
         .values({
@@ -253,7 +253,7 @@ const app = createApp()
           strength,
         })
         .returning();
-  
+
       return c.json(newLink, 201);
     } catch (error) {
       console.error("Error creating note link:", error);
@@ -265,29 +265,29 @@ const app = createApp()
       const sourceNoteId = c.req.param("id");
       const { searchParams } = new URL(c.req.url);
       const targetNoteId = searchParams.get("targetNoteId");
-  
+
       if (!targetNoteId) {
         return c.json({ error: "targetNoteId query parameter is required" }, 400);
       }
-  
+
       const rls = rlsExecutor(c.get("userId"));
-  
+
       const [sourceNote] = await db
         .select({ id: notes.id })
         .from(notes)
         .where(rls.where(notes, eq(notes.id, sourceNoteId)))
         .limit(1);
-  
+
       const [targetNote] = await db
         .select({ id: notes.id })
         .from(notes)
         .where(rls.where(notes, eq(notes.id, targetNoteId)))
         .limit(1);
-  
+
       if (!sourceNote || !targetNote) {
         return c.json({ error: "Note not found" }, 404);
       }
-  
+
       const deletedLinks = await db
         .delete(noteLinks)
         .where(
@@ -303,11 +303,11 @@ const app = createApp()
           )
         )
         .returning();
-  
+
       if (deletedLinks.length === 0) {
         return c.json({ error: "Link not found" }, 404);
       }
-  
+
       return c.json({ success: true, deleted: deletedLinks[0] });
     } catch (error) {
       console.error("Error deleting note link:", error);
@@ -329,19 +329,19 @@ const app = createApp()
       const noteId = c.req.param("id");
       const body = await c.req.json();
       const validationResult = syncMentionsSchema.safeParse(body);
-  
+
       if (!validationResult.success) {
         return c.json(
           { error: "Invalid input", details: validationResult.error.issues },
           400
         );
       }
-  
+
       const { content } = validationResult.data;
-  
+
       await baseSyncNoteMentions(c.get("userId"), noteId, content);
       const mentions = await fetchNoteMentions(c.get("userId"), noteId);
-  
+
       return c.json({ success: true, mentions });
     } catch (error) {
       console.error("Error syncing note mentions:", error);
@@ -363,19 +363,19 @@ const app = createApp()
       const noteId = c.req.param("id");
       const body = await c.req.json();
       const validationResult = syncTagsSchema.safeParse(body);
-  
+
       if (!validationResult.success) {
         return c.json(
           { error: "Invalid input", details: validationResult.error.issues },
           400
         );
       }
-  
+
       const { content } = validationResult.data;
-  
+
       await baseSyncNoteTags(c.get("userId"), noteId, content);
       const tags = await fetchNoteTags(c.get("userId"), noteId);
-  
+
       return c.json({ success: true, tags });
     } catch (error) {
       console.error("Error syncing note tags:", error);
@@ -388,25 +388,25 @@ const app = createApp()
       const { searchParams } = new URL(c.req.url);
       const limit = Math.min(Math.max(parseInt(searchParams.get("limit") || "5"), 1), 10);
       const rls = rlsExecutor(c.get("userId"));
-  
+
       const [note] = await db
         .select({ id: notes.id })
         .from(notes)
         .where(rls.where(notes, eq(notes.id, noteId)))
         .limit(1);
-  
+
       if (!note) {
         return c.json({ error: "Note not found" }, 404);
       }
-  
+
       const relatedResults = await findRelatedNotes(noteId, c.get("userId"), limit);
-  
+
       if (relatedResults.length === 0) {
         return c.json({ related: [], hasEmbedding: false });
       }
-  
+
       const relatedNoteIds = relatedResults.map((r) => r.id);
-  
+
       const relatedNotes = await db
         .select({
           id: notes.id,
@@ -418,7 +418,7 @@ const app = createApp()
         })
         .from(notes)
         .where(rls.where(notes, inArray(notes.id, relatedNoteIds)));
-  
+
       const existingLinks = await db
         .select({
           sourceNoteId: noteLinks.sourceNoteId,
@@ -438,18 +438,18 @@ const app = createApp()
             )
           )
         );
-  
+
       const linkedNoteIds = new Set(
         existingLinks.map((link) =>
           link.sourceNoteId === noteId ? link.targetNoteId : link.sourceNoteId
         )
       );
-  
+
       const related = relatedResults
         .map((result) => {
           const noteData = relatedNotes.find((n) => n.id === result.id);
           if (!noteData) return null;
-  
+
           const plainContent = noteData.content
             .replace(/#{1,6}\s+/g, "")
             .replace(/\*\*([^*]+)\*\*/g, "$1")
@@ -458,11 +458,11 @@ const app = createApp()
             .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
             .replace(/\n+/g, " ")
             .trim();
-  
+
           const preview = plainContent.length > 150
             ? plainContent.slice(0, 150) + "..."
             : plainContent;
-  
+
           return {
             id: noteData.id,
             title: noteData.title,
@@ -476,7 +476,7 @@ const app = createApp()
         })
         .filter((r): r is NonNullable<typeof r> => r !== null)
         .sort((a, b) => b.similarity - a.similarity);
-  
+
       return c.json({ related, hasEmbedding: true });
     } catch (error) {
       console.error("Error fetching related notes:", error);
@@ -488,30 +488,30 @@ const app = createApp()
       const noteId = c.req.param("id");
       const body = await c.req.json();
       const { content } = body;
-  
+
       if (!content || typeof content !== "string" || content.trim().length < 50) {
         return c.json({ related: [], hasEmbedding: false });
       }
-  
+
       const { searchParams } = new URL(c.req.url);
       const limit = Math.min(Math.max(parseInt(searchParams.get("limit") || "5"), 1), 10);
       const rls = rlsExecutor(c.get("userId"));
-  
+
       const embedding = await getEmbedding(content);
-  
+
       const relatedResults = await semanticSearch(embedding, c.get("userId"), {
         topK: limit + 1,
         includeMetadata: true,
       });
-  
+
       const filteredResults = relatedResults.filter((r) => r.id !== noteId).slice(0, limit);
-  
+
       if (filteredResults.length === 0) {
         return c.json({ related: [], hasEmbedding: true });
       }
-  
+
       const relatedNoteIds = filteredResults.map((r) => r.id);
-  
+
       const relatedNotes = await db
         .select({
           id: notes.id,
@@ -523,45 +523,45 @@ const app = createApp()
         })
         .from(notes)
         .where(rls.where(notes, inArray(notes.id, relatedNoteIds)));
-  
+
       const [ownedNote] = await db
         .select({ id: notes.id })
         .from(notes)
         .where(rls.where(notes, eq(notes.id, noteId)))
         .limit(1);
-  
+
       const existingLinks = ownedNote
         ? await db
-            .select({
-              sourceNoteId: noteLinks.sourceNoteId,
-              targetNoteId: noteLinks.targetNoteId,
-            })
-            .from(noteLinks)
-            .where(
-              or(
-                and(
-                  eq(noteLinks.sourceNoteId, noteId),
-                  inArray(noteLinks.targetNoteId, relatedNoteIds)
-                ),
-                and(
-                  eq(noteLinks.targetNoteId, noteId),
-                  inArray(noteLinks.sourceNoteId, relatedNoteIds)
-                )
+          .select({
+            sourceNoteId: noteLinks.sourceNoteId,
+            targetNoteId: noteLinks.targetNoteId,
+          })
+          .from(noteLinks)
+          .where(
+            or(
+              and(
+                eq(noteLinks.sourceNoteId, noteId),
+                inArray(noteLinks.targetNoteId, relatedNoteIds)
+              ),
+              and(
+                eq(noteLinks.targetNoteId, noteId),
+                inArray(noteLinks.sourceNoteId, relatedNoteIds)
               )
             )
+          )
         : [];
-  
+
       const linkedNoteIds = new Set(
         existingLinks.map((link) =>
           link.sourceNoteId === noteId ? link.targetNoteId : link.sourceNoteId
         )
       );
-  
+
       const related = filteredResults
         .map((result) => {
           const noteData = relatedNotes.find((n) => n.id === result.id);
           if (!noteData) return null;
-  
+
           const plainContent = noteData.content
             .replace(/#{1,6}\s+/g, "")
             .replace(/\*\*([^*]+)\*\*/g, "$1")
@@ -570,11 +570,11 @@ const app = createApp()
             .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
             .replace(/\n+/g, " ")
             .trim();
-  
+
           const preview = plainContent.length > 150
             ? plainContent.slice(0, 150) + "..."
             : plainContent;
-  
+
           return {
             id: noteData.id,
             title: noteData.title,
@@ -588,7 +588,7 @@ const app = createApp()
         })
         .filter((r): r is NonNullable<typeof r> => r !== null)
         .sort((a, b) => b.similarity - a.similarity);
-  
+
       return c.json({ related, hasEmbedding: true });
     } catch (error) {
       console.error("Error finding related notes from content:", error);

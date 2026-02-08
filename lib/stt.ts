@@ -16,7 +16,7 @@ const groq = new Groq({
 /**
  * Supported audio MIME types for transcription
  */
-export const SUPPORTED_AUDIO_TYPES = [
+const SUPPORTED_AUDIO_TYPES = [
   'audio/webm',
   'audio/webm;codecs=opus',
   'audio/ogg',
@@ -33,12 +33,12 @@ export const SUPPORTED_AUDIO_TYPES = [
 /**
  * Maximum file size for transcription (25MB)
  */
-export const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB in bytes
+const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB in bytes
 
 /**
  * Response from transcription API
  */
-export interface TranscriptionResult {
+interface TranscriptionResult {
   /** Transcribed text */
   text: string;
   /** Detected or specified language */
@@ -50,7 +50,7 @@ export interface TranscriptionResult {
 /**
  * Options for transcription
  */
-export interface TranscribeOptions {
+interface TranscribeOptions {
   /** Language hint for better accuracy (ISO 639-1 code, e.g., 'en', 'es', 'fr') */
   language?: string;
   /** Custom prompt to guide the model (useful for domain-specific terms) */
@@ -62,7 +62,7 @@ export interface TranscribeOptions {
 /**
  * Check if a MIME type is supported for transcription
  */
-export function isSupportedAudioType(mimeType: string): boolean {
+function isSupportedAudioType(mimeType: string): boolean {
   // Extract base MIME type without codec info
   const baseMimeType = mimeType.split(';')[0]?.toLowerCase();
   return SUPPORTED_AUDIO_TYPES.some((type) => {
@@ -74,7 +74,7 @@ export function isSupportedAudioType(mimeType: string): boolean {
 /**
  * Validate audio file before transcription
  */
-export function validateAudioFile(
+function validateAudioFile(
   size: number,
   mimeType: string
 ): { valid: boolean; error?: string } {
@@ -119,7 +119,7 @@ function sleep(ms: number): Promise<void> {
  * console.log(result.text);
  * ```
  */
-export async function transcribeAudio(
+async function transcribeAudio(
   audioFile: File,
   options: TranscribeOptions = {},
   maxRetries = 3
@@ -191,4 +191,16 @@ export async function transcribeAudio(
   );
 }
 
-export { groq };
+export {
+  groq,
+  SUPPORTED_AUDIO_TYPES,
+  MAX_FILE_SIZE,
+  isSupportedAudioType,
+  validateAudioFile,
+  transcribeAudio,
+};
+
+export type {
+  TranscriptionResult,
+  TranscribeOptions,
+};

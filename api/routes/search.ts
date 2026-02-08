@@ -22,9 +22,9 @@ const SearchParamsSchema = z.object({
   semanticWeight: z.coerce.number().min(0).max(1).default(0.6),
 });
 
-export type SearchParams = z.infer<typeof SearchParamsSchema>;
+type SearchParams = z.infer<typeof SearchParamsSchema>;
 
-export interface HybridSearchResult {
+interface HybridSearchResult {
   id: string;
   title: string;
   content: string;
@@ -353,3 +353,4 @@ const app = createApp().get("/search", async (c) => {
 });
 
 export default app;
+export type { SearchParams, HybridSearchResult };

@@ -13,13 +13,13 @@ if (!VOYAGE_API_KEY) {
 const VOYAGE_API_URL = "https://api.voyageai.com/v1";
 
 // Voyage AI models
-export const VOYAGE_MODELS = {
+const VOYAGE_MODELS = {
   voyage3Lite: "voyage-3-lite",
   voyage3: "voyage-3",
   voyage2: "voyage-2",
 } as const;
 
-export type VoyageModel = (typeof VOYAGE_MODELS)[keyof typeof VOYAGE_MODELS];
+type VoyageModel = (typeof VOYAGE_MODELS)[keyof typeof VOYAGE_MODELS];
 
 // Embedding response schema
 const EmbeddingResponseSchema = z.object({
@@ -36,7 +36,7 @@ const EmbeddingResponseSchema = z.object({
   }),
 });
 
-export type EmbeddingResponse = z.infer<typeof EmbeddingResponseSchema>;
+type EmbeddingResponse = z.infer<typeof EmbeddingResponseSchema>;
 
 // Input validation schema
 const EmbeddingRequestSchema = z.object({
@@ -45,7 +45,7 @@ const EmbeddingRequestSchema = z.object({
   input_type: z.enum(["document", "query"]).optional(),
 });
 
-export type EmbeddingRequest = z.infer<typeof EmbeddingRequestSchema>;
+type EmbeddingRequest = z.infer<typeof EmbeddingRequestSchema>;
 
 /**
  * Generate embedding vector from text using Voyage AI
@@ -54,7 +54,7 @@ export type EmbeddingRequest = z.infer<typeof EmbeddingRequestSchema>;
  * @param model - The Voyage AI model to use (default: voyage-3-lite)
  * @returns Promise<number[]> - The embedding vector
  */
-export async function getEmbedding(
+async function getEmbedding(
   text: string,
   model: VoyageModel = VOYAGE_MODELS.voyage3Lite
 ): Promise<number[]> {
@@ -114,7 +114,7 @@ export async function getEmbedding(
  * @param model - The Voyage AI model to use (default: voyage-3-lite)
  * @returns Promise<number[][]> - Array of embedding vectors
  */
-export async function getEmbeddings(
+async function getEmbeddings(
   texts: string[],
   model: VoyageModel = VOYAGE_MODELS.voyage3Lite
 ): Promise<number[][]> {
@@ -163,7 +163,7 @@ export async function getEmbeddings(
  * @param vecB - Second vector
  * @returns number - Cosine similarity score (-1 to 1, higher is more similar)
  */
-export function cosineSimilarity(vecA: number[], vecB: number[]): number {
+function cosineSimilarity(vecA: number[], vecB: number[]): number {
   if (vecA.length !== vecB.length) {
     throw new Error("Vectors must have the same length");
   }
@@ -191,3 +191,16 @@ export function cosineSimilarity(vecA: number[], vecB: number[]): number {
 
   return dotProduct / (normA * normB);
 }
+
+export {
+  VOYAGE_MODELS,
+  getEmbedding,
+  getEmbeddings,
+  cosineSimilarity,
+};
+
+export type {
+  VoyageModel,
+  EmbeddingResponse,
+  EmbeddingRequest,
+};

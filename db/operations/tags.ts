@@ -22,7 +22,7 @@ import { extractTagsFromContent } from "@/lib/mentions";
  * @param noteId - Note ID to sync tags for
  * @param content - Note content to extract tags from
  */
-export async function syncNoteTags(
+async function syncNoteTags(
   userId: string,
   noteId: string,
   content: string
@@ -123,7 +123,7 @@ export async function syncNoteTags(
  * @param noteId - Note ID to get tags for
  * @returns Array of tags
  */
-export async function getNoteTags(
+async function getNoteTags(
   userId: string,
   noteId: string
 ): Promise<Tag[]> {
@@ -172,3 +172,5 @@ function generateRandomColor(): string {
 
   return colors[Math.floor(Math.random() * colors.length)] ?? '#6366f1';
 }
+
+export { syncNoteTags, getNoteTags };

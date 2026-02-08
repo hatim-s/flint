@@ -52,7 +52,7 @@ function getMarkdownFromEditor(editor: Editor | null): string {
   return storage.markdown?.getMarkdown() ?? '';
 }
 
-export function TipTapEditor({
+function TipTapEditor({
   content = '',
   onChange,
   placeholder = 'Start writing...',
@@ -202,13 +202,19 @@ export function TipTapEditor({
 }
 
 // Export helper methods for parent components to use
-export function getMarkdown(editor: Editor | null): string {
+function getMarkdown(editor: Editor | null): string {
   return getMarkdownFromEditor(editor);
 }
 
-export function setMarkdown(editor: Editor | null, markdown: string) {
+function setMarkdown(editor: Editor | null, markdown: string) {
   editor?.commands.setContent(markdown);
 }
 
-export { useEditor };
+export {
+  TipTapEditor,
+  getMarkdown,
+  setMarkdown,
+  useEditor,
+};
+
 export type { Editor };

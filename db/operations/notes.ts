@@ -16,12 +16,12 @@ import type {
   CreateNoteInput,
   ListNotesInput,
   UpdateNoteInput,
-} from "@/db/schema/inputs/notes";
+} from "@/db/schema/notes";
 
 /**
  * Create a new note
  */
-export async function createNote(
+async function createNote(
   userId: string,
   input: CreateNoteInput
 ): Promise<Note> {
@@ -62,7 +62,7 @@ export async function createNote(
 /**
  * Get a single note by ID
  */
-export async function getNote(
+async function getNote(
   userId: string,
   noteId: string
 ): Promise<Note | null> {
@@ -80,7 +80,7 @@ export async function getNote(
 /**
  * Update an existing note
  */
-export async function updateNote(
+async function updateNote(
   userId: string,
   noteId: string,
   input: UpdateNoteInput
@@ -148,7 +148,7 @@ export async function updateNote(
 /**
  * Delete a note
  */
-export async function deleteNote(
+async function deleteNote(
   userId: string,
   noteId: string
 ): Promise<void> {
@@ -166,7 +166,7 @@ export async function deleteNote(
 /**
  * List notes with filtering and pagination
  */
-export async function listNotes(
+async function listNotes(
   userId: string,
   options: ListNotesInput = { limit: 20, sortBy: "updatedAt", sortOrder: "desc" }
 ): Promise<{ notes: Note[]; nextCursor: string | null; hasMore: boolean }> {
@@ -280,7 +280,7 @@ export async function listNotes(
 /**
  * Get note count for a user
  */
-export async function getNoteCount(
+async function getNoteCount(
   userId: string,
   noteType?: "note" | "journal"
 ): Promise<number> {
@@ -296,3 +296,12 @@ export async function getNoteCount(
 
   return result[0]?.count ?? 0;
 }
+
+export {
+  createNote,
+  getNote,
+  updateNote,
+  deleteNote,
+  listNotes,
+  getNoteCount,
+};

@@ -22,7 +22,7 @@ import { extractPeopleFromContent } from "@/lib/mentions";
  * @param noteId - Note ID to sync mentions for
  * @param content - Note content to extract mentions from
  */
-export async function syncNoteMentions(
+async function syncNoteMentions(
   userId: string,
   noteId: string,
   content: string
@@ -124,7 +124,7 @@ export async function syncNoteMentions(
  * @param noteId - Note ID to get mentions for
  * @returns Array of people
  */
-export async function getNoteMentions(
+async function getNoteMentions(
   userId: string,
   noteId: string
 ): Promise<Person[]> {
@@ -151,3 +151,5 @@ export async function getNoteMentions(
 
   return result;
 }
+
+export { syncNoteMentions, getNoteMentions };

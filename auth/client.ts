@@ -3,14 +3,23 @@ import { config } from 'dotenv';
 
 config({ path: '.env.local', quiet: true });
 
-export const authClient = createAuthClient({
+const authClient = createAuthClient({
     baseURL: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3005",
 });
 
-export const {
+const {
     signIn,
     signOut,
     signUp,
     useSession,
     getSession,
 } = authClient;
+
+export {
+    authClient,
+    signIn,
+    signOut,
+    signUp,
+    useSession,
+    getSession,
+};

@@ -1,7 +1,7 @@
 import { pgTable, text, timestamp, index, unique } from "drizzle-orm/pg-core";
 import { user } from "@/auth/schema";
 
-export const tags = pgTable(
+const tags = pgTable(
   "tags",
   {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
@@ -18,5 +18,8 @@ export const tags = pgTable(
   ]
 );
 
-export type Tag = typeof tags.$inferSelect;
-export type NewTag = typeof tags.$inferInsert;
+type Tag = typeof tags.$inferSelect;
+type NewTag = typeof tags.$inferInsert;
+
+export { tags };
+export type { Tag, NewTag };

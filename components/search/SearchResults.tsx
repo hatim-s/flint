@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn } from '@/components/ui/lib/utils';
 
-export interface SearchResult {
+interface SearchResult {
   id: string;
   title: string;
   content: string;
@@ -58,14 +58,14 @@ function escapeRegExp(string: string): string {
 // Get preview text around match
 function getPreview(content: string, query: string, maxLength: number = 200): string {
   const plainContent = content.replace(/[#*_`~\[\]]/g, '');
-  
+
   if (!query.trim()) {
     return plainContent.slice(0, maxLength) + (plainContent.length > maxLength ? '...' : '');
   }
 
   const words = query.trim().toLowerCase().split(/\s+/);
   const lowerContent = plainContent.toLowerCase();
-  
+
   // Find the first match position
   let firstMatchIndex = -1;
   for (const word of words) {
@@ -113,7 +113,7 @@ function getScoreColor(score: number): string {
   return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
 }
 
-export function SearchResults({
+function SearchResults({
   results,
   query,
   isLoading,
@@ -319,7 +319,7 @@ export function SearchResults({
 }
 
 // Loading skeleton component
-export function SearchResultsSkeleton() {
+function SearchResultsSkeleton() {
   return (
     <div className="space-y-3">
       {[...Array(5)].map((_, i) => (
@@ -339,3 +339,6 @@ export function SearchResultsSkeleton() {
     </div>
   );
 }
+
+export { SearchResults, SearchResultsSkeleton };
+export type { SearchResult };

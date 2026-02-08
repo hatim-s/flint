@@ -3,9 +3,9 @@ import { pgTable, text, timestamp, integer, real, jsonb, pgEnum, index } from "d
 import { user } from "@/auth/schema";
 
 // Enum for note types
-export const noteTypeEnum = pgEnum("note_type", ["note", "journal"]);
+const noteTypeEnum = pgEnum("note_type", ["note", "journal"]);
 
-export const notes = pgTable(
+const notes = pgTable(
   "notes",
   {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
@@ -40,10 +40,10 @@ export const notes = pgTable(
 );
 
 // Relations will be defined in index.ts after all tables are created
-export type Note = typeof notes.$inferSelect;
-export type NewNote = typeof notes.$inferInsert;
+type Note = typeof notes.$inferSelect;
+type NewNote = typeof notes.$inferInsert;
 
-export const createNoteSchema = z.object({
+const createNoteSchema = z.object({
   title: z.string().min(1, "Title is required").max(500, "Title must be 500 characters or less"),
   content: z.string(),
   noteType: z.enum(["note", "journal"]),
@@ -54,7 +54,7 @@ export const createNoteSchema = z.object({
   metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
-export const updateNoteSchema = z.object({
+const updateNoteSchema = z.object({
   title: z.string().min(1, "Title is required").max(500, "Title must be 500 characters or less").optional(),
   content: z.string().optional(),
   noteType: z.enum(["note", "journal"]).optional(),
@@ -66,7 +66,7 @@ export const updateNoteSchema = z.object({
   updatedAt: z.string().datetime().optional(),
 });
 
-export const listNotesSchema = z.object({
+const listNotesSchema = z.object({
   limit: z.number().int().min(1).max(100).default(20),
   cursor: z.string().optional(),
   noteType: z.enum(["note", "journal"]).optional(),
@@ -79,6 +79,22 @@ export const listNotesSchema = z.object({
   sortOrder: z.enum(["asc", "desc"]).default("desc"),
 });
 
-export type CreateNoteInput = z.infer<typeof createNoteSchema>;
-export type UpdateNoteInput = z.infer<typeof updateNoteSchema>;
-export type ListNotesInput = z.infer<typeof listNotesSchema>;
+type CreateNoteInput = z.infer<typeof createNoteSchema>;
+type UpdateNoteInput = z.infer<typeof updateNoteSchema>;
+type ListNotesInput = z.infer<typeof listNotesSchema>;
+
+export {
+  noteTypeEnum,
+  notes,
+  createNoteSchema,
+  updateNoteSchema,
+  listNotesSchema,
+};
+
+export type {
+  Note,
+  NewNote,
+  CreateNoteInput,
+  UpdateNoteInput,
+  ListNotesInput,
+};

@@ -2,7 +2,7 @@ import { pgTable, text, primaryKey, index } from "drizzle-orm/pg-core";
 import { notes } from "./notes";
 import { tags } from "./tags";
 
-export const noteTags = pgTable(
+const noteTags = pgTable(
   "note_tags",
   {
     noteId: text("note_id")
@@ -19,5 +19,8 @@ export const noteTags = pgTable(
   ]
 );
 
-export type NoteTag = typeof noteTags.$inferSelect;
-export type NewNoteTag = typeof noteTags.$inferInsert;
+type NoteTag = typeof noteTags.$inferSelect;
+type NewNoteTag = typeof noteTags.$inferInsert;
+
+export { noteTags };
+export type { NoteTag, NewNoteTag };
