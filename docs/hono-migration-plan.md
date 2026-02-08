@@ -135,7 +135,8 @@ Notes API with typed routes:
 ```typescript
 import { createApp, authMiddleware } from "../app";
 import { zValidator } from "@hono/zod-validator";
-import { createNoteSchema, listNotesSchema } from "@/lib/notes";
+import { createNoteSchema, listNotesSchema } from "@/db/schema/inputs/notes";
+import { listNotes } from "@/db/operations/notes";
 
 const app = createApp()
   .use("*", authMiddleware)

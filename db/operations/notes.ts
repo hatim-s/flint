@@ -11,89 +11,12 @@ import { noteTags } from "@/db/schema/noteTags";
 import { tags } from "@/db/schema/tags";
 import { eq, and, desc, asc, gte, lte, sql, inArray } from "drizzle-orm";
 import { rlsExecutor } from "@/db/lib/rls";
-import { z } from "zod";
-
-/**
- * Zod Schemas for Request Validation
- */
-
-export const createNoteSchema = z.object({
-  title: z.string().min(1, "Title is required").max(500, "Title must be 500 characters or less"),
-  content: z.string(),
-  noteType: z.enum(["note", "journal"]),
-  sourceUrl: z.union([z.string().url(), z.literal("")]).optional(),
-  moodScore: z.number().int().min(1).max(10).optional(),
-  qualityScore: z.number().min(0).max(1).optional(),
-  templateId: z.string().optional(),
-  metadata: z.record(z.string(), z.unknown()).optional(),
-});
-
-export const updateNoteSchema = z.object({
-  title: z.string().min(1, "Title is required").max(500, "Title must be 500 characters or less").optional(),
-  content: z.string().optional(),
-  noteType: z.enum(["note", "journal"]).optional(),
-  sourceUrl: z.union([z.string().url(), z.literal("")]).optional(),
-  moodScore: z.number().int().min(1).max(10).optional().nullable(),
-  qualityScore: z.number().min(0).max(1).optional().nullable(),
-  templateId: z.string().optional().nullable(),
-  metadata: z.record(z.string(), z.unknown()).optional(),
-  updatedAt: z.string().datetime().optional(), // For optimistic locking
-});
-
-export const listNotesSchema = z.object({
-  limit: z.number().int().min(1).max(100).default(20),
-  cursor: z.string().optional(), // Cursor-based pagination (note ID)
-  noteType: z.enum(["note", "journal"]).optional(),
-  tags: z.array(z.string()).optional(),
-  minMood: z.number().int().min(1).max(10).optional(),
-  maxMood: z.number().int().min(1).max(10).optional(),
-  startDate: z.string().datetime().optional(),
-  endDate: z.string().datetime().optional(),
-  sortBy: z.enum(["createdAt", "updatedAt", "title"]).default("updatedAt"),
-  sortOrder: z.enum(["asc", "desc"]).default("desc"),
-});
-
-export type CreateNoteInput = z.infer<typeof createNoteSchema>;
-export type UpdateNoteInput = z.infer<typeof updateNoteSchema>;
-export type ListNotesInput = z.infer<typeof listNotesSchema>;
-
-/**
- * Strips markdown formatting from content to create plain text for search
- */
-export function stripMarkdown(markdown: string): string {
-  return markdown
-    // Remove code blocks
-    .replace(/```[\s\S]*?```/g, "")
-    .replace(/`([^`]+)`/g, "$1")
-    // Remove headers
-    .replace(/^#{1,6}\s+/gm, "")
-    // Remove bold/italic
-    .replace(/(\*\*|__)(.*?)\1/g, "$2")
-    .replace(/(\*|_)(.*?)\1/g, "$2")
-    // Remove links but keep text
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
-    // Remove images
-    .replace(/!\[([^\]]*)\]\([^)]+\)/g, "")
-    // Remove horizontal rules
-    .replace(/^(-{3,}|_{3,}|\*{3,})$/gm, "")
-    // Remove blockquotes
-    .replace(/^>\s+/gm, "")
-    // Remove list markers
-    .replace(/^[\s]*[-*+]\s+/gm, "")
-    .replace(/^[\s]*\d+\.\s+/gm, "")
-    // Remove task list markers
-    .replace(/^[\s]*-\s+\[[x\s]\]\s+/gim, "")
-    // Clean up extra whitespace
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
-}
-
-/**
- * Count words in text
- */
-export function countWords(text: string): number {
-  return text.trim().split(/\s+/).filter(word => word.length > 0).length;
-}
+import { countWords, stripMarkdown } from "@/lib/markdown";
+import type {
+  CreateNoteInput,
+  ListNotesInput,
+  UpdateNoteInput,
+} from "@/db/schema/inputs/notes";
 
 /**
  * Create a new note
@@ -192,7 +115,7 @@ export async function updateNote(
   if (input.content !== undefined) {
     updateData.content = input.content;
     updateData.contentPlain = stripMarkdown(input.content);
-    
+
     // Update word count in metadata
     const wordCount = countWords(updateData.contentPlain);
     updateData.metadata = {

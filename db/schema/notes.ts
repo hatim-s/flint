@@ -1,4 +1,4 @@
-import { relations } from "drizzle-orm";
+import { z } from 'zod'
 import { pgTable, text, timestamp, integer, real, jsonb, pgEnum, index } from "drizzle-orm/pg-core";
 import { user } from "@/auth/schema";
 
@@ -42,3 +42,43 @@ export const notes = pgTable(
 // Relations will be defined in index.ts after all tables are created
 export type Note = typeof notes.$inferSelect;
 export type NewNote = typeof notes.$inferInsert;
+
+export const createNoteSchema = z.object({
+  title: z.string().min(1, "Title is required").max(500, "Title must be 500 characters or less"),
+  content: z.string(),
+  noteType: z.enum(["note", "journal"]),
+  sourceUrl: z.union([z.string().url(), z.literal("")]).optional(),
+  moodScore: z.number().int().min(1).max(10).optional(),
+  qualityScore: z.number().min(0).max(1).optional(),
+  templateId: z.string().optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+});
+
+export const updateNoteSchema = z.object({
+  title: z.string().min(1, "Title is required").max(500, "Title must be 500 characters or less").optional(),
+  content: z.string().optional(),
+  noteType: z.enum(["note", "journal"]).optional(),
+  sourceUrl: z.union([z.string().url(), z.literal("")]).optional(),
+  moodScore: z.number().int().min(1).max(10).optional().nullable(),
+  qualityScore: z.number().min(0).max(1).optional().nullable(),
+  templateId: z.string().optional().nullable(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
+  updatedAt: z.string().datetime().optional(),
+});
+
+export const listNotesSchema = z.object({
+  limit: z.number().int().min(1).max(100).default(20),
+  cursor: z.string().optional(),
+  noteType: z.enum(["note", "journal"]).optional(),
+  tags: z.array(z.string()).optional(),
+  minMood: z.number().int().min(1).max(10).optional(),
+  maxMood: z.number().int().min(1).max(10).optional(),
+  startDate: z.string().datetime().optional(),
+  endDate: z.string().datetime().optional(),
+  sortBy: z.enum(["createdAt", "updatedAt", "title"]).default("updatedAt"),
+  sortOrder: z.enum(["asc", "desc"]).default("desc"),
+});
+
+export type CreateNoteInput = z.infer<typeof createNoteSchema>;
+export type UpdateNoteInput = z.infer<typeof updateNoteSchema>;
+export type ListNotesInput = z.infer<typeof listNotesSchema>;

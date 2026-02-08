@@ -10,29 +10,7 @@ import { people, type Person } from "@/db/schema/people";
 import { noteMentions } from "@/db/schema/noteMentions";
 import { eq, and, inArray } from "drizzle-orm";
 import { rlsExecutor } from "@/db/lib/rls";
-
-/**
- * Extracts people/contact names from markdown content
- * People are identified by the @name pattern (mention format)
- * 
- * @param content - Markdown content to extract mentions from
- * @returns Array of unique person names
- */
-export function extractPeopleFromContent(content: string): string[] {
-  // Match @name pattern, supporting names with spaces, hyphens, and apostrophes
-  // More lenient than tags to support full names like "John Smith"
-  const mentionRegex = /@([a-zA-Z0-9_-]+(?:\s+[a-zA-Z0-9_-]+)*)/g;
-  const matches = content.matchAll(mentionRegex);
-  
-  const personNames = new Set<string>();
-  for (const match of matches) {
-    if (match[1]) {
-      personNames.add(match[1].trim());
-    }
-  }
-  
-  return Array.from(personNames);
-}
+import { extractPeopleFromContent } from "@/lib/mentions";
 
 /**
  * Syncs people mentions for a note:
@@ -74,7 +52,7 @@ export async function syncNoteMentions(
 
   // Get or create people
   const personRecords: Person[] = [];
-  
+
   for (const personName of personNames) {
     // Check if person exists
     const [existingPerson] = await db

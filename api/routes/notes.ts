@@ -1,6 +1,17 @@
 import { createApp } from "@/api/app";
-import { embedNote } from "@/lib/jobs/embedNote";
-import { createNote as baseCreateNote, createNoteSchema, getNote, listNotes, listNotesSchema, updateNote as baseUpdateNote, updateNoteSchema, deleteNote as baseDeleteNote } from "@/lib/notes";
+import { embedNote } from "@/db/operations/jobs/embedNote";
+import {
+  createNote as baseCreateNote,
+  deleteNote as baseDeleteNote,
+  getNote,
+  listNotes,
+  updateNote as baseUpdateNote,
+} from "@/db/operations/notes";
+import {
+  createNoteSchema,
+  listNotesSchema,
+  updateNoteSchema,
+} from "@/db/schema/inputs/notes";
 import { ZodError, z } from "zod";
 import { deleteNoteVector, findRelatedNotes, semanticSearch } from "@/lib/vector";
 import { getEmbedding } from "@/lib/embeddings";
@@ -12,11 +23,11 @@ import { eq, and, or, inArray } from "drizzle-orm";
 import {
   syncNoteMentions as baseSyncNoteMentions,
   getNoteMentions as fetchNoteMentions,
-} from "@/lib/people";
+} from "@/db/operations/people";
 import {
   syncNoteTags as baseSyncNoteTags,
   getNoteTags as fetchNoteTags,
-} from "@/lib/tags";
+} from "@/db/operations/tags";
 
 const createLinkSchema = z.object({
   targetNoteId: z.string().min(1, "Target note ID is required"),
