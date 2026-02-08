@@ -84,7 +84,8 @@ Overall a productive week, though I felt drained by Thursday. Need to protect We
   {
     title: "Literature Note: Thinking in Systems",
     noteType: "note" as const,
-    sourceUrl: "https://www.goodreads.com/book/show/3828902-thinking-in-systems",
+    sourceUrl:
+      "https://www.goodreads.com/book/show/3828902-thinking-in-systems",
     content: `# Literature Note: Thinking in Systems
 
 ## Source Information

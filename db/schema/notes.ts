@@ -1,5 +1,14 @@
-import { z } from 'zod'
-import { pgTable, text, timestamp, integer, real, jsonb, pgEnum, index } from "drizzle-orm/pg-core";
+import {
+  index,
+  integer,
+  jsonb,
+  pgEnum,
+  pgTable,
+  real,
+  text,
+  timestamp,
+} from "drizzle-orm/pg-core";
+import { z } from "zod";
 import { user } from "@/auth/schema";
 
 // Enum for note types
@@ -8,7 +17,9 @@ const noteTypeEnum = pgEnum("note_type", ["note", "journal"]);
 const notes = pgTable(
   "notes",
   {
-    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
@@ -25,18 +36,21 @@ const notes = pgTable(
       .defaultNow()
       .$onUpdate(() => new Date())
       .notNull(),
-    metadata: jsonb("metadata").$type<{
-      embeddingStatus?: "pending" | "complete" | "failed";
-      wordCount?: number;
-      lastViewedAt?: string;
-      [key: string]: unknown;
-    }>().default({}).notNull(),
+    metadata: jsonb("metadata")
+      .$type<{
+        embeddingStatus?: "pending" | "complete" | "failed";
+        wordCount?: number;
+        lastViewedAt?: string;
+        [key: string]: unknown;
+      }>()
+      .default({})
+      .notNull(),
   },
   (table) => [
     index("notes_userId_idx").on(table.userId),
     index("notes_noteType_idx").on(table.noteType),
     index("notes_createdAt_idx").on(table.createdAt),
-  ]
+  ],
 );
 
 // Relations will be defined in index.ts after all tables are created
@@ -44,7 +58,10 @@ type Note = typeof notes.$inferSelect;
 type NewNote = typeof notes.$inferInsert;
 
 const createNoteSchema = z.object({
-  title: z.string().min(1, "Title is required").max(500, "Title must be 500 characters or less"),
+  title: z
+    .string()
+    .min(1, "Title is required")
+    .max(500, "Title must be 500 characters or less"),
   content: z.string(),
   noteType: z.enum(["note", "journal"]),
   sourceUrl: z.union([z.string().url(), z.literal("")]).optional(),
@@ -55,7 +72,11 @@ const createNoteSchema = z.object({
 });
 
 const updateNoteSchema = z.object({
-  title: z.string().min(1, "Title is required").max(500, "Title must be 500 characters or less").optional(),
+  title: z
+    .string()
+    .min(1, "Title is required")
+    .max(500, "Title must be 500 characters or less")
+    .optional(),
   content: z.string().optional(),
   noteType: z.enum(["note", "journal"]).optional(),
   sourceUrl: z.union([z.string().url(), z.literal("")]).optional(),
@@ -91,10 +112,4 @@ export {
   listNotesSchema,
 };
 
-export type {
-  Note,
-  NewNote,
-  CreateNoteInput,
-  UpdateNoteInput,
-  ListNotesInput,
-};
+export type { Note, NewNote, CreateNoteInput, UpdateNoteInput, ListNotesInput };

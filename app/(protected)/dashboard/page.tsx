@@ -1,16 +1,21 @@
 "use client";
 
-import { useSession, signOut } from "@/auth/client";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LogOut, Plus, BookOpen, Clock, Mic } from "lucide-react";
-import { CreateNoteModal } from "@/components/notes";
-import { RecentNotes } from "@/components/dashboard/RecentNotes";
+import { BookOpen, LogOut, Mic, Plus } from "lucide-react";
+import { useEffect, useState } from "react";
+import { signOut, useSession } from "@/auth/client";
 import { MoodChart } from "@/components/dashboard/MoodChart";
+import { RecentNotes } from "@/components/dashboard/RecentNotes";
 import { StreakCalendar } from "@/components/dashboard/StreakCalendar";
-import { useState, useEffect } from "react";
+import { CreateNoteModal } from "@/components/notes";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
 // Helper function to get time-based greeting
 function getGreeting() {
@@ -31,24 +36,24 @@ function getFormattedDate() {
   });
 }
 
-// Loading skeleton for dashboard quadrants
-function QuadrantSkeleton() {
-  return (
-    <Card>
-      <CardHeader>
-        <Skeleton className="h-6 w-32" />
-        <Skeleton className="h-4 w-48 mt-2" />
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-3">
-          <Skeleton className="h-20 w-full" />
-          <Skeleton className="h-20 w-full" />
-          <Skeleton className="h-20 w-full" />
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
+// // Loading skeleton for dashboard quadrants
+// function QuadrantSkeleton() {
+//   return (
+//     <Card>
+//       <CardHeader>
+//         <Skeleton className="h-6 w-32" />
+//         <Skeleton className="h-4 w-48 mt-2" />
+//       </CardHeader>
+//       <CardContent>
+//         <div className="space-y-3">
+//           <Skeleton className="h-20 w-full" />
+//           <Skeleton className="h-20 w-full" />
+//           <Skeleton className="h-20 w-full" />
+//         </div>
+//       </CardContent>
+//     </Card>
+//   );
+// }
 
 export default function DashboardPage() {
   const { data: session, isPending } = useSession();
@@ -91,12 +96,17 @@ export default function DashboardPage() {
               <>
                 <div className="flex items-center gap-2">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={user.image || undefined} alt={user.name} />
+                    <AvatarImage
+                      src={user.image || undefined}
+                      alt={user.name}
+                    />
                     <AvatarFallback>
                       {user.name?.charAt(0).toUpperCase() || "U"}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="text-sm font-medium hidden sm:inline">{user.name}</span>
+                  <span className="text-sm font-medium hidden sm:inline">
+                    {user.name}
+                  </span>
                 </div>
                 <Button
                   variant="ghost"
@@ -129,16 +139,21 @@ export default function DashboardPage() {
                 <h2 className="text-3xl font-bold">
                   {greeting}, {userName}
                 </h2>
-                <p className="mt-1 text-sm text-muted-foreground">{formattedDate}</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {formattedDate}
+                </p>
               </div>
-              
+
               {/* Quick Action Buttons */}
               <div className="flex flex-wrap gap-2">
                 <Button onClick={() => setIsCreateModalOpen(true)}>
                   <Plus className="w-4 h-4 mr-2" />
                   New Note
                 </Button>
-                <Button variant="outline" onClick={() => setIsCreateModalOpen(true)}>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsCreateModalOpen(true)}
+                >
                   <BookOpen className="w-4 h-4 mr-2" />
                   New Journal
                 </Button>
@@ -153,9 +168,14 @@ export default function DashboardPage() {
             <div className="mt-4">
               <p className="text-sm text-muted-foreground">
                 Press{" "}
-                <kbd className="px-2 py-1 text-xs bg-muted rounded border">Cmd+N</kbd> or{" "}
-                <kbd className="px-2 py-1 text-xs bg-muted rounded border">Ctrl+N</kbd> to
-                create a new note
+                <kbd className="px-2 py-1 text-xs bg-muted rounded border">
+                  Cmd+N
+                </kbd>{" "}
+                or{" "}
+                <kbd className="px-2 py-1 text-xs bg-muted rounded border">
+                  Ctrl+N
+                </kbd>{" "}
+                to create a new note
               </p>
             </div>
           </div>
@@ -175,7 +195,9 @@ export default function DashboardPage() {
             <Card className="lg:row-span-1">
               <CardHeader>
                 <CardTitle>Weekly Summary</CardTitle>
-                <CardDescription>AI-powered insights from your week</CardDescription>
+                <CardDescription>
+                  AI-powered insights from your week
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center justify-center h-64 text-sm text-muted-foreground">
@@ -188,7 +210,10 @@ export default function DashboardPage() {
       </main>
 
       {/* Create Note Modal */}
-      <CreateNoteModal open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen} />
+      <CreateNoteModal
+        open={isCreateModalOpen}
+        onOpenChange={setIsCreateModalOpen}
+      />
     </div>
   );
 }

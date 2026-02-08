@@ -1,6 +1,6 @@
-import React, { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
-import { Person } from '@/db/schema/people';
-import { User } from 'lucide-react';
+import { User } from "lucide-react";
+import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
+import type { Person } from "@/db/schema/people";
 
 interface PeopleSuggestionProps {
   items: Person[];
@@ -22,7 +22,7 @@ const PeopleSuggestion = forwardRef<PeopleSuggestionRef, PeopleSuggestionProps>(
     // Reset selected index when items change
     useEffect(() => {
       setSelectedIndex(0);
-    }, [props.items]);
+    }, []);
 
     const selectItem = (index: number) => {
       const item = props.items[index];
@@ -32,7 +32,9 @@ const PeopleSuggestion = forwardRef<PeopleSuggestionRef, PeopleSuggestionProps>(
     };
 
     const upHandler = () => {
-      setSelectedIndex((selectedIndex + props.items.length - 1) % props.items.length);
+      setSelectedIndex(
+        (selectedIndex + props.items.length - 1) % props.items.length,
+      );
     };
 
     const downHandler = () => {
@@ -45,17 +47,17 @@ const PeopleSuggestion = forwardRef<PeopleSuggestionRef, PeopleSuggestionProps>(
 
     useImperativeHandle(ref, () => ({
       onKeyDown: ({ event }) => {
-        if (event.key === 'ArrowUp') {
+        if (event.key === "ArrowUp") {
           upHandler();
           return true;
         }
 
-        if (event.key === 'ArrowDown') {
+        if (event.key === "ArrowDown") {
           downHandler();
           return true;
         }
 
-        if (event.key === 'Enter') {
+        if (event.key === "Enter") {
           enterHandler();
           return true;
         }
@@ -80,16 +82,19 @@ const PeopleSuggestion = forwardRef<PeopleSuggestionRef, PeopleSuggestionProps>(
           {props.items.map((item, index) => (
             <button
               key={item.id}
-              className={`flex w-full items-center gap-2 rounded-sm px-2 py-2 text-sm outline-none transition-colors ${index === selectedIndex
-                  ? 'bg-neutral-100 dark:bg-neutral-800'
-                  : 'hover:bg-neutral-50 dark:hover:bg-neutral-900'
-                }`}
+              className={`flex w-full items-center gap-2 rounded-sm px-2 py-2 text-sm outline-none transition-colors ${
+                index === selectedIndex
+                  ? "bg-neutral-100 dark:bg-neutral-800"
+                  : "hover:bg-neutral-50 dark:hover:bg-neutral-900"
+              }`}
               onClick={() => selectItem(index)}
               type="button"
             >
               <User className="h-4 w-4 flex-shrink-0 text-neutral-500 dark:text-neutral-400" />
               <div className="flex flex-1 flex-col items-start overflow-hidden">
-                <span className="w-full truncate text-left font-medium">{item.name}</span>
+                <span className="w-full truncate text-left font-medium">
+                  {item.name}
+                </span>
                 {item.email && (
                   <span className="w-full truncate text-left text-xs text-neutral-500 dark:text-neutral-400">
                     {item.email}
@@ -101,10 +106,10 @@ const PeopleSuggestion = forwardRef<PeopleSuggestionRef, PeopleSuggestionProps>(
         </div>
       </div>
     );
-  }
+  },
 );
 
-PeopleSuggestion.displayName = 'PeopleSuggestion';
+PeopleSuggestion.displayName = "PeopleSuggestion";
 
 export { PeopleSuggestion };
 export type { PeopleSuggestionProps, PeopleSuggestionRef };

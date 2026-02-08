@@ -1,19 +1,24 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card } from '@/components/ui/card';
-import { Spinner } from '@/components/ui/spinner';
-import { Clock, Brain, ChevronLeft, ChevronRight } from 'lucide-react';
-import { toast } from 'sonner';
-import { fillTemplateVariables } from '@/db/seed/templates';
-import { api } from '@/api/client';
+import { Brain, ChevronLeft, ChevronRight, Clock } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { toast } from "sonner";
+import { api } from "@/api/client";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/ui/spinner";
+import { fillTemplateVariables } from "@/db/seed/templates";
 
-type NoteType = 'note' | 'journal';
+type NoteType = "note" | "journal";
 
 interface Template {
   id: string;
@@ -35,9 +40,11 @@ export function CreateNoteModal({ open, onOpenChange }: CreateNoteModalProps) {
 
   // Form state
   const [noteType, setNoteType] = useState<NoteType | null>(null);
-  const [title, setTitle] = useState('');
-  const [sourceUrl, setSourceUrl] = useState('');
-  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
+  const [title, setTitle] = useState("");
+  const [sourceUrl, setSourceUrl] = useState("");
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(
+    null,
+  );
   const [templates, setTemplates] = useState<Template[]>([]);
   const [loadingTemplates, setLoadingTemplates] = useState(false);
 
@@ -46,8 +53,8 @@ export function CreateNoteModal({ open, onOpenChange }: CreateNoteModalProps) {
     if (!open) {
       setStep(1);
       setNoteType(null);
-      setTitle('');
-      setSourceUrl('');
+      setTitle("");
+      setSourceUrl("");
       setSelectedTemplateId(null);
       setTemplates([]);
     }
@@ -63,7 +70,7 @@ export function CreateNoteModal({ open, onOpenChange }: CreateNoteModalProps) {
   // Step 2: Enter basic info and move to templates
   const handleBasicInfoNext = async () => {
     if (!title.trim()) {
-      toast.error('Please enter a title');
+      toast.error("Please enter a title");
       return;
     }
 
@@ -73,13 +80,13 @@ export function CreateNoteModal({ open, onOpenChange }: CreateNoteModalProps) {
       const response = await api.templates.$get({
         query: noteType ? { noteType } : {},
       });
-      if (!response.ok) throw new Error('Failed to fetch templates');
+      if (!response.ok) throw new Error("Failed to fetch templates");
       const data = await response.json();
       setTemplates(data.templates || []);
       setStep(3);
     } catch (error) {
-      console.error('Error fetching templates:', error);
-      toast.error('Failed to load templates');
+      console.error("Error fetching templates:", error);
+      toast.error("Failed to load templates");
       // Allow proceeding without templates
       setTemplates([]);
       setStep(3);
@@ -91,22 +98,22 @@ export function CreateNoteModal({ open, onOpenChange }: CreateNoteModalProps) {
   // Step 3: Create note (with or without template)
   const handleCreateNote = async (skipTemplate = false) => {
     if (!noteType || !title.trim()) {
-      toast.error('Missing required information');
+      toast.error("Missing required information");
       return;
     }
 
     setIsCreating(true);
     try {
       // Get template content and fill variables
-      let content = '';
+      let content = "";
       if (!skipTemplate && selectedTemplateId) {
-        const template = templates.find(t => t.id === selectedTemplateId);
+        const template = templates.find((t) => t.id === selectedTemplateId);
         if (template) {
           // Fill template variables with current values
           content = fillTemplateVariables(template.content, {
             date: undefined, // Will use current date
             time: undefined, // Will use current time
-            mood: noteType === 'journal' ? 5 : undefined,
+            mood: noteType === "journal" ? 5 : undefined,
             source: sourceUrl.trim() || undefined,
           });
         }
@@ -119,22 +126,24 @@ export function CreateNoteModal({ open, onOpenChange }: CreateNoteModalProps) {
           noteType,
           sourceUrl: sourceUrl.trim() || undefined,
           templateId: skipTemplate ? undefined : selectedTemplateId,
-          moodScore: noteType === 'journal' ? 5 : undefined, // Default neutral mood for journals
+          moodScore: noteType === "journal" ? 5 : undefined, // Default neutral mood for journals
         },
       });
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to create note');
+        throw new Error(error.error || "Failed to create note");
       }
 
       const { data } = await response.json();
-      toast.success('Note created successfully!');
+      toast.success("Note created successfully!");
       handleOpenChange(false);
       router.push(`/notes/${data.id}`);
     } catch (error) {
-      console.error('Error creating note:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to create note');
+      console.error("Error creating note:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to create note",
+      );
     } finally {
       setIsCreating(false);
     }
@@ -144,7 +153,14 @@ export function CreateNoteModal({ open, onOpenChange }: CreateNoteModalProps) {
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create New {noteType === 'journal' ? 'Journal Entry' : noteType === 'note' ? 'Knowledge Note' : 'Note'}</DialogTitle>
+          <DialogTitle>
+            Create New{" "}
+            {noteType === "journal"
+              ? "Journal Entry"
+              : noteType === "note"
+                ? "Knowledge Note"
+                : "Note"}
+          </DialogTitle>
         </DialogHeader>
 
         {/* Progress Indicator */}
@@ -152,8 +168,13 @@ export function CreateNoteModal({ open, onOpenChange }: CreateNoteModalProps) {
           {[1, 2, 3].map((s) => (
             <div
               key={s}
-              className={`h-2 w-12 rounded-full transition-colors ${s === step ? 'bg-primary' : s < step ? 'bg-primary/60' : 'bg-muted'
-                }`}
+              className={`h-2 w-12 rounded-full transition-colors ${
+                s === step
+                  ? "bg-primary"
+                  : s < step
+                    ? "bg-primary/60"
+                    : "bg-muted"
+              }`}
             />
           ))}
         </div>
@@ -167,7 +188,7 @@ export function CreateNoteModal({ open, onOpenChange }: CreateNoteModalProps) {
             <div className="grid grid-cols-2 gap-4">
               <Card
                 className="p-6 cursor-pointer hover:border-primary transition-colors"
-                onClick={() => handleTypeSelect('journal')}
+                onClick={() => handleTypeSelect("journal")}
               >
                 <div className="flex flex-col items-center text-center space-y-3">
                   <div className="p-3 rounded-full bg-orange-100 dark:bg-orange-900/20">
@@ -184,7 +205,7 @@ export function CreateNoteModal({ open, onOpenChange }: CreateNoteModalProps) {
 
               <Card
                 className="p-6 cursor-pointer hover:border-primary transition-colors"
-                onClick={() => handleTypeSelect('note')}
+                onClick={() => handleTypeSelect("note")}
               >
                 <div className="flex flex-col items-center text-center space-y-3">
                   <div className="p-3 rounded-full bg-blue-100 dark:bg-blue-900/20">
@@ -267,8 +288,11 @@ export function CreateNoteModal({ open, onOpenChange }: CreateNoteModalProps) {
                 {templates.map((template) => (
                   <Card
                     key={template.id}
-                    className={`p-4 cursor-pointer hover:border-primary transition-colors ${selectedTemplateId === template.id ? 'border-primary bg-primary/5' : ''
-                      }`}
+                    className={`p-4 cursor-pointer hover:border-primary transition-colors ${
+                      selectedTemplateId === template.id
+                        ? "border-primary bg-primary/5"
+                        : ""
+                    }`}
                     onClick={() => setSelectedTemplateId(template.id)}
                   >
                     <div className="flex items-start justify-between">
@@ -279,7 +303,9 @@ export function CreateNoteModal({ open, onOpenChange }: CreateNoteModalProps) {
                         </p>
                       </div>
                       {template.isDefault && (
-                        <span className="text-xs bg-muted px-2 py-1 rounded">Default</span>
+                        <span className="text-xs bg-muted px-2 py-1 rounded">
+                          Default
+                        </span>
                       )}
                     </div>
                   </Card>
@@ -306,7 +332,9 @@ export function CreateNoteModal({ open, onOpenChange }: CreateNoteModalProps) {
                 </Button>
                 <Button
                   onClick={() => handleCreateNote(false)}
-                  disabled={isCreating || (!selectedTemplateId && templates.length > 0)}
+                  disabled={
+                    isCreating || (!selectedTemplateId && templates.length > 0)
+                  }
                 >
                   {isCreating ? (
                     <>
@@ -314,7 +342,7 @@ export function CreateNoteModal({ open, onOpenChange }: CreateNoteModalProps) {
                       Creating...
                     </>
                   ) : (
-                    'Create Note'
+                    "Create Note"
                   )}
                 </Button>
               </div>

@@ -1,5 +1,5 @@
-import React, { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
-import { Tag } from '@/db/schema/tags';
+import { forwardRef, useEffect, useImperativeHandle, useState } from "react";
+import type { Tag } from "@/db/schema/tags";
 
 interface TagSuggestionProps {
   items: Tag[];
@@ -21,7 +21,7 @@ const TagSuggestion = forwardRef<TagSuggestionRef, TagSuggestionProps>(
     // Reset selected index when items change
     useEffect(() => {
       setSelectedIndex(0);
-    }, [props.items]);
+    }, []);
 
     const selectItem = (index: number) => {
       const item = props.items[index];
@@ -31,7 +31,9 @@ const TagSuggestion = forwardRef<TagSuggestionRef, TagSuggestionProps>(
     };
 
     const upHandler = () => {
-      setSelectedIndex((selectedIndex + props.items.length - 1) % props.items.length);
+      setSelectedIndex(
+        (selectedIndex + props.items.length - 1) % props.items.length,
+      );
     };
 
     const downHandler = () => {
@@ -44,17 +46,17 @@ const TagSuggestion = forwardRef<TagSuggestionRef, TagSuggestionProps>(
 
     useImperativeHandle(ref, () => ({
       onKeyDown: ({ event }) => {
-        if (event.key === 'ArrowUp') {
+        if (event.key === "ArrowUp") {
           upHandler();
           return true;
         }
 
-        if (event.key === 'ArrowDown') {
+        if (event.key === "ArrowDown") {
           downHandler();
           return true;
         }
 
-        if (event.key === 'Enter') {
+        if (event.key === "Enter") {
           enterHandler();
           return true;
         }
@@ -79,10 +81,11 @@ const TagSuggestion = forwardRef<TagSuggestionRef, TagSuggestionProps>(
           {props.items.map((item, index) => (
             <button
               key={item.id}
-              className={`flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors ${index === selectedIndex
-                  ? 'bg-neutral-100 dark:bg-neutral-800'
-                  : 'hover:bg-neutral-50 dark:hover:bg-neutral-900'
-                }`}
+              className={`flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors ${
+                index === selectedIndex
+                  ? "bg-neutral-100 dark:bg-neutral-800"
+                  : "hover:bg-neutral-50 dark:hover:bg-neutral-900"
+              }`}
               onClick={() => selectItem(index)}
               type="button"
             >
@@ -96,10 +99,10 @@ const TagSuggestion = forwardRef<TagSuggestionRef, TagSuggestionProps>(
         </div>
       </div>
     );
-  }
+  },
 );
 
-TagSuggestion.displayName = 'TagSuggestion';
+TagSuggestion.displayName = "TagSuggestion";
 
 export { TagSuggestion };
 export type { TagSuggestionProps, TagSuggestionRef };

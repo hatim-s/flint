@@ -1,29 +1,29 @@
 /**
  * Note CRUD Operations
- * 
+ *
  * This module provides type-safe functions for creating, reading, updating, and deleting notes.
  * All operations automatically respect Row Level Security (RLS) policies.
  */
 
+import { and, asc, desc, eq, gte, inArray, lte, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { notes, type Note, type NewNote } from "@/db/schema/notes";
-import { noteTags } from "@/db/schema/noteTags";
-import { tags } from "@/db/schema/tags";
-import { eq, and, desc, asc, gte, lte, sql, inArray } from "drizzle-orm";
 import { rlsExecutor } from "@/db/lib/rls";
-import { countWords, stripMarkdown } from "@/lib/markdown";
 import type {
   CreateNoteInput,
   ListNotesInput,
   UpdateNoteInput,
 } from "@/db/schema/notes";
+import { type NewNote, type Note, notes } from "@/db/schema/notes";
+import { noteTags } from "@/db/schema/noteTags";
+import { tags } from "@/db/schema/tags";
+import { countWords, stripMarkdown } from "@/lib/markdown";
 
 /**
  * Create a new note
  */
 async function createNote(
   userId: string,
-  input: CreateNoteInput
+  input: CreateNoteInput,
 ): Promise<Note> {
   const rls = rlsExecutor(userId);
 
@@ -62,10 +62,7 @@ async function createNote(
 /**
  * Get a single note by ID
  */
-async function getNote(
-  userId: string,
-  noteId: string
-): Promise<Note | null> {
+async function getNote(userId: string, noteId: string): Promise<Note | null> {
   const rls = rlsExecutor(userId);
 
   const [note] = await db
@@ -83,7 +80,7 @@ async function getNote(
 async function updateNote(
   userId: string,
   noteId: string,
-  input: UpdateNoteInput
+  input: UpdateNoteInput,
 ): Promise<Note> {
   const rls = rlsExecutor(userId);
 
@@ -97,7 +94,9 @@ async function updateNote(
   if (input.updatedAt) {
     const providedUpdatedAt = new Date(input.updatedAt);
     if (existingNote.updatedAt.getTime() !== providedUpdatedAt.getTime()) {
-      throw new Error("Note was modified by another process. Please refresh and try again.");
+      throw new Error(
+        "Note was modified by another process. Please refresh and try again.",
+      );
     }
   }
 
@@ -106,9 +105,11 @@ async function updateNote(
 
   if (input.title !== undefined) updateData.title = input.title;
   if (input.noteType !== undefined) updateData.noteType = input.noteType;
-  if (input.sourceUrl !== undefined) updateData.sourceUrl = input.sourceUrl || null;
+  if (input.sourceUrl !== undefined)
+    updateData.sourceUrl = input.sourceUrl || null;
   if (input.moodScore !== undefined) updateData.moodScore = input.moodScore;
-  if (input.qualityScore !== undefined) updateData.qualityScore = input.qualityScore;
+  if (input.qualityScore !== undefined)
+    updateData.qualityScore = input.qualityScore;
   if (input.templateId !== undefined) updateData.templateId = input.templateId;
 
   // If content is being updated, re-strip markdown
@@ -148,10 +149,7 @@ async function updateNote(
 /**
  * Delete a note
  */
-async function deleteNote(
-  userId: string,
-  noteId: string
-): Promise<void> {
+async function deleteNote(userId: string, noteId: string): Promise<void> {
   const rls = rlsExecutor(userId);
 
   // Verify note exists first
@@ -168,7 +166,11 @@ async function deleteNote(
  */
 async function listNotes(
   userId: string,
-  options: ListNotesInput = { limit: 20, sortBy: "updatedAt", sortOrder: "desc" }
+  options: ListNotesInput = {
+    limit: 20,
+    sortBy: "updatedAt",
+    sortOrder: "desc",
+  },
 ): Promise<{ notes: Note[]; nextCursor: string | null; hasMore: boolean }> {
   const rls = rlsExecutor(userId);
 
@@ -223,11 +225,9 @@ async function listNotes(
     const tagRecords = await db
       .select()
       .from(tags)
-      .where(
-        rls.where(tags, inArray(tags.name, options.tags))
-      );
+      .where(rls.where(tags, inArray(tags.name, options.tags)));
 
-    const tagIds = tagRecords.map(t => t.id);
+    const tagIds = tagRecords.map((t) => t.id);
 
     if (tagIds.length > 0) {
       // Find note IDs that have all requested tags
@@ -237,7 +237,7 @@ async function listNotes(
         .where(inArray(noteTags.tagId, tagIds))
         .groupBy(noteTags.noteId);
 
-      const noteIds = noteIdsWithTags.map(nt => nt.noteId);
+      const noteIds = noteIdsWithTags.map((nt) => nt.noteId);
 
       if (noteIds.length > 0) {
         conditions.push(inArray(notes.id, noteIds));
@@ -256,7 +256,8 @@ async function listNotes(
 
   // Determine sort order
   const sortColumn = notes[options.sortBy];
-  const orderBy = options.sortOrder === "desc" ? desc(sortColumn) : asc(sortColumn);
+  const orderBy =
+    options.sortOrder === "desc" ? desc(sortColumn) : asc(sortColumn);
 
   // Fetch one extra to determine if there are more results
   const results = await query
@@ -266,9 +267,10 @@ async function listNotes(
 
   const hasMore = results.length > options.limit;
   const returnedNotes = hasMore ? results.slice(0, options.limit) : results;
-  const nextCursor = hasMore && returnedNotes.length > 0
-    ? returnedNotes[returnedNotes.length - 1]!.id
-    : null;
+  const nextCursor =
+    hasMore && returnedNotes.length > 0
+      ? returnedNotes[returnedNotes.length - 1]?.id
+      : null;
 
   return {
     notes: returnedNotes,
@@ -282,7 +284,7 @@ async function listNotes(
  */
 async function getNoteCount(
   userId: string,
-  noteType?: "note" | "journal"
+  noteType?: "note" | "journal",
 ): Promise<number> {
   const rls = rlsExecutor(userId);
 
@@ -297,11 +299,4 @@ async function getNoteCount(
   return result[0]?.count ?? 0;
 }
 
-export {
-  createNote,
-  getNote,
-  updateNote,
-  deleteNote,
-  listNotes,
-  getNoteCount,
-};
+export { createNote, getNote, updateNote, deleteNote, listNotes, getNoteCount };

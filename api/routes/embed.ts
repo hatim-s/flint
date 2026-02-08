@@ -1,7 +1,6 @@
-import { createApp } from "../app";
-import { getEmbedding } from "@/lib/embeddings";
 import { z } from "zod";
-
+import { getEmbedding } from "@/lib/embeddings";
+import { createApp } from "../app";
 
 const EmbedRequestSchema = z.object({
   text: z.string().min(1).max(4000),

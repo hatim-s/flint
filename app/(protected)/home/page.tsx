@@ -1,11 +1,11 @@
 "use client";
 
-import { useSession, signOut } from "@/auth/client";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LogOut, Plus } from "lucide-react";
+import { useEffect, useState } from "react";
+import { signOut, useSession } from "@/auth/client";
 import { CreateNoteModal } from "@/components/notes";
-import { useState, useEffect } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 
 export default function DashboardPage() {
   const { data: session, isPending } = useSession();
@@ -14,14 +14,14 @@ export default function DashboardPage() {
   // Global keyboard shortcut: Cmd+N / Ctrl+N
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key === 'n') {
+      if ((e.metaKey || e.ctrlKey) && e.key === "n") {
         e.preventDefault();
         setIsCreateModalOpen(true);
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
 
   if (isPending) {
@@ -44,7 +44,10 @@ export default function DashboardPage() {
               <>
                 <div className="flex items-center gap-2">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={user.image || undefined} alt={user.name} />
+                    <AvatarImage
+                      src={user.image || undefined}
+                      alt={user.name}
+                    />
                     <AvatarFallback>
                       {user.name?.charAt(0).toUpperCase() || "U"}
                     </AvatarFallback>
@@ -54,7 +57,15 @@ export default function DashboardPage() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => signOut({ fetchOptions: { onSuccess: () => { window.location.href = "/login"; } } })}
+                  onClick={() =>
+                    signOut({
+                      fetchOptions: {
+                        onSuccess: () => {
+                          window.location.href = "/login";
+                        },
+                      },
+                    })
+                  }
                 >
                   <LogOut className="h-4 w-4" />
                 </Button>
@@ -83,14 +94,19 @@ export default function DashboardPage() {
           {/* Dashboard content will go here */}
           <div className="mt-8">
             <p className="text-sm text-muted-foreground">
-              Press <kbd className="px-2 py-1 text-xs bg-muted rounded">Cmd+N</kbd> or{" "}
-              <kbd className="px-2 py-1 text-xs bg-muted rounded">Ctrl+N</kbd> to create a new note
+              Press{" "}
+              <kbd className="px-2 py-1 text-xs bg-muted rounded">Cmd+N</kbd> or{" "}
+              <kbd className="px-2 py-1 text-xs bg-muted rounded">Ctrl+N</kbd>{" "}
+              to create a new note
             </p>
           </div>
         </div>
       </main>
 
-      <CreateNoteModal open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen} />
+      <CreateNoteModal
+        open={isCreateModalOpen}
+        onOpenChange={setIsCreateModalOpen}
+      />
     </div>
   );
 }

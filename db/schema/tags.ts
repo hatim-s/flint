@@ -1,10 +1,12 @@
-import { pgTable, text, timestamp, index, unique } from "drizzle-orm/pg-core";
+import { index, pgTable, text, timestamp, unique } from "drizzle-orm/pg-core";
 import { user } from "@/auth/schema";
 
 const tags = pgTable(
   "tags",
   {
-    id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+    id: text("id")
+      .primaryKey()
+      .$defaultFn(() => crypto.randomUUID()),
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
@@ -15,7 +17,7 @@ const tags = pgTable(
   (table) => [
     index("tags_userId_idx").on(table.userId),
     unique("tags_userId_name_unique").on(table.userId, table.name),
-  ]
+  ],
 );
 
 type Tag = typeof tags.$inferSelect;

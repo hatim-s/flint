@@ -1,32 +1,32 @@
-'use client';
+"use client";
 
-import type { Editor } from '@tiptap/react';
+import type { Editor } from "@tiptap/react";
 import {
   Bold,
-  Italic,
-  Strikethrough,
   Code,
+  CodeSquare,
   Heading1,
   Heading2,
   Heading3,
-  List,
-  ListOrdered,
-  Quote,
-  CodeSquare,
-  Minus,
-  Link as LinkIcon,
-  Image as ImageIcon,
   Highlighter,
+  Image as ImageIcon,
+  Italic,
+  Link as LinkIcon,
+  List,
   ListChecks,
-} from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
+  ListOrdered,
+  Minus,
+  Quote,
+  Strikethrough,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from '@/components/ui/tooltip';
+} from "@/components/ui/tooltip";
 
 interface EditorToolbarProps {
   editor: Editor | null;
@@ -52,7 +52,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
-            variant={isActive ? 'secondary' : 'ghost'}
+            variant={isActive ? "secondary" : "ghost"}
             size="sm"
             onClick={onClick}
             type="button"
@@ -73,7 +73,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
       {/* Text Formatting */}
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleBold().run()}
-        isActive={editor.isActive('bold')}
+        isActive={editor.isActive("bold")}
         tooltip="Bold (Cmd+B)"
       >
         <Bold className="h-4 w-4" />
@@ -81,7 +81,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
 
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleItalic().run()}
-        isActive={editor.isActive('italic')}
+        isActive={editor.isActive("italic")}
         tooltip="Italic (Cmd+I)"
       >
         <Italic className="h-4 w-4" />
@@ -89,7 +89,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
 
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleStrike().run()}
-        isActive={editor.isActive('strike')}
+        isActive={editor.isActive("strike")}
         tooltip="Strikethrough"
       >
         <Strikethrough className="h-4 w-4" />
@@ -97,7 +97,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
 
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleCode().run()}
-        isActive={editor.isActive('code')}
+        isActive={editor.isActive("code")}
         tooltip="Inline Code (Cmd+E)"
       >
         <Code className="h-4 w-4" />
@@ -105,7 +105,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
 
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleHighlight().run()}
-        isActive={editor.isActive('highlight')}
+        isActive={editor.isActive("highlight")}
         tooltip="Highlight"
       >
         <Highlighter className="h-4 w-4" />
@@ -116,7 +116,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
       {/* Headings */}
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-        isActive={editor.isActive('heading', { level: 1 })}
+        isActive={editor.isActive("heading", { level: 1 })}
         tooltip="Heading 1"
       >
         <Heading1 className="h-4 w-4" />
@@ -124,7 +124,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
 
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
-        isActive={editor.isActive('heading', { level: 2 })}
+        isActive={editor.isActive("heading", { level: 2 })}
         tooltip="Heading 2"
       >
         <Heading2 className="h-4 w-4" />
@@ -132,7 +132,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
 
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
-        isActive={editor.isActive('heading', { level: 3 })}
+        isActive={editor.isActive("heading", { level: 3 })}
         tooltip="Heading 3"
       >
         <Heading3 className="h-4 w-4" />
@@ -143,7 +143,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
       {/* Lists */}
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleBulletList().run()}
-        isActive={editor.isActive('bulletList')}
+        isActive={editor.isActive("bulletList")}
         tooltip="Bullet List"
       >
         <List className="h-4 w-4" />
@@ -151,7 +151,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
 
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleOrderedList().run()}
-        isActive={editor.isActive('orderedList')}
+        isActive={editor.isActive("orderedList")}
         tooltip="Numbered List"
       >
         <ListOrdered className="h-4 w-4" />
@@ -159,7 +159,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
 
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleTaskList().run()}
-        isActive={editor.isActive('taskList')}
+        isActive={editor.isActive("taskList")}
         tooltip="Task List"
       >
         <ListChecks className="h-4 w-4" />
@@ -170,7 +170,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
       {/* Blocks */}
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleBlockquote().run()}
-        isActive={editor.isActive('blockquote')}
+        isActive={editor.isActive("blockquote")}
         tooltip="Quote"
       >
         <Quote className="h-4 w-4" />
@@ -178,7 +178,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
 
       <ToolbarButton
         onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-        isActive={editor.isActive('codeBlock')}
+        isActive={editor.isActive("codeBlock")}
         tooltip="Code Block"
       >
         <CodeSquare className="h-4 w-4" />
@@ -196,12 +196,12 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
       {/* Link & Image */}
       <ToolbarButton
         onClick={() => {
-          const url = window.prompt('Enter URL');
+          const url = window.prompt("Enter URL");
           if (url) {
             editor.chain().focus().setLink({ href: url }).run();
           }
         }}
-        isActive={editor.isActive('link')}
+        isActive={editor.isActive("link")}
         tooltip="Insert Link (Cmd+K)"
       >
         <LinkIcon className="h-4 w-4" />
@@ -209,7 +209,7 @@ export function EditorToolbar({ editor }: EditorToolbarProps) {
 
       <ToolbarButton
         onClick={() => {
-          const url = window.prompt('Enter image URL');
+          const url = window.prompt("Enter image URL");
           if (url) {
             editor.chain().focus().setImage({ src: url }).run();
           }

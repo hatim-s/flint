@@ -1,30 +1,38 @@
-'use client';
+"use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Slider } from '@/components/ui/slider';
-import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
-import { Smile, FileText } from 'lucide-react';
+import { FileText, Smile } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Slider } from "@/components/ui/slider";
 
 interface LiveTrackersProps {
   moodScore: number;
   onMoodChange: (value: number) => void;
   wordCount: number;
-  noteType?: 'note' | 'journal';
+  noteType?: "note" | "journal";
 }
 
 const MOOD_LABELS = [
-  { range: [1, 2], label: 'Very Low', color: 'bg-red-500' },
-  { range: [3, 4], label: 'Low', color: 'bg-orange-500' },
-  { range: [5, 6], label: 'Neutral', color: 'bg-yellow-500' },
-  { range: [7, 8], label: 'Good', color: 'bg-green-500' },
-  { range: [9, 10], label: 'Excellent', color: 'bg-emerald-500' },
+  { range: [1, 2], label: "Very Low", color: "bg-red-500" },
+  { range: [3, 4], label: "Low", color: "bg-orange-500" },
+  { range: [5, 6], label: "Neutral", color: "bg-yellow-500" },
+  { range: [7, 8], label: "Good", color: "bg-green-500" },
+  { range: [9, 10], label: "Excellent", color: "bg-emerald-500" },
 ];
 
 function getMoodLabel(score: number) {
   const mood = MOOD_LABELS.find(
-    ({ range }) => score >= range[0]! && score <= range[1]!
+    // biome-ignore lint/style/noNonNullAssertion: range has atleast 2 elements
+    ({ range }) => score >= range[0]! && score <= range[1]!,
   );
+  // biome-ignore lint/style/noNonNullAssertion: mood labels has enough items
   return mood ?? MOOD_LABELS[2]!; // Default to neutral
 }
 
@@ -87,13 +95,12 @@ export function LiveTrackers({
           <Separator />
           <div className="flex justify-between items-center">
             <span className="text-sm text-muted-foreground">Type</span>
-            <Badge variant={noteType === 'journal' ? 'default' : 'secondary'}>
-              {noteType === 'journal' ? 'Journal' : 'Note'}
+            <Badge variant={noteType === "journal" ? "default" : "secondary"}>
+              {noteType === "journal" ? "Journal" : "Note"}
             </Badge>
           </div>
         </CardContent>
       </Card>
-
     </div>
   );
 }

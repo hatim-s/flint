@@ -1,12 +1,12 @@
 import { createApp } from "../app";
-import notesRoutes from "./notes";
-import searchRoutes from "./search";
 import analyticsRoutes from "./analytics";
-import tagsRoutes from "./tags";
+import embedRoutes from "./embed";
+import notesRoutes from "./notes";
 import peopleRoutes from "./people";
+import searchRoutes from "./search";
+import tagsRoutes from "./tags";
 import templatesRoutes from "./templates";
 import transcribeRoutes from "./transcribe";
-import embedRoutes from "./embed";
 
 const routes = [
   notesRoutes,
@@ -17,12 +17,12 @@ const routes = [
   templatesRoutes,
   transcribeRoutes,
   embedRoutes,
- ] as const;
+] as const;
 
 const app = createApp();
 
 routes.forEach((route) => {
-  app.route('/', route);
+  app.route("/", route);
 });
 
 export type AppType = (typeof routes)[number];

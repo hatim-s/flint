@@ -2,17 +2,23 @@
 
 import { useEffect, useState } from "react";
 import {
-  LineChart,
+  CartesianGrid,
   Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
 } from "recharts";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/api/client";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface MoodDataPoint {
   date: string;
@@ -157,17 +163,22 @@ export function MoodChart({ days = 30 }: MoodChartProps) {
                         <div className="flex items-center gap-2">
                           <div
                             className="w-3 h-3 rounded-full"
-                            style={{ backgroundColor: getMoodColor(data.avgMood) }}
+                            style={{
+                              backgroundColor: getMoodColor(data.avgMood),
+                            }}
                           />
                           <span>Average Mood: {data.avgMood.toFixed(1)}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <div className="w-3 h-3 rounded-full bg-blue-500" />
-                          <span>Moving Average: {data.movingAverage.toFixed(2)}</span>
+                          <span>
+                            Moving Average: {data.movingAverage.toFixed(2)}
+                          </span>
                         </div>
                         <div>
                           <span className="text-muted-foreground">
-                            {data.noteCount} {data.noteCount === 1 ? "note" : "notes"}
+                            {data.noteCount}{" "}
+                            {data.noteCount === 1 ? "note" : "notes"}
                           </span>
                         </div>
                       </div>

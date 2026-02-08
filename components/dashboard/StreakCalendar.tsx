@@ -1,10 +1,17 @@
+/** biome-ignore-all lint/suspicious/noArrayIndexKey: is okay since none of them are deletable or draggable */
 "use client";
 
+import { Calendar, Flame } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Flame, Calendar } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { api } from "@/api/client";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface ActivityDay {
   date: string;
@@ -63,8 +70,8 @@ export function StreakCalendar({ days = 90 }: StreakCalendarProps) {
   // Format date string helper
   const toDateString = (date: Date): string => {
     const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
     return `${year}-${month}-${day}`;
   };
 
@@ -80,7 +87,12 @@ export function StreakCalendar({ days = 90 }: StreakCalendarProps) {
   // Format date for tooltip
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
-    return date.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
+    return date.toLocaleDateString("en-US", {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      year: "numeric",
+    });
   };
 
   if (isLoading) {
@@ -131,7 +143,7 @@ export function StreakCalendar({ days = 90 }: StreakCalendarProps) {
     isNewMonth: boolean;
   }> = [];
 
-  let currentDate = new Date(startDate);
+  const currentDate = new Date(startDate);
   let lastDayOfWeek = -1;
   let lastMonth = -1;
 
@@ -165,7 +177,10 @@ export function StreakCalendar({ days = 90 }: StreakCalendarProps) {
   let currentMonthName = "";
 
   calendarData.forEach((item) => {
-    const monthName = new Date(item.date).toLocaleDateString("en-US", { month: "long", year: "numeric" });
+    const monthName = new Date(item.date).toLocaleDateString("en-US", {
+      month: "long",
+      year: "numeric",
+    });
 
     if (monthName !== currentMonthName) {
       if (currentWeek.length > 0) {
@@ -224,7 +239,11 @@ export function StreakCalendar({ days = 90 }: StreakCalendarProps) {
           <div className="flex items-center gap-4 text-sm">
             <Calendar className="h-4 w-4 text-muted-foreground" />
             <span className="text-muted-foreground">
-              Longest streak: <span className="font-semibold text-foreground">{longestStreak}</span> days
+              Longest streak:{" "}
+              <span className="font-semibold text-foreground">
+                {longestStreak}
+              </span>{" "}
+              days
             </span>
           </div>
 
@@ -237,15 +256,22 @@ export function StreakCalendar({ days = 90 }: StreakCalendarProps) {
                   {monthData.weeks.map((week, weekIndex) => (
                     <div key={weekIndex} className="flex flex-col gap-1">
                       {week.map((day, dayIndex) => {
-                        if (!day) return <div key={dayIndex} className="w-3 h-3 rounded-sm" />;
+                        if (!day)
+                          return (
+                            <div
+                              key={dayIndex}
+                              className="w-3 h-3 rounded-sm"
+                            />
+                          );
 
                         return (
+                          // biome-ignore lint/a11y/noStaticElementInteractions: is okay
                           <div
                             key={dayIndex}
                             className={`w-3 h-3 rounded-sm cursor-pointer transition-all hover:ring-2 hover:ring-offset-1 hover:ring-primary ${getLevelColor(day.level)}`}
                             onMouseEnter={() => setHoveredDate(day)}
                             onMouseLeave={() => setHoveredDate(null)}
-                            title={`${day.noteCount} ${day.noteCount === 1 ? 'note' : 'notes'}`}
+                            title={`${day.noteCount} ${day.noteCount === 1 ? "note" : "notes"}`}
                           />
                         );
                       })}
@@ -260,15 +286,21 @@ export function StreakCalendar({ days = 90 }: StreakCalendarProps) {
           {hoveredDate && (
             <div className="fixed inset-0 pointer-events-none flex items-center justify-center z-50 bg-background/50 backdrop-blur-sm">
               <div className="bg-background border rounded-lg p-4 shadow-lg max-w-sm pointer-events-auto">
-                <p className="font-semibold mb-2">{formatDate(hoveredDate.date)}</p>
+                <p className="font-semibold mb-2">
+                  {formatDate(hoveredDate.date)}
+                </p>
                 <div className="space-y-1 text-sm">
                   <div>
-                    <span className="text-muted-foreground">Notes created:</span>{" "}
+                    <span className="text-muted-foreground">
+                      Notes created:
+                    </span>{" "}
                     <span className="font-medium">{hoveredDate.noteCount}</span>
                   </div>
                   {hoveredDate.noteCount > 0 && (
                     <div>
-                      <span className="text-muted-foreground">Activity level:</span>{" "}
+                      <span className="text-muted-foreground">
+                        Activity level:
+                      </span>{" "}
                       <span className="font-medium">{hoveredDate.level}/4</span>
                     </div>
                   )}

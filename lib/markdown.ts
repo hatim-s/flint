@@ -23,5 +23,8 @@ export function stripMarkdown(markdown: string): string {
  * Count words in text.
  */
 export function countWords(text: string): number {
-  return text.trim().split(/\s+/).filter((word) => word.length > 0).length;
+  return text
+    .trim()
+    .split(/\s+/)
+    .filter((word) => word.length > 0).length;
 }

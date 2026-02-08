@@ -1,8 +1,21 @@
-'use client';
+"use client";
 
-import { useState, useCallback, useRef, useEffect } from 'react';
-import { useVoiceRecorder } from '@/hooks';
-import { Button } from '@/components/ui/button';
+import {
+  AlertCircle,
+  Check,
+  Loader2,
+  Mic,
+  MicOff,
+  Pause,
+  Play,
+  RotateCcw,
+  Square,
+  X,
+} from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
+import { api } from "@/api/client";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -10,34 +23,21 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
-import { toast } from 'sonner';
-import { api } from '@/api/client';
-import {
-  Mic,
-  MicOff,
-  Square,
-  X,
-  Loader2,
-  Play,
-  Pause,
-  RotateCcw,
-  Check,
-  AlertCircle,
-} from 'lucide-react';
-import { cn } from '@/components/ui/lib/utils';
+} from "@/components/ui/dialog";
+import { cn } from "@/components/ui/lib/utils";
+import { Textarea } from "@/components/ui/textarea";
+import { useVoiceRecorder } from "@/hooks";
 
 /**
  * Voice capture state machine
  */
 type VoiceCaptureState =
-  | 'idle'
-  | 'recording'
-  | 'paused'
-  | 'processing'
-  | 'preview'
-  | 'error';
+  | "idle"
+  | "recording"
+  | "paused"
+  | "processing"
+  | "preview"
+  | "error";
 
 /**
  * Props for the VoiceCapture component
@@ -50,7 +50,7 @@ interface VoiceCaptureProps {
   /** Whether the component is disabled */
   disabled?: boolean;
   /** Floating button position (for styling) */
-  position?: 'inline' | 'floating';
+  position?: "inline" | "floating";
 }
 
 /**
@@ -75,14 +75,17 @@ function AudioWaveform({
 
         return (
           <div
+            // biome-ignore lint/suspicious/noArrayIndexKey: is ok
             key={i}
             className={cn(
-              'w-1 rounded-full transition-all duration-75',
-              isRecording ? 'bg-red-500' : 'bg-muted-foreground/30'
+              "w-1 rounded-full transition-all duration-75",
+              isRecording ? "bg-red-500" : "bg-muted-foreground/30",
             )}
             style={{
               height: `${height * 48}px`,
-              transform: isRecording ? `scaleY(${0.8 + Math.random() * 0.4})` : 'scaleY(1)',
+              transform: isRecording
+                ? `scaleY(${0.8 + Math.random() * 0.4})`
+                : "scaleY(1)",
             }}
           />
         );
@@ -105,16 +108,16 @@ export function VoiceCapture({
   onInsert,
   className,
   disabled = false,
-  position = 'inline',
+  position = "inline",
 }: VoiceCaptureProps) {
   // Voice recorder hook
   const {
     state: recorderState,
-    isRecording,
-    isPaused,
+    // isRecording,
+    // isPaused,
     formattedDuration,
     audioLevel,
-    audioBlob,
+    // audioBlob,
     audioUrl,
     error: recorderError,
     errorMessage,
@@ -127,21 +130,23 @@ export function VoiceCapture({
   } = useVoiceRecorder();
 
   // Component state
-  const [captureState, setCaptureState] = useState<VoiceCaptureState>('idle');
-  const [transcription, setTranscription] = useState('');
+  const [captureState, setCaptureState] = useState<VoiceCaptureState>("idle");
+  const [transcription, setTranscription] = useState("");
   const [isPlaying, setIsPlaying] = useState(false);
-  const [transcriptionError, setTranscriptionError] = useState<string | null>(null);
+  const [transcriptionError, setTranscriptionError] = useState<string | null>(
+    null,
+  );
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Sync recorder state with capture state
   useEffect(() => {
     if (recorderError) {
-      setCaptureState('error');
+      setCaptureState("error");
       setTranscriptionError(errorMessage);
-    } else if (recorderState === 'recording') {
-      setCaptureState('recording');
-    } else if (recorderState === 'paused') {
-      setCaptureState('paused');
+    } else if (recorderState === "recording") {
+      setCaptureState("recording");
+    } else if (recorderState === "paused") {
+      setCaptureState("paused");
     }
   }, [recorderState, recorderError, errorMessage]);
 
@@ -150,10 +155,10 @@ export function VoiceCapture({
    */
   const handleStart = useCallback(async () => {
     setTranscriptionError(null);
-    setTranscription('');
+    setTranscription("");
     const success = await startRecording();
     if (!success) {
-      setCaptureState('error');
+      setCaptureState("error");
     }
   }, [startRecording]);
 
@@ -163,17 +168,17 @@ export function VoiceCapture({
   const handleDone = useCallback(async () => {
     const blob = await stopRecording();
     if (!blob) {
-      toast.error('Failed to capture audio');
-      setCaptureState('error');
+      toast.error("Failed to capture audio");
+      setCaptureState("error");
       return;
     }
 
-    setCaptureState('processing');
+    setCaptureState("processing");
 
     try {
       // Upload to transcription API
       const formData = new FormData();
-      formData.append('audio', blob, 'recording.webm');
+      formData.append("audio", blob, "recording.webm");
 
       const response = await api.transcribe.$post({
         form: formData,
@@ -181,18 +186,18 @@ export function VoiceCapture({
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Transcription failed');
+        throw new Error(errorData.error || "Transcription failed");
       }
 
       const data = await response.json();
-      setTranscription(data.text || '');
-      setCaptureState('preview');
+      setTranscription(data.text || "");
+      setCaptureState("preview");
     } catch (err) {
-      console.error('Transcription error:', err);
+      console.error("Transcription error:", err);
       setTranscriptionError(
-        err instanceof Error ? err.message : 'Failed to transcribe audio'
+        err instanceof Error ? err.message : "Failed to transcribe audio",
       );
-      setCaptureState('error');
+      setCaptureState("error");
     }
   }, [stopRecording]);
 
@@ -201,8 +206,8 @@ export function VoiceCapture({
    */
   const handleCancel = useCallback(() => {
     reset();
-    setCaptureState('idle');
-    setTranscription('');
+    setCaptureState("idle");
+    setTranscription("");
     setTranscriptionError(null);
   }, [reset]);
 
@@ -212,7 +217,7 @@ export function VoiceCapture({
   const handleInsert = useCallback(() => {
     if (transcription.trim()) {
       onInsert(transcription.trim());
-      toast.success('Transcription inserted');
+      toast.success("Transcription inserted");
     }
     handleCancel();
   }, [transcription, onInsert, handleCancel]);
@@ -222,8 +227,8 @@ export function VoiceCapture({
    */
   const handleReRecord = useCallback(() => {
     reset();
-    setTranscription('');
-    setCaptureState('idle');
+    setTranscription("");
+    setCaptureState("idle");
     // Start recording again after a short delay
     setTimeout(() => handleStart(), 100);
   }, [reset, handleStart]);
@@ -249,9 +254,9 @@ export function VoiceCapture({
     if (!audio) return;
 
     const handleEnded = () => setIsPlaying(false);
-    audio.addEventListener('ended', handleEnded);
-    return () => audio.removeEventListener('ended', handleEnded);
-  }, [audioUrl]);
+    audio.addEventListener("ended", handleEnded);
+    return () => audio.removeEventListener("ended", handleEnded);
+  }, []);
 
   // Not supported message
   if (!isSupported) {
@@ -261,10 +266,10 @@ export function VoiceCapture({
         size="icon"
         disabled
         className={cn(
-          'relative',
-          position === 'floating' &&
-          'fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg',
-          className
+          "relative",
+          position === "floating" &&
+            "fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg",
+          className,
         )}
         title="Voice recording not supported in this browser"
       >
@@ -277,52 +282,54 @@ export function VoiceCapture({
   return (
     <>
       {/* Main Button - Idle State */}
-      {captureState === 'idle' && (
+      {captureState === "idle" && (
         <Button
-          variant={position === 'floating' ? 'default' : 'outline'}
-          size={position === 'floating' ? 'lg' : 'icon'}
+          variant={position === "floating" ? "default" : "outline"}
+          size={position === "floating" ? "lg" : "icon"}
           onClick={handleStart}
           disabled={disabled}
           className={cn(
-            'relative',
-            position === 'floating' &&
-            'fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow',
-            className
+            "relative",
+            position === "floating" &&
+              "fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow",
+            className,
           )}
           title="Start voice recording"
         >
-          <Mic className={cn('h-5 w-5', position === 'floating' && 'h-6 w-6')} />
+          <Mic
+            className={cn("h-5 w-5", position === "floating" && "h-6 w-6")}
+          />
         </Button>
       )}
 
       {/* Recording/Paused State - Expanded UI */}
-      {(captureState === 'recording' || captureState === 'paused') && (
+      {(captureState === "recording" || captureState === "paused") && (
         <div
           className={cn(
-            'flex flex-col items-center gap-4 p-4 rounded-lg border bg-background',
-            position === 'floating' &&
-            'fixed bottom-6 right-6 shadow-xl min-w-[280px]',
-            position === 'inline' && 'w-full max-w-sm mx-auto',
-            className
+            "flex flex-col items-center gap-4 p-4 rounded-lg border bg-background",
+            position === "floating" &&
+              "fixed bottom-6 right-6 shadow-xl min-w-70",
+            position === "inline" && "w-full max-w-sm mx-auto",
+            className,
           )}
         >
           {/* Pulsing Indicator */}
           <div className="relative">
             <div
               className={cn(
-                'w-16 h-16 rounded-full flex items-center justify-center',
-                captureState === 'recording'
-                  ? 'bg-red-500 animate-pulse'
-                  : 'bg-yellow-500'
+                "w-16 h-16 rounded-full flex items-center justify-center",
+                captureState === "recording"
+                  ? "bg-red-500 animate-pulse"
+                  : "bg-yellow-500",
               )}
             >
-              {captureState === 'recording' ? (
+              {captureState === "recording" ? (
                 <Mic className="h-8 w-8 text-white" />
               ) : (
                 <Pause className="h-8 w-8 text-white" />
               )}
             </div>
-            {captureState === 'recording' && (
+            {captureState === "recording" && (
               <span className="absolute -top-1 -right-1 flex h-4 w-4">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-4 w-4 bg-red-500"></span>
@@ -338,7 +345,7 @@ export function VoiceCapture({
           {/* Audio Waveform */}
           <AudioWaveform
             audioLevel={audioLevel}
-            isRecording={captureState === 'recording'}
+            isRecording={captureState === "recording"}
           />
 
           {/* Controls */}
@@ -357,10 +364,12 @@ export function VoiceCapture({
             <Button
               variant="outline"
               size="icon"
-              onClick={captureState === 'recording' ? pauseRecording : resumeRecording}
-              title={captureState === 'recording' ? 'Pause' : 'Resume'}
+              onClick={
+                captureState === "recording" ? pauseRecording : resumeRecording
+              }
+              title={captureState === "recording" ? "Pause" : "Resume"}
             >
-              {captureState === 'recording' ? (
+              {captureState === "recording" ? (
                 <Pause className="h-4 w-4" />
               ) : (
                 <Play className="h-4 w-4" />
@@ -382,14 +391,14 @@ export function VoiceCapture({
       )}
 
       {/* Processing State */}
-      {captureState === 'processing' && (
+      {captureState === "processing" && (
         <div
           className={cn(
-            'flex flex-col items-center gap-4 p-6 rounded-lg border bg-background',
-            position === 'floating' &&
-            'fixed bottom-6 right-6 shadow-xl min-w-[280px]',
-            position === 'inline' && 'w-full max-w-sm mx-auto',
-            className
+            "flex flex-col items-center gap-4 p-6 rounded-lg border bg-background",
+            position === "floating" &&
+              "fixed bottom-6 right-6 shadow-xl min-w-70",
+            position === "inline" && "w-full max-w-sm mx-auto",
+            className,
           )}
         >
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -403,14 +412,14 @@ export function VoiceCapture({
       )}
 
       {/* Error State */}
-      {captureState === 'error' && (
+      {captureState === "error" && (
         <div
           className={cn(
-            'flex flex-col items-center gap-4 p-6 rounded-lg border border-destructive/50 bg-background',
-            position === 'floating' &&
-            'fixed bottom-6 right-6 shadow-xl min-w-[280px]',
-            position === 'inline' && 'w-full max-w-sm mx-auto',
-            className
+            "flex flex-col items-center gap-4 p-6 rounded-lg border border-destructive/50 bg-background",
+            position === "floating" &&
+              "fixed bottom-6 right-6 shadow-xl min-w-70",
+            position === "inline" && "w-full max-w-sm mx-auto",
+            className,
           )}
         >
           <div className="w-12 h-12 rounded-full bg-destructive/10 flex items-center justify-center">
@@ -419,7 +428,7 @@ export function VoiceCapture({
           <div className="text-center">
             <p className="font-medium text-destructive">Recording Error</p>
             <p className="text-sm text-muted-foreground">
-              {transcriptionError || 'Something went wrong'}
+              {transcriptionError || "Something went wrong"}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -436,7 +445,7 @@ export function VoiceCapture({
 
       {/* Preview Dialog */}
       <Dialog
-        open={captureState === 'preview'}
+        open={captureState === "preview"}
         onOpenChange={(open) => {
           if (!open) handleCancel();
         }}
@@ -445,7 +454,8 @@ export function VoiceCapture({
           <DialogHeader>
             <DialogTitle>Voice Transcription</DialogTitle>
             <DialogDescription>
-              Review and edit the transcription before inserting it into your note.
+              Review and edit the transcription before inserting it into your
+              note.
             </DialogDescription>
           </DialogHeader>
 
@@ -465,8 +475,9 @@ export function VoiceCapture({
                 )}
               </Button>
               <div className="flex-1 text-sm text-muted-foreground">
-                {isPlaying ? 'Playing audio...' : 'Click to play recording'}
+                {isPlaying ? "Playing audio..." : "Click to play recording"}
               </div>
+              {/** biome-ignore lint/a11y/useMediaCaption: audio is not a media element */}
               <audio ref={audioRef} src={audioUrl} className="hidden" />
             </div>
           )}
@@ -476,7 +487,7 @@ export function VoiceCapture({
             value={transcription}
             onChange={(e) => setTranscription(e.target.value)}
             placeholder="Transcription will appear here..."
-            className="min-h-[150px] resize-none"
+            className="min-h-37.5 resize-none"
           />
 
           <DialogFooter className="flex-col sm:flex-row gap-2">
@@ -491,10 +502,7 @@ export function VoiceCapture({
             <Button variant="outline" onClick={handleCancel}>
               Cancel
             </Button>
-            <Button
-              onClick={handleInsert}
-              disabled={!transcription.trim()}
-            >
+            <Button onClick={handleInsert} disabled={!transcription.trim()}>
               <Check className="h-4 w-4 mr-2" />
               Insert
             </Button>

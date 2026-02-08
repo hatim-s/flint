@@ -1,25 +1,16 @@
+import { and, eq, inArray, or } from "drizzle-orm";
+import { ZodError, z } from "zod";
 import { createApp } from "@/api/app";
+import { db } from "@/db";
+import { rlsExecutor } from "@/db/lib/rls";
 import { embedNote } from "@/db/operations/jobs/embedNote";
 import {
   createNote as baseCreateNote,
   deleteNote as baseDeleteNote,
+  updateNote as baseUpdateNote,
   getNote,
   listNotes,
-  updateNote as baseUpdateNote,
 } from "@/db/operations/notes";
-import {
-  createNoteSchema,
-  listNotesSchema,
-  updateNoteSchema,
-} from "@/db/schema/notes";
-import { ZodError, z } from "zod";
-import { deleteNoteVector, findRelatedNotes, semanticSearch } from "@/lib/vector";
-import { getEmbedding } from "@/lib/embeddings";
-import { db } from "@/db";
-import { notes } from "@/db/schema/notes";
-import { noteLinks } from "@/db/schema/noteLinks";
-import { rlsExecutor } from "@/db/lib/rls";
-import { eq, and, or, inArray } from "drizzle-orm";
 import {
   syncNoteMentions as baseSyncNoteMentions,
   getNoteMentions as fetchNoteMentions,
@@ -28,6 +19,19 @@ import {
   syncNoteTags as baseSyncNoteTags,
   getNoteTags as fetchNoteTags,
 } from "@/db/operations/tags";
+import { noteLinks } from "@/db/schema/noteLinks";
+import {
+  createNoteSchema,
+  listNotesSchema,
+  notes,
+  updateNoteSchema,
+} from "@/db/schema/notes";
+import { getEmbedding } from "@/lib/embeddings";
+import {
+  deleteNoteVector,
+  findRelatedNotes,
+  semanticSearch,
+} from "@/lib/vector";
 
 const createLinkSchema = z.object({
   targetNoteId: z.string().min(1, "Target note ID is required"),
@@ -44,19 +48,35 @@ const syncTagsSchema = z.object({
 });
 
 const app = createApp()
-  .get('/notes', async (c) => {
+  .get("/notes", async (c) => {
     try {
       const { searchParams } = new URL(c.req.url);
       const rawParams = {
-        limit: searchParams.get("limit") ? parseInt(searchParams.get("limit")!, 10) : undefined,
+        limit: searchParams.get("limit")
+          ? // biome-ignore lint/style/noNonNullAssertion: is present, checked in the ternary
+            parseInt(searchParams.get("limit")!, 10)
+          : undefined,
         cursor: searchParams.get("cursor") ?? undefined,
-        noteType: searchParams.get("noteType") as "note" | "journal" | undefined,
+        noteType: searchParams.get("noteType") as
+          | "note"
+          | "journal"
+          | undefined,
         tags: searchParams.get("tags")?.split(",").filter(Boolean) ?? undefined,
-        minMood: searchParams.get("minMood") ? parseInt(searchParams.get("minMood")!, 10) : undefined,
-        maxMood: searchParams.get("maxMood") ? parseInt(searchParams.get("maxMood")!, 10) : undefined,
+        minMood: searchParams.get("minMood")
+          ? // biome-ignore lint/style/noNonNullAssertion: is present, checked in the ternary
+            parseInt(searchParams.get("minMood")!, 10)
+          : undefined,
+        maxMood: searchParams.get("maxMood")
+          ? // biome-ignore lint/style/noNonNullAssertion: is present, checked in the ternary
+            parseInt(searchParams.get("maxMood")!, 10)
+          : undefined,
         startDate: searchParams.get("startDate") ?? undefined,
         endDate: searchParams.get("endDate") ?? undefined,
-        sortBy: searchParams.get("sortBy") as "createdAt" | "updatedAt" | "title" | undefined,
+        sortBy: searchParams.get("sortBy") as
+          | "createdAt"
+          | "updatedAt"
+          | "title"
+          | undefined,
         sortOrder: searchParams.get("sortOrder") as "asc" | "desc" | undefined,
       };
 
@@ -74,7 +94,7 @@ const app = createApp()
       if (error instanceof ZodError) {
         return c.json(
           { error: "Invalid parameters", details: error.issues },
-          400
+          400,
         );
       }
 
@@ -82,7 +102,7 @@ const app = createApp()
       return c.json({ error: "Internal server error" }, 500);
     }
   })
-  .post('/notes', async (c) => {
+  .post("/notes", async (c) => {
     try {
       const body = await c.req.json();
       const input = createNoteSchema.parse(body);
@@ -96,17 +116,14 @@ const app = createApp()
       return c.json({ data: note }, 201);
     } catch (error) {
       if (error instanceof ZodError) {
-        return c.json(
-          { error: "Invalid input", details: error.issues },
-          400
-        );
+        return c.json({ error: "Invalid input", details: error.issues }, 400);
       }
 
       console.error("Error creating note:", error);
       return c.json({ error: "Internal server error" }, 500);
     }
   })
-  .get('/notes/:id', async (c) => {
+  .get("/notes/:id", async (c) => {
     try {
       const id = c.req.param("id");
       const note = await getNote(c.get("userId"), id);
@@ -121,7 +138,7 @@ const app = createApp()
       return c.json({ error: "Internal server error" }, 500);
     }
   })
-  .put('/notes/:id', async (c) => {
+  .put("/notes/:id", async (c) => {
     try {
       const id = c.req.param("id");
       const body = await c.req.json();
@@ -138,10 +155,7 @@ const app = createApp()
       return c.json({ data: note });
     } catch (error) {
       if (error instanceof ZodError) {
-        return c.json(
-          { error: "Invalid input", details: error.issues },
-          400
-        );
+        return c.json({ error: "Invalid input", details: error.issues }, 400);
       }
 
       if (error instanceof Error) {
@@ -158,7 +172,7 @@ const app = createApp()
       return c.json({ error: "Internal server error" }, 500);
     }
   })
-  .delete('/notes/:id', async (c) => {
+  .delete("/notes/:id", async (c) => {
     try {
       const id = c.req.param("id");
       await baseDeleteNote(c.get("userId"), id);
@@ -177,7 +191,7 @@ const app = createApp()
       return c.json({ error: "Internal server error" }, 500);
     }
   })
-  .post('/notes/:id/link', async (c) => {
+  .post("/notes/:id/link", async (c) => {
     try {
       const sourceNoteId = c.req.param("id");
       const body = await c.req.json();
@@ -185,8 +199,10 @@ const app = createApp()
 
       if (!validationResult.success) {
         return c.json(
-          { error: validationResult.error.issues[0]?.message || "Invalid input" },
-          400
+          {
+            error: validationResult.error.issues[0]?.message || "Invalid input",
+          },
+          400,
         );
       }
 
@@ -224,13 +240,13 @@ const app = createApp()
           or(
             and(
               eq(noteLinks.sourceNoteId, sourceNoteId),
-              eq(noteLinks.targetNoteId, targetNoteId)
+              eq(noteLinks.targetNoteId, targetNoteId),
             ),
             and(
               eq(noteLinks.sourceNoteId, targetNoteId),
-              eq(noteLinks.targetNoteId, sourceNoteId)
-            )
-          )
+              eq(noteLinks.targetNoteId, sourceNoteId),
+            ),
+          ),
         )
         .limit(1);
 
@@ -240,7 +256,7 @@ const app = createApp()
             error: "Link already exists between these notes",
             existingLinkId: existingLink[0]?.id,
           },
-          409
+          409,
         );
       }
 
@@ -260,14 +276,17 @@ const app = createApp()
       return c.json({ error: "Failed to create note link" }, 500);
     }
   })
-  .delete('/notes/:id/link', async (c) => {
+  .delete("/notes/:id/link", async (c) => {
     try {
       const sourceNoteId = c.req.param("id");
       const { searchParams } = new URL(c.req.url);
       const targetNoteId = searchParams.get("targetNoteId");
 
       if (!targetNoteId) {
-        return c.json({ error: "targetNoteId query parameter is required" }, 400);
+        return c.json(
+          { error: "targetNoteId query parameter is required" },
+          400,
+        );
       }
 
       const rls = rlsExecutor(c.get("userId"));
@@ -294,13 +313,13 @@ const app = createApp()
           or(
             and(
               eq(noteLinks.sourceNoteId, sourceNoteId),
-              eq(noteLinks.targetNoteId, targetNoteId)
+              eq(noteLinks.targetNoteId, targetNoteId),
             ),
             and(
               eq(noteLinks.sourceNoteId, targetNoteId),
-              eq(noteLinks.targetNoteId, sourceNoteId)
-            )
-          )
+              eq(noteLinks.targetNoteId, sourceNoteId),
+            ),
+          ),
         )
         .returning();
 
@@ -314,7 +333,7 @@ const app = createApp()
       return c.json({ error: "Failed to delete note link" }, 500);
     }
   })
-  .get('/notes/:id/mentions', async (c) => {
+  .get("/notes/:id/mentions", async (c) => {
     try {
       const noteId = c.req.param("id");
       const mentions = await fetchNoteMentions(c.get("userId"), noteId);
@@ -324,7 +343,7 @@ const app = createApp()
       return c.json({ error: "Failed to fetch note mentions" }, 500);
     }
   })
-  .post('/notes/:id/mentions', async (c) => {
+  .post("/notes/:id/mentions", async (c) => {
     try {
       const noteId = c.req.param("id");
       const body = await c.req.json();
@@ -333,7 +352,7 @@ const app = createApp()
       if (!validationResult.success) {
         return c.json(
           { error: "Invalid input", details: validationResult.error.issues },
-          400
+          400,
         );
       }
 
@@ -348,7 +367,7 @@ const app = createApp()
       return c.json({ error: "Failed to sync note mentions" }, 500);
     }
   })
-  .get('/notes/:id/tags', async (c) => {
+  .get("/notes/:id/tags", async (c) => {
     try {
       const noteId = c.req.param("id");
       const tags = await fetchNoteTags(c.get("userId"), noteId);
@@ -358,7 +377,7 @@ const app = createApp()
       return c.json({ error: "Failed to fetch note tags" }, 500);
     }
   })
-  .post('/notes/:id/tags', async (c) => {
+  .post("/notes/:id/tags", async (c) => {
     try {
       const noteId = c.req.param("id");
       const body = await c.req.json();
@@ -367,7 +386,7 @@ const app = createApp()
       if (!validationResult.success) {
         return c.json(
           { error: "Invalid input", details: validationResult.error.issues },
-          400
+          400,
         );
       }
 
@@ -382,11 +401,14 @@ const app = createApp()
       return c.json({ error: "Failed to sync note tags" }, 500);
     }
   })
-  .get('/notes/:id/related', async (c) => {
+  .get("/notes/:id/related", async (c) => {
     try {
       const noteId = c.req.param("id");
       const { searchParams } = new URL(c.req.url);
-      const limit = Math.min(Math.max(parseInt(searchParams.get("limit") || "5"), 1), 10);
+      const limit = Math.min(
+        Math.max(parseInt(searchParams.get("limit") || "5", 10), 1),
+        10,
+      );
       const rls = rlsExecutor(c.get("userId"));
 
       const [note] = await db
@@ -399,7 +421,11 @@ const app = createApp()
         return c.json({ error: "Note not found" }, 404);
       }
 
-      const relatedResults = await findRelatedNotes(noteId, c.get("userId"), limit);
+      const relatedResults = await findRelatedNotes(
+        noteId,
+        c.get("userId"),
+        limit,
+      );
 
       if (relatedResults.length === 0) {
         return c.json({ related: [], hasEmbedding: false });
@@ -430,19 +456,19 @@ const app = createApp()
           or(
             and(
               eq(noteLinks.sourceNoteId, noteId),
-              inArray(noteLinks.targetNoteId, relatedNoteIds)
+              inArray(noteLinks.targetNoteId, relatedNoteIds),
             ),
             and(
               eq(noteLinks.targetNoteId, noteId),
-              inArray(noteLinks.sourceNoteId, relatedNoteIds)
-            )
-          )
+              inArray(noteLinks.sourceNoteId, relatedNoteIds),
+            ),
+          ),
         );
 
       const linkedNoteIds = new Set(
         existingLinks.map((link) =>
-          link.sourceNoteId === noteId ? link.targetNoteId : link.sourceNoteId
-        )
+          link.sourceNoteId === noteId ? link.targetNoteId : link.sourceNoteId,
+        ),
       );
 
       const related = relatedResults
@@ -459,9 +485,10 @@ const app = createApp()
             .replace(/\n+/g, " ")
             .trim();
 
-          const preview = plainContent.length > 150
-            ? plainContent.slice(0, 150) + "..."
-            : plainContent;
+          const preview =
+            plainContent.length > 150
+              ? `${plainContent.slice(0, 150)}...`
+              : plainContent;
 
           return {
             id: noteData.id,
@@ -483,18 +510,25 @@ const app = createApp()
       return c.json({ error: "Failed to fetch related notes" }, 500);
     }
   })
-  .post('/notes/:id/related', async (c) => {
+  .post("/notes/:id/related", async (c) => {
     try {
       const noteId = c.req.param("id");
       const body = await c.req.json();
       const { content } = body;
 
-      if (!content || typeof content !== "string" || content.trim().length < 50) {
+      if (
+        !content ||
+        typeof content !== "string" ||
+        content.trim().length < 50
+      ) {
         return c.json({ related: [], hasEmbedding: false });
       }
 
       const { searchParams } = new URL(c.req.url);
-      const limit = Math.min(Math.max(parseInt(searchParams.get("limit") || "5"), 1), 10);
+      const limit = Math.min(
+        Math.max(parseInt(searchParams.get("limit") || "5", 10), 1),
+        10,
+      );
       const rls = rlsExecutor(c.get("userId"));
 
       const embedding = await getEmbedding(content);
@@ -504,7 +538,9 @@ const app = createApp()
         includeMetadata: true,
       });
 
-      const filteredResults = relatedResults.filter((r) => r.id !== noteId).slice(0, limit);
+      const filteredResults = relatedResults
+        .filter((r) => r.id !== noteId)
+        .slice(0, limit);
 
       if (filteredResults.length === 0) {
         return c.json({ related: [], hasEmbedding: true });
@@ -532,29 +568,29 @@ const app = createApp()
 
       const existingLinks = ownedNote
         ? await db
-          .select({
-            sourceNoteId: noteLinks.sourceNoteId,
-            targetNoteId: noteLinks.targetNoteId,
-          })
-          .from(noteLinks)
-          .where(
-            or(
-              and(
-                eq(noteLinks.sourceNoteId, noteId),
-                inArray(noteLinks.targetNoteId, relatedNoteIds)
+            .select({
+              sourceNoteId: noteLinks.sourceNoteId,
+              targetNoteId: noteLinks.targetNoteId,
+            })
+            .from(noteLinks)
+            .where(
+              or(
+                and(
+                  eq(noteLinks.sourceNoteId, noteId),
+                  inArray(noteLinks.targetNoteId, relatedNoteIds),
+                ),
+                and(
+                  eq(noteLinks.targetNoteId, noteId),
+                  inArray(noteLinks.sourceNoteId, relatedNoteIds),
+                ),
               ),
-              and(
-                eq(noteLinks.targetNoteId, noteId),
-                inArray(noteLinks.sourceNoteId, relatedNoteIds)
-              )
             )
-          )
         : [];
 
       const linkedNoteIds = new Set(
         existingLinks.map((link) =>
-          link.sourceNoteId === noteId ? link.targetNoteId : link.sourceNoteId
-        )
+          link.sourceNoteId === noteId ? link.targetNoteId : link.sourceNoteId,
+        ),
       );
 
       const related = filteredResults
@@ -571,9 +607,10 @@ const app = createApp()
             .replace(/\n+/g, " ")
             .trim();
 
-          const preview = plainContent.length > 150
-            ? plainContent.slice(0, 150) + "..."
-            : plainContent;
+          const preview =
+            plainContent.length > 150
+              ? `${plainContent.slice(0, 150)}...`
+              : plainContent;
 
           return {
             id: noteData.id,

@@ -1,1 +1,1 @@
-export { CreateNoteModal } from './CreateNoteModal';
+export { CreateNoteModal } from "./CreateNoteModal";

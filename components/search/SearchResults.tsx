@@ -1,19 +1,27 @@
-'use client';
+"use client";
 
-import { useRef, useEffect, useCallback, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
-import { FileText, BookOpen, Clock, Sparkles, ArrowUp, ArrowDown, CornerDownLeft } from 'lucide-react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { cn } from '@/components/ui/lib/utils';
+import {
+  ArrowDown,
+  ArrowUp,
+  BookOpen,
+  Clock,
+  CornerDownLeft,
+  FileText,
+  Sparkles,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useRef } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/components/ui/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface SearchResult {
   id: string;
   title: string;
   content: string;
   contentPlain: string | null;
-  noteType: 'note' | 'journal';
+  noteType: "note" | "journal";
   moodScore: number | null;
   createdAt: string;
   updatedAt: string;
@@ -36,13 +44,22 @@ function highlightText(text: string, query: string): React.ReactNode {
   if (!query.trim()) return text;
 
   const words = query.trim().toLowerCase().split(/\s+/);
-  const regex = new RegExp(`(${words.map(w => escapeRegExp(w)).join('|')})`, 'gi');
+  const regex = new RegExp(
+    `(${words.map((w) => escapeRegExp(w)).join("|")})`,
+    "gi",
+  );
   const parts = text.split(regex);
 
   return parts.map((part, i) => {
-    const isMatch = words.some(w => part.toLowerCase() === w.toLowerCase());
+    const isMatch = words.some((w) => part.toLowerCase() === w.toLowerCase());
     return isMatch ? (
-      <mark key={i} className="bg-yellow-200 dark:bg-yellow-800 rounded-sm px-0.5">
+      <mark
+        key={`${part}_${
+          // biome-ignore lint/suspicious/noArrayIndexKey: is ok
+          i
+        }`}
+        className="bg-yellow-200 dark:bg-yellow-800 rounded-sm px-0.5"
+      >
         {part}
       </mark>
     ) : (
@@ -52,15 +69,22 @@ function highlightText(text: string, query: string): React.ReactNode {
 }
 
 function escapeRegExp(string: string): string {
-  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 // Get preview text around match
-function getPreview(content: string, query: string, maxLength: number = 200): string {
-  const plainContent = content.replace(/[#*_`~\[\]]/g, '');
+function getPreview(
+  content: string,
+  query: string,
+  maxLength: number = 200,
+): string {
+  const plainContent = content.replace(/[#*_`~[\]]/g, "");
 
   if (!query.trim()) {
-    return plainContent.slice(0, maxLength) + (plainContent.length > maxLength ? '...' : '');
+    return (
+      plainContent.slice(0, maxLength) +
+      (plainContent.length > maxLength ? "..." : "")
+    );
   }
 
   const words = query.trim().toLowerCase().split(/\s+/);
@@ -76,7 +100,10 @@ function getPreview(content: string, query: string, maxLength: number = 200): st
   }
 
   if (firstMatchIndex === -1) {
-    return plainContent.slice(0, maxLength) + (plainContent.length > maxLength ? '...' : '');
+    return (
+      plainContent.slice(0, maxLength) +
+      (plainContent.length > maxLength ? "..." : "")
+    );
   }
 
   // Get context around the match
@@ -84,8 +111,8 @@ function getPreview(content: string, query: string, maxLength: number = 200): st
   const end = Math.min(plainContent.length, firstMatchIndex + maxLength - 50);
   let preview = plainContent.slice(start, end);
 
-  if (start > 0) preview = '...' + preview;
-  if (end < plainContent.length) preview = preview + '...';
+  if (start > 0) preview = `...${preview}`;
+  if (end < plainContent.length) preview = `${preview}...`;
 
   return preview;
 }
@@ -97,8 +124,8 @@ function formatRelativeTime(dateString: string): string {
   const diffMs = now.getTime() - date.getTime();
   const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-  if (diffDays === 0) return 'Today';
-  if (diffDays === 1) return 'Yesterday';
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Yesterday";
   if (diffDays < 7) return `${diffDays} days ago`;
   if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
   if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
@@ -107,10 +134,13 @@ function formatRelativeTime(dateString: string): string {
 
 // Score badge color
 function getScoreColor(score: number): string {
-  if (score >= 0.8) return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-  if (score >= 0.6) return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
-  if (score >= 0.4) return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
-  return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
+  if (score >= 0.8)
+    return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200";
+  if (score >= 0.6)
+    return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200";
+  if (score >= 0.4)
+    return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200";
+  return "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
 }
 
 function SearchResults({
@@ -127,8 +157,10 @@ function SearchResults({
   // Scroll selected item into view
   useEffect(() => {
     if (selectedIndex >= 0 && resultsRef.current) {
-      const item = resultsRef.current.querySelector(`[data-index="${selectedIndex}"]`);
-      item?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      const item = resultsRef.current.querySelector(
+        `[data-index="${selectedIndex}"]`,
+      );
+      item?.scrollIntoView({ block: "nearest", behavior: "smooth" });
     }
   }, [selectedIndex]);
 
@@ -138,15 +170,15 @@ function SearchResults({
       if (results.length === 0) return;
 
       switch (e.key) {
-        case 'ArrowDown':
+        case "ArrowDown":
           e.preventDefault();
           onSelectIndex(Math.min(selectedIndex + 1, results.length - 1));
           break;
-        case 'ArrowUp':
+        case "ArrowUp":
           e.preventDefault();
           onSelectIndex(Math.max(selectedIndex - 1, 0));
           break;
-        case 'Enter':
+        case "Enter":
           if (selectedIndex >= 0 && selectedIndex < results.length) {
             e.preventDefault();
             const result = results[selectedIndex];
@@ -158,18 +190,22 @@ function SearchResults({
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [results, selectedIndex, onSelectIndex, router]);
 
-  const handleResultClick = useCallback((id: string) => {
-    router.push(`/notes/${id}`);
-  }, [router]);
+  const handleResultClick = useCallback(
+    (id: string) => {
+      router.push(`/notes/${id}`);
+    },
+    [router],
+  );
 
   if (isLoading) {
     return (
-      <div className={cn('space-y-3', className)}>
+      <div className={cn("space-y-3", className)}>
         {[...Array(3)].map((_, i) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: is ok
           <Card key={i}>
             <CardContent className="p-4">
               <div className="space-y-3">
@@ -193,13 +229,19 @@ function SearchResults({
 
   if (results.length === 0 && query) {
     return (
-      <div className={cn('flex flex-col items-center justify-center py-12 text-center', className)}>
+      <div
+        className={cn(
+          "flex flex-col items-center justify-center py-12 text-center",
+          className,
+        )}
+      >
         <div className="rounded-full bg-muted p-4 mb-4">
           <Sparkles className="h-8 w-8 text-muted-foreground" />
         </div>
         <h3 className="text-lg font-medium mb-2">No results found</h3>
         <p className="text-sm text-muted-foreground max-w-sm">
-          We couldn't find any notes matching "{query}". Try different keywords or adjust your filters.
+          We couldn't find any notes matching "{query}". Try different keywords
+          or adjust your filters.
         </p>
         <div className="mt-4 text-xs text-muted-foreground space-y-1">
           <p>Suggestions:</p>
@@ -215,23 +257,31 @@ function SearchResults({
 
   if (results.length === 0) {
     return (
-      <div className={cn('flex flex-col items-center justify-center py-12 text-center', className)}>
+      <div
+        className={cn(
+          "flex flex-col items-center justify-center py-12 text-center",
+          className,
+        )}
+      >
         <div className="rounded-full bg-muted p-4 mb-4">
           <FileText className="h-8 w-8 text-muted-foreground" />
         </div>
         <h3 className="text-lg font-medium mb-2">Start searching</h3>
         <p className="text-sm text-muted-foreground max-w-sm">
-          Type a query above to search through your notes. We'll use AI to find semantically similar content.
+          Type a query above to search through your notes. We'll use AI to find
+          semantically similar content.
         </p>
       </div>
     );
   }
 
   return (
-    <div className={cn('space-y-3', className)}>
+    <div className={cn("space-y-3", className)}>
       {/* Results count and keyboard hint */}
       <div className="flex items-center justify-between text-sm text-muted-foreground">
-        <span>{results.length} result{results.length !== 1 ? 's' : ''}</span>
+        <span>
+          {results.length} result{results.length !== 1 ? "s" : ""}
+        </span>
         <div className="flex items-center gap-3">
           <span className="flex items-center gap-1">
             <ArrowUp className="h-3 w-3" />
@@ -254,8 +304,8 @@ function SearchResults({
             onClick={() => handleResultClick(result.id)}
             onMouseEnter={() => onSelectIndex(index)}
             className={cn(
-              'cursor-pointer transition-colors hover:bg-accent/50',
-              selectedIndex === index && 'ring-2 ring-primary bg-accent/50'
+              "cursor-pointer transition-colors hover:bg-accent/50",
+              selectedIndex === index && "ring-2 ring-primary bg-accent/50",
             )}
           >
             <CardContent className="p-4">
@@ -265,15 +315,15 @@ function SearchResults({
                   <h4 className="font-medium text-sm leading-tight flex-1 line-clamp-1">
                     {highlightText(result.title, query)}
                   </h4>
-                  <div className="flex items-center gap-2 flex-shrink-0">
+                  <div className="flex items-center gap-2 shrink-0">
                     <Badge
                       variant="secondary"
-                      className={cn('text-xs', getScoreColor(result.score))}
+                      className={cn("text-xs", getScoreColor(result.score))}
                     >
                       {Math.round(result.score * 100)}% match
                     </Badge>
                     <Badge variant="outline" className="text-xs">
-                      {result.noteType === 'journal' ? (
+                      {result.noteType === "journal" ? (
                         <>
                           <BookOpen className="h-3 w-3 mr-1" />
                           Journal
@@ -290,7 +340,10 @@ function SearchResults({
 
                 {/* Preview text */}
                 <p className="text-sm text-muted-foreground line-clamp-2">
-                  {highlightText(getPreview(result.contentPlain || result.content, query), query)}
+                  {highlightText(
+                    getPreview(result.contentPlain || result.content, query),
+                    query,
+                  )}
                 </p>
 
                 {/* Footer row */}
@@ -299,15 +352,14 @@ function SearchResults({
                     <Clock className="h-3 w-3" />
                     {formatRelativeTime(result.updatedAt)}
                   </span>
-                  {result.moodScore && (
-                    <span>Mood: {result.moodScore}/10</span>
-                  )}
-                  {result.semanticScore !== undefined && result.keywordRank !== undefined && (
-                    <span className="flex items-center gap-1">
-                      <Sparkles className="h-3 w-3" />
-                      Semantic: {Math.round(result.semanticScore * 100)}%
-                    </span>
-                  )}
+                  {result.moodScore && <span>Mood: {result.moodScore}/10</span>}
+                  {result.semanticScore !== undefined &&
+                    result.keywordRank !== undefined && (
+                      <span className="flex items-center gap-1">
+                        <Sparkles className="h-3 w-3" />
+                        Semantic: {Math.round(result.semanticScore * 100)}%
+                      </span>
+                    )}
                 </div>
               </div>
             </CardContent>
@@ -323,6 +375,7 @@ function SearchResultsSkeleton() {
   return (
     <div className="space-y-3">
       {[...Array(5)].map((_, i) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: is ok
         <Card key={i}>
           <CardContent className="p-4">
             <div className="space-y-3">

@@ -6,8 +6,8 @@
 export const defaultTemplates = [
   // ==================== JOURNAL TEMPLATES ====================
   {
-    name: 'Daily Reflection',
-    noteType: 'journal' as const,
+    name: "Daily Reflection",
+    noteType: "journal" as const,
     isDefault: true,
     content: `# Daily Reflection - {{date}}
 
@@ -38,8 +38,8 @@ What do I want to focus on tomorrow?
 `,
   },
   {
-    name: 'Morning Pages',
-    noteType: 'journal' as const,
+    name: "Morning Pages",
+    noteType: "journal" as const,
     isDefault: true,
     content: `# Morning Pages - {{date}}
 
@@ -52,8 +52,8 @@ What do I want to focus on tomorrow?
 `,
   },
   {
-    name: 'Weekly Review',
-    noteType: 'journal' as const,
+    name: "Weekly Review",
+    noteType: "journal" as const,
     isDefault: true,
     content: `# Weekly Review - {{date}}
 
@@ -85,8 +85,8 @@ How am I feeling about this week?
 `,
   },
   {
-    name: 'Evening Wind Down',
-    noteType: 'journal' as const,
+    name: "Evening Wind Down",
+    noteType: "journal" as const,
     isDefault: true,
     content: `# Evening Wind Down - {{date}}
 
@@ -120,8 +120,8 @@ Top 3 things for tomorrow:
 
   // ==================== KNOWLEDGE NOTE TEMPLATES ====================
   {
-    name: 'Literature Note',
-    noteType: 'note' as const,
+    name: "Literature Note",
+    noteType: "note" as const,
     isDefault: true,
     content: `# Literature Note: [Title]
 
@@ -159,8 +159,8 @@ What will I do with this information?
 `,
   },
   {
-    name: 'Meeting Notes',
-    noteType: 'note' as const,
+    name: "Meeting Notes",
+    noteType: "note" as const,
     isDefault: true,
     content: `# Meeting Notes - {{date}}
 
@@ -193,8 +193,8 @@ What will I do with this information?
 `,
   },
   {
-    name: 'Idea Capture',
-    noteType: 'note' as const,
+    name: "Idea Capture",
+    noteType: "note" as const,
     isDefault: true,
     content: `# Idea: [Title]
 
@@ -233,8 +233,8 @@ What other concepts connect to this?
 `,
   },
   {
-    name: 'Learning Note',
-    noteType: 'note' as const,
+    name: "Learning Note",
+    noteType: "note" as const,
     isDefault: true,
     content: `# Learning: [Topic]
 
@@ -271,8 +271,8 @@ What do I still need to understand?
 `,
   },
   {
-    name: 'Research Note',
-    noteType: 'note' as const,
+    name: "Research Note",
+    noteType: "note" as const,
     isDefault: true,
     content: `# Research: [Topic]
 
@@ -310,8 +310,8 @@ What patterns or conclusions emerge?
 `,
   },
   {
-    name: 'Project Planning',
-    noteType: 'note' as const,
+    name: "Project Planning",
+    noteType: "note" as const,
     isDefault: true,
     content: `# Project: [Name]
 
@@ -365,24 +365,28 @@ export function fillTemplateVariables(
     time?: string;
     mood?: number;
     source?: string;
-  } = {}
+  } = {},
 ): string {
   const now = new Date();
-  
+
   // Default values
-  const date = variables.date || now.toLocaleDateString('en-US', { 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
-  });
-  
-  const time = variables.time || now.toLocaleTimeString('en-US', { 
-    hour: '2-digit', 
-    minute: '2-digit' 
-  });
-  
-  const mood = variables.mood !== undefined ? variables.mood.toString() : '';
-  const source = variables.source || '';
+  const date =
+    variables.date ||
+    now.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+
+  const time =
+    variables.time ||
+    now.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+  const mood = variables.mood !== undefined ? variables.mood.toString() : "";
+  const source = variables.source || "";
 
   // Replace all template variables
   return template

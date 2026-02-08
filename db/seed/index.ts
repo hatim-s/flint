@@ -3,22 +3,22 @@
  * Populates the database with sample data for development and testing
  */
 
-import { db } from "../index";
-import { user } from "@/auth/schema";
-import { 
-  notes, 
-  tags, 
-  people, 
-  templates, 
-  noteTags, 
-  noteMentions,
-  noteLinks 
-} from "@/db/schema";
-import { defaultTemplates } from "./templates";
-import { defaultTags } from "./tags";
-import { samplePeople } from "./people";
-import { sampleNotes } from "./notes";
 import { eq } from "drizzle-orm";
+import { user } from "@/auth/schema";
+import {
+  noteLinks,
+  noteMentions,
+  notes,
+  noteTags,
+  people,
+  tags,
+  templates,
+} from "@/db/schema";
+import { db } from "../index";
+import { sampleNotes } from "./notes";
+import { samplePeople } from "./people";
+import { defaultTags } from "./tags";
+import { defaultTemplates } from "./templates";
 
 /**
  * Main seed function
@@ -70,6 +70,7 @@ async function getOrCreateTestUser() {
     .limit(1);
 
   if (existingUser.length > 0) {
+    // biome-ignore lint/style/noNonNullAssertion: checked above
     return existingUser[0]!;
   }
 
@@ -84,6 +85,7 @@ async function getOrCreateTestUser() {
     })
     .returning();
 
+  // biome-ignore lint/style/noNonNullAssertion: insert returns the inserted element
   return newUser[0]!;
 }
 
@@ -95,7 +97,7 @@ async function seedTemplates(userId: string) {
   await db.delete(templates).where(eq(templates.userId, userId));
 
   // Insert default templates
-  const templateData = defaultTemplates.map(template => ({
+  const templateData = defaultTemplates.map((template) => ({
     ...template,
     userId,
   }));
@@ -111,7 +113,7 @@ async function seedTags(userId: string) {
   await db.delete(tags).where(eq(tags.userId, userId));
 
   // Insert default tags
-  const tagData = defaultTags.map(tag => ({
+  const tagData = defaultTags.map((tag) => ({
     ...tag,
     id: crypto.randomUUID(),
     userId,
@@ -128,7 +130,7 @@ async function seedPeople(userId: string) {
   await db.delete(people).where(eq(people.userId, userId));
 
   // Insert sample people
-  const peopleData = samplePeople.map(person => ({
+  const peopleData = samplePeople.map((person) => ({
     id: crypto.randomUUID(),
     userId,
     name: person.name,
@@ -146,37 +148,43 @@ async function seedPeople(userId: string) {
  * Seed notes
  */
 async function seedNotes(
-  userId: string, 
-  seededTags: Array<{ id: string; name: string }>, 
-  seededPeople: Array<{ id: string; name: string }>
+  userId: string,
+  seededTags: Array<{ id: string; name: string }>,
+  seededPeople: Array<{ id: string; name: string }>,
 ) {
   // Clear existing notes for this user
   await db.delete(notes).where(eq(notes.userId, userId));
 
   // Create a map for quick lookup
-  const tagMap = new Map(seededTags.map(tag => [tag.name, tag.id]));
-  const personMap = new Map(seededPeople.map(person => [person.name, person.id]));
+  const tagMap = new Map(seededTags.map((tag) => [tag.name, tag.id]));
+  const personMap = new Map(
+    seededPeople.map((person) => [person.name, person.id]),
+  );
 
   const seededNotes: Array<{ id: string; title: string }> = [];
 
   for (const note of sampleNotes) {
     // Insert the note
-    const insertedNotes = await db.insert(notes).values({
-      ...note,
-      id: crypto.randomUUID(),
-      userId,
-      contentPlain: stripMarkdown(note.content),
-    }).returning();
+    const insertedNotes = await db
+      .insert(notes)
+      .values({
+        ...note,
+        id: crypto.randomUUID(),
+        userId,
+        contentPlain: stripMarkdown(note.content),
+      })
+      .returning();
 
+    // biome-ignore lint/style/noNonNullAssertion: insert returns the inserted element
     const insertedNote = insertedNotes[0]!;
     seededNotes.push({ id: insertedNote.id, title: insertedNote.title });
 
     // Handle tags
     if (note.tags && note.tags.length > 0) {
       const noteTagData = note.tags
-        .map(tagName => tagMap.get(tagName))
+        .map((tagName) => tagMap.get(tagName))
         .filter((tagId): tagId is string => tagId !== undefined)
-        .map(tagId => ({
+        .map((tagId) => ({
           noteId: insertedNote.id,
           tagId,
         }));
@@ -189,9 +197,9 @@ async function seedNotes(
     // Handle mentions
     if (note.mentions && note.mentions.length > 0) {
       const noteMentionData = note.mentions
-        .map(personName => personMap.get(personName))
+        .map((personName) => personMap.get(personName))
         .filter((personId): personId is string => personId !== undefined)
-        .map(personId => ({
+        .map((personId) => ({
           noteId: insertedNote.id,
           personId,
         }));
@@ -208,17 +216,27 @@ async function seedNotes(
 /**
  * Create some sample note links
  */
-async function seedNoteLinks(seededNotes: Array<{ id: string; title: string }>) {
+async function seedNoteLinks(
+  seededNotes: Array<{ id: string; title: string }>,
+) {
   // Clear existing note links
   await db.delete(noteLinks);
 
   // Create some sample links between notes
-  const typeScriptNote = seededNotes.find(n => n.title.includes("TypeScript"));
-  const systemsNote = seededNotes.find(n => n.title.includes("Thinking in Systems"));
-  const q4Note = seededNotes.find(n => n.title.includes("Q4 Planning"));
-  const knowledgeNote = seededNotes.find(n => n.title.includes("Personal Knowledge Graph"));
-  const morningNote = seededNotes.find(n => n.title.includes("Morning Reflection"));
-  const weeklyNote = seededNotes.find(n => n.title.includes("Weekly Review"));
+  const typeScriptNote = seededNotes.find((n) =>
+    n.title.includes("TypeScript"),
+  );
+  const systemsNote = seededNotes.find((n) =>
+    n.title.includes("Thinking in Systems"),
+  );
+  const q4Note = seededNotes.find((n) => n.title.includes("Q4 Planning"));
+  const knowledgeNote = seededNotes.find((n) =>
+    n.title.includes("Personal Knowledge Graph"),
+  );
+  const morningNote = seededNotes.find((n) =>
+    n.title.includes("Morning Reflection"),
+  );
+  const weeklyNote = seededNotes.find((n) => n.title.includes("Weekly Review"));
 
   const links: Array<{
     sourceNoteId: string;
@@ -267,16 +285,16 @@ async function seedNoteLinks(seededNotes: Array<{ id: string; title: string }>) 
  */
 function stripMarkdown(markdown: string): string {
   return markdown
-    .replace(/#{1,6}\s/g, '') // Headers
-    .replace(/\*\*(.*?)\*\*/g, '$1') // Bold
-    .replace(/\*(.*?)\*/g, '$1') // Italic
-    .replace(/`(.*?)`/g, '$1') // Inline code
-    .replace(/```[\s\S]*?```/g, '') // Code blocks
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // Links
-    .replace(/^\s*[-*+]\s/gm, '') // List items
-    .replace(/^\s*\d+\.\s/gm, '') // Numbered lists
-    .replace(/^\s*>\s/gm, '') // Blockquotes
-    .replace(/\n{3,}/g, '\n\n') // Multiple newlines
+    .replace(/#{1,6}\s/g, "") // Headers
+    .replace(/\*\*(.*?)\*\*/g, "$1") // Bold
+    .replace(/\*(.*?)\*/g, "$1") // Italic
+    .replace(/`(.*?)`/g, "$1") // Inline code
+    .replace(/```[\s\S]*?```/g, "") // Code blocks
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1") // Links
+    .replace(/^\s*[-*+]\s/gm, "") // List items
+    .replace(/^\s*\d+\.\s/gm, "") // Numbered lists
+    .replace(/^\s*>\s/gm, "") // Blockquotes
+    .replace(/\n{3,}/g, "\n\n") // Multiple newlines
     .trim();
 }
 
