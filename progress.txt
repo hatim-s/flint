@@ -54,7 +54,7 @@
    - Clean card-based UI with "Continue with GitHub" button
    - Loading state with spinner during OAuth flow
    - Error handling for failed sign-ins
-   - Redirects to /dashboard after successful authentication
+   - Redirects to /home after successful authentication
 
 6. User avatar and name extraction:
    - Better Auth automatically extracts GitHub profile data (name, avatar_url)
@@ -87,7 +87,7 @@
 
 3. Implemented redirect logic:
    - Unauthenticated users on protected routes -> /login with callbackUrl
-   - Authenticated users on /login -> /dashboard
+   - Authenticated users on /login -> /home
    - Preserves intended destination via callbackUrl query param
 
 4. Created route groups:
@@ -912,7 +912,7 @@ app/api/templates/
 **Commit:** (pending)
 
 **What was done:**
-1. Created app/(protected)/dashboard/page.tsx with comprehensive dashboard layout:
+1. Created app/(protected)/home/page.tsx with comprehensive dashboard layout:
    - 4-quadrant responsive grid layout (2x2 on desktop, stacked on mobile)
    - Quadrant 1 (top-left): Mood Trends placeholder
    - Quadrant 2 (top-right): Writing Streak placeholder
@@ -975,7 +975,7 @@ app/api/templates/
 
 **Component Structure:**
 ```
-app/(protected)/dashboard/
+app/(protected)/home/
 └── page.tsx                # Main dashboard page with 4-quadrant layout
 ```
 
@@ -1238,7 +1238,7 @@ components/dashboard/
     - Empty state when no mood data exists
     - Responsive container that adapts to card width
 
-3. Updated app/(protected)/dashboard/page.tsx - Integrated MoodChart widget:
+3. Updated app/(protected)/home/page.tsx - Integrated MoodChart widget:
     - Replaced Quadrant 1 placeholder with functional MoodChart component
     - Imported MoodChart from components/dashboard
     - Removed placeholder content from mood trends card

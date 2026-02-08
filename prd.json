@@ -48,8 +48,8 @@
           "steps": [
             "Create middleware.ts at project root with auth session validation",
             "Define PUBLIC_ROUTES array: ['/', '/login', '/signup', '/api/auth/*']",
-            "Define PROTECTED_ROUTES array: ['/dashboard/*', '/notes/*', '/journal/*', '/search/*']",
-            "Implement redirect logic: unauthenticated users -> /login, authenticated on /login -> /dashboard",
+            "Define PROTECTED_ROUTES array: ['/home/*', '/notes/*', '/journal/*', '/search/*']",
+            "Implement redirect logic: unauthenticated users -> /login, authenticated on /login -> /home",
             "Create app/(public) route group for landing page and auth pages",
             "Create app/(protected) route group for dashboard, notes, journal, search",
             "Add layout.tsx in (protected) that fetches and provides session context",
@@ -503,7 +503,7 @@
           "description": "Create the main dashboard page structure with responsive grid",
           "priority": "critical",
           "steps": [
-            "Create app/(protected)/dashboard/page.tsx",
+            "Create app/(protected)/home/page.tsx",
             "Design 4-quadrant grid layout: Mood Trends (top-left), Calendar/Streaks (top-right), Recent Notes (bottom-left), Weekly Summary (bottom-right)",
             "Make layout responsive: stack vertically on mobile, 2x2 grid on desktop",
             "Add dashboard header with greeting ('Good morning, [Name]') and date",
