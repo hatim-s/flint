@@ -1,10 +1,14 @@
-import { Hono } from "hono";
 import type { MiddlewareHandler } from "hono";
-import { requestId } from "hono/request-id";
-import { logger } from "hono/logger";
+import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { logger } from "hono/logger";
+import { requestId } from "hono/request-id";
+import {
+  INTERNAL_SERVER_ERROR,
+  NOT_FOUND,
+  UNAUTHORIZED,
+} from "@/api/lib/http-status-codes";
 import { auth } from "@/auth";
-import { NOT_FOUND, INTERNAL_SERVER_ERROR, UNAUTHORIZED } from "@/api/lib/http-status-codes";
 
 type AppBindings = {
   Variables: {
@@ -26,7 +30,7 @@ const authMiddleware: MiddlewareHandler<AppBindings> = async (c, next) => {
 
 function createApp() {
   const app = new Hono<AppBindings>({
-    strict: false
+    strict: false,
   });
 
   app.use("*", authMiddleware).use(requestId()).use(logger()).use(cors());
@@ -43,5 +47,3 @@ function createApp() {
 
 export { authMiddleware, createApp };
 export type { AppBindings };
-
-

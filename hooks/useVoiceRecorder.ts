@@ -1,20 +1,20 @@
-'use client';
+"use client";
 
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef, useState } from "react";
 
 /**
  * Recording state for the voice recorder
  */
-type RecordingState = 'idle' | 'recording' | 'paused' | 'stopped';
+type RecordingState = "idle" | "recording" | "paused" | "stopped";
 
 /**
  * Error types for voice recording
  */
 type VoiceRecorderError =
-  | 'permission_denied'
-  | 'not_supported'
-  | 'no_audio_device'
-  | 'recording_failed'
+  | "permission_denied"
+  | "not_supported"
+  | "no_audio_device"
+  | "recording_failed"
   | null;
 
 /**
@@ -73,10 +73,13 @@ interface VoiceRecorderReturn {
  * Error messages for different error types
  */
 const ERROR_MESSAGES: Record<NonNullable<VoiceRecorderError>, string> = {
-  permission_denied: 'Microphone access was denied. Please allow microphone access in your browser settings.',
-  not_supported: 'Voice recording is not supported in this browser. Please try Chrome, Firefox, or Safari.',
-  no_audio_device: 'No microphone found. Please connect a microphone and try again.',
-  recording_failed: 'Recording failed. Please try again.',
+  permission_denied:
+    "Microphone access was denied. Please allow microphone access in your browser settings.",
+  not_supported:
+    "Voice recording is not supported in this browser. Please try Chrome, Firefox, or Safari.",
+  no_audio_device:
+    "No microphone found. Please connect a microphone and try again.",
+  recording_failed: "Recording failed. Please try again.",
 };
 
 /**
@@ -85,33 +88,35 @@ const ERROR_MESSAGES: Record<NonNullable<VoiceRecorderError>, string> = {
 function formatDuration(seconds: number): string {
   const mins = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);
-  return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
 }
 
 /**
  * Check if MediaRecorder is supported
  */
 function isMediaRecorderSupported(): boolean {
-  return typeof window !== 'undefined' &&
-    'MediaRecorder' in window &&
-    'mediaDevices' in navigator &&
-    'getUserMedia' in navigator.mediaDevices;
+  return (
+    typeof window !== "undefined" &&
+    "MediaRecorder" in window &&
+    "mediaDevices" in navigator &&
+    "getUserMedia" in navigator.mediaDevices
+  );
 }
 
 /**
  * Get supported mime type for recording
  */
 function getSupportedMimeType(preferred: string): string {
-  if (typeof window === 'undefined') return preferred;
+  if (typeof window === "undefined") return preferred;
 
   const types = [
     preferred,
-    'audio/webm;codecs=opus',
-    'audio/webm',
-    'audio/ogg;codecs=opus',
-    'audio/ogg',
-    'audio/mp4',
-    'audio/mpeg',
+    "audio/webm;codecs=opus",
+    "audio/webm",
+    "audio/ogg;codecs=opus",
+    "audio/ogg",
+    "audio/mp4",
+    "audio/mpeg",
   ];
 
   for (const type of types) {
@@ -120,12 +125,12 @@ function getSupportedMimeType(preferred: string): string {
     }
   }
 
-  return 'audio/webm'; // fallback
+  return "audio/webm"; // fallback
 }
 
 /**
  * Hook for browser-based audio recording with visualization support
- * 
+ *
  * @example
  * ```tsx
  * const {
@@ -137,7 +142,7 @@ function getSupportedMimeType(preferred: string): string {
  *   stopRecording,
  *   audioBlob,
  * } = useVoiceRecorder();
- * 
+ *
  * const handleRecord = async () => {
  *   if (isRecording) {
  *     const blob = await stopRecording();
@@ -148,16 +153,18 @@ function getSupportedMimeType(preferred: string): string {
  * };
  * ```
  */
-function useVoiceRecorder(options: VoiceRecorderOptions = {}): VoiceRecorderReturn {
+function useVoiceRecorder(
+  options: VoiceRecorderOptions = {},
+): VoiceRecorderReturn {
   const {
-    mimeType = 'audio/webm',
+    mimeType = "audio/webm",
     audioBitsPerSecond = 128000,
     enableVisualization = true,
     fftSize = 256,
   } = options;
 
   // State
-  const [state, setState] = useState<RecordingState>('idle');
+  const [state, setState] = useState<RecordingState>("idle");
   const [duration, setDuration] = useState(0);
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
@@ -195,7 +202,7 @@ function useVoiceRecorder(options: VoiceRecorderOptions = {}): VoiceRecorderRetu
     }
 
     // Close audio context
-    if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
+    if (audioContextRef.current && audioContextRef.current.state !== "closed") {
       audioContextRef.current.close();
       audioContextRef.current = null;
     }
@@ -205,13 +212,13 @@ function useVoiceRecorder(options: VoiceRecorderOptions = {}): VoiceRecorderRetu
 
     // Stop all tracks
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current.getTracks().forEach((track) => void track.stop());
       streamRef.current = null;
     }
 
     // Clear media recorder
     if (mediaRecorderRef.current) {
-      if (mediaRecorderRef.current.state !== 'inactive') {
+      if (mediaRecorderRef.current.state !== "inactive") {
         try {
           mediaRecorderRef.current.stop();
         } catch {
@@ -239,7 +246,7 @@ function useVoiceRecorder(options: VoiceRecorderOptions = {}): VoiceRecorderRetu
    * Update audio level visualization
    */
   const updateAudioLevel = useCallback(() => {
-    if (!analyserRef.current || state !== 'recording') {
+    if (!analyserRef.current || state !== "recording") {
       setAudioLevel(0);
       return;
     }
@@ -263,7 +270,7 @@ function useVoiceRecorder(options: VoiceRecorderOptions = {}): VoiceRecorderRetu
    * Start the duration timer
    */
   const startDurationTimer = useCallback(() => {
-    startTimeRef.current = Date.now() - (pausedDurationRef.current * 1000);
+    startTimeRef.current = Date.now() - pausedDurationRef.current * 1000;
 
     durationIntervalRef.current = setInterval(() => {
       const elapsed = (Date.now() - startTimeRef.current) / 1000;
@@ -284,31 +291,34 @@ function useVoiceRecorder(options: VoiceRecorderOptions = {}): VoiceRecorderRetu
   /**
    * Set up audio analysis for visualization
    */
-  const setupAudioAnalysis = useCallback((stream: MediaStream) => {
-    if (!enableVisualization) return;
+  const setupAudioAnalysis = useCallback(
+    (stream: MediaStream) => {
+      if (!enableVisualization) return;
 
-    try {
-      audioContextRef.current = new AudioContext();
-      analyserRef.current = audioContextRef.current.createAnalyser();
-      analyserRef.current.fftSize = fftSize;
-      analyserRef.current.smoothingTimeConstant = 0.8;
+      try {
+        audioContextRef.current = new AudioContext();
+        analyserRef.current = audioContextRef.current.createAnalyser();
+        analyserRef.current.fftSize = fftSize;
+        analyserRef.current.smoothingTimeConstant = 0.8;
 
-      const source = audioContextRef.current.createMediaStreamSource(stream);
-      source.connect(analyserRef.current);
+        const source = audioContextRef.current.createMediaStreamSource(stream);
+        source.connect(analyserRef.current);
 
-      // Start visualization loop
-      updateAudioLevel();
-    } catch (err) {
-      console.warn('Failed to set up audio visualization:', err);
-    }
-  }, [enableVisualization, fftSize, updateAudioLevel]);
+        // Start visualization loop
+        updateAudioLevel();
+      } catch (err) {
+        console.warn("Failed to set up audio visualization:", err);
+      }
+    },
+    [enableVisualization, fftSize, updateAudioLevel],
+  );
 
   /**
    * Start recording
    */
   const startRecording = useCallback(async (): Promise<boolean> => {
     if (!isSupported) {
-      setError('not_supported');
+      setError("not_supported");
       return false;
     }
 
@@ -347,16 +357,16 @@ function useVoiceRecorder(options: VoiceRecorderOptions = {}): VoiceRecorderRetu
       };
 
       recorder.onerror = () => {
-        setError('recording_failed');
+        setError("recording_failed");
         cleanupAudio();
-        setState('idle');
+        setState("idle");
       };
 
       mediaRecorderRef.current = recorder;
 
       // Start recording
       recorder.start(1000); // Collect data every second
-      setState('recording');
+      setState("recording");
 
       // Start duration timer
       startDurationTimer();
@@ -366,36 +376,47 @@ function useVoiceRecorder(options: VoiceRecorderOptions = {}): VoiceRecorderRetu
 
       return true;
     } catch (err) {
-      console.error('Failed to start recording:', err);
+      console.error("Failed to start recording:", err);
 
       if (err instanceof DOMException) {
-        if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-          setError('permission_denied');
-        } else if (err.name === 'NotFoundError') {
-          setError('no_audio_device');
+        if (
+          err.name === "NotAllowedError" ||
+          err.name === "PermissionDeniedError"
+        ) {
+          setError("permission_denied");
+        } else if (err.name === "NotFoundError") {
+          setError("no_audio_device");
         } else {
-          setError('recording_failed');
+          setError("recording_failed");
         }
       } else {
-        setError('recording_failed');
+        setError("recording_failed");
       }
 
       cleanupAudio();
       return false;
     }
-  }, [isSupported, mimeType, audioBitsPerSecond, revokeAudioUrl, cleanupAudio, startDurationTimer, setupAudioAnalysis]);
+  }, [
+    isSupported,
+    mimeType,
+    audioBitsPerSecond,
+    revokeAudioUrl,
+    cleanupAudio,
+    startDurationTimer,
+    setupAudioAnalysis,
+  ]);
 
   /**
    * Pause recording
    */
   const pauseRecording = useCallback(() => {
-    if (!mediaRecorderRef.current || state !== 'recording') return;
+    if (!mediaRecorderRef.current || state !== "recording") return;
 
     try {
       mediaRecorderRef.current.pause();
       pausedDurationRef.current = duration;
       stopDurationTimer();
-      setState('paused');
+      setState("paused");
 
       // Stop visualization during pause
       if (animationFrameRef.current) {
@@ -404,7 +425,7 @@ function useVoiceRecorder(options: VoiceRecorderOptions = {}): VoiceRecorderRetu
       }
       setAudioLevel(0);
     } catch (err) {
-      console.error('Failed to pause recording:', err);
+      console.error("Failed to pause recording:", err);
     }
   }, [state, duration, stopDurationTimer]);
 
@@ -412,11 +433,11 @@ function useVoiceRecorder(options: VoiceRecorderOptions = {}): VoiceRecorderRetu
    * Resume recording
    */
   const resumeRecording = useCallback(() => {
-    if (!mediaRecorderRef.current || state !== 'paused') return;
+    if (!mediaRecorderRef.current || state !== "paused") return;
 
     try {
       mediaRecorderRef.current.resume();
-      setState('recording');
+      setState("recording");
 
       // Resume duration timer
       startDurationTimer();
@@ -424,7 +445,7 @@ function useVoiceRecorder(options: VoiceRecorderOptions = {}): VoiceRecorderRetu
       // Resume visualization
       updateAudioLevel();
     } catch (err) {
-      console.error('Failed to resume recording:', err);
+      console.error("Failed to resume recording:", err);
     }
   }, [state, startDurationTimer, updateAudioLevel]);
 
@@ -432,7 +453,7 @@ function useVoiceRecorder(options: VoiceRecorderOptions = {}): VoiceRecorderRetu
    * Stop recording and return audio blob
    */
   const stopRecording = useCallback(async (): Promise<Blob | null> => {
-    if (!mediaRecorderRef.current || state === 'idle') {
+    if (!mediaRecorderRef.current || state === "idle") {
       return null;
     }
 
@@ -454,7 +475,7 @@ function useVoiceRecorder(options: VoiceRecorderOptions = {}): VoiceRecorderRetu
         const url = URL.createObjectURL(blob);
         setAudioUrl(url);
 
-        setState('stopped');
+        setState("stopped");
         stopDurationTimer();
         cleanupAudio();
 
@@ -463,7 +484,7 @@ function useVoiceRecorder(options: VoiceRecorderOptions = {}): VoiceRecorderRetu
 
       // Stop recording
       try {
-        if (recorder.state !== 'inactive') {
+        if (recorder.state !== "inactive") {
           recorder.stop();
         }
       } catch {
@@ -481,7 +502,7 @@ function useVoiceRecorder(options: VoiceRecorderOptions = {}): VoiceRecorderRetu
     setAudioBlob(null);
     setDuration(0);
     setError(null);
-    setState('idle');
+    setState("idle");
     chunksRef.current = [];
     pausedDurationRef.current = 0;
   }, [cleanupAudio, revokeAudioUrl]);
@@ -498,8 +519,8 @@ function useVoiceRecorder(options: VoiceRecorderOptions = {}): VoiceRecorderRetu
 
   return {
     state,
-    isRecording: state === 'recording',
-    isPaused: state === 'paused',
+    isRecording: state === "recording",
+    isPaused: state === "paused",
     duration,
     formattedDuration: formatDuration(duration),
     audioBlob,

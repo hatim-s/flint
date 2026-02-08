@@ -1,3 +1,11 @@
-export { SearchBar } from './SearchBar';
-export { SearchFilters, defaultFilters, type SearchFiltersState } from './SearchFilters';
-export { SearchResults, SearchResultsSkeleton, type SearchResult } from './SearchResults';
+export { SearchBar } from "./SearchBar";
+export {
+  defaultFilters,
+  SearchFilters,
+  type SearchFiltersState,
+} from "./SearchFilters";
+export {
+  type SearchResult,
+  SearchResults,
+  SearchResultsSkeleton,
+} from "./SearchResults";

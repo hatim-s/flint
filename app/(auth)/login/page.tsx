@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { useSearchParams } from "next/navigation";
 import { Github, Loader2 } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import { useState } from "react";
+import { signIn } from "@/auth/client";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -11,7 +12,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { signIn } from "@/auth/client";
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -30,6 +30,7 @@ export default function LoginPage() {
       });
     } catch (err) {
       setError("Failed to sign in with GitHub. Please try again.");
+      console.error(err);
       setIsLoading(false);
     }
   };

@@ -1,5 +1,5 @@
-import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 
 // Routes that don't require authentication
 const PUBLIC_ROUTES = ["/", "/login"];
@@ -46,7 +46,7 @@ export async function middleware(request: NextRequest) {
             headers: {
               cookie: request.headers.get("cookie") || "",
             },
-          }
+          },
         );
 
         if (sessionResponse.ok) {
@@ -77,7 +77,7 @@ export async function middleware(request: NextRequest) {
       headers: {
         cookie: request.headers.get("cookie") || "",
       },
-    }
+    },
   );
 
   if (!sessionResponse.ok) {

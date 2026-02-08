@@ -1,6 +1,6 @@
-import { useState, useEffect, useCallback } from 'react';
-import type { Person } from '@/db/schema/people';
-import { api } from '@/api/client';
+import { useCallback, useEffect, useState } from "react";
+import { api } from "@/api/client";
+import type { Person } from "@/db/schema/people";
 
 interface UsePeopleOptions {
   search?: string;
@@ -10,7 +10,11 @@ interface UsePeopleReturn {
   people: Person[];
   loading: boolean;
   error: Error | null;
-  createPerson: (data: { name: string; email?: string; metadata?: Record<string, unknown> }) => Promise<Person>;
+  createPerson: (data: {
+    name: string;
+    email?: string;
+    metadata?: Record<string, unknown>;
+  }) => Promise<Person>;
   deletePerson: (personId: string) => Promise<void>;
   refetch: () => Promise<void>;
 }
@@ -30,8 +34,8 @@ export function usePeople(options: UsePeopleOptions = {}): UsePeopleReturn {
       setError(null);
 
       const params = new URLSearchParams();
-      if (search && search.trim()) {
-        params.append('search', search.trim());
+      if (search?.trim()) {
+        params.append("search", search.trim());
       }
 
       const response = await api.people.$get({
@@ -39,13 +43,13 @@ export function usePeople(options: UsePeopleOptions = {}): UsePeopleReturn {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch people');
+        throw new Error("Failed to fetch people");
       }
 
       const data = await response.json();
       setPeople(data);
     } catch (err) {
-      setError(err instanceof Error ? err : new Error('Unknown error'));
+      setError(err instanceof Error ? err : new Error("Unknown error"));
     } finally {
       setLoading(false);
     }
@@ -55,34 +59,37 @@ export function usePeople(options: UsePeopleOptions = {}): UsePeopleReturn {
     fetchPeople();
   }, [fetchPeople]);
 
-  const createPerson = useCallback(async (data: {
-    name: string;
-    email?: string;
-    metadata?: Record<string, unknown>
-  }): Promise<Person> => {
-    const response = await api.people.$post({
-      json: data,
-    });
+  const createPerson = useCallback(
+    async (data: {
+      name: string;
+      email?: string;
+      metadata?: Record<string, unknown>;
+    }): Promise<Person> => {
+      const response = await api.people.$post({
+        json: data,
+      });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to create person');
-    }
-
-    const person = await response.json();
-
-    // Update local state
-    setPeople((prev) => {
-      // Check if person already exists (might be returned existing)
-      const exists = prev.some((p) => p.id === person.id);
-      if (exists) {
-        return prev;
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to create person");
       }
-      return [...prev, person].sort((a, b) => a.name.localeCompare(b.name));
-    });
 
-    return person;
-  }, []);
+      const person = await response.json();
+
+      // Update local state
+      setPeople((prev) => {
+        // Check if person already exists (might be returned existing)
+        const exists = prev.some((p) => p.id === person.id);
+        if (exists) {
+          return prev;
+        }
+        return [...prev, person].sort((a, b) => a.name.localeCompare(b.name));
+      });
+
+      return person;
+    },
+    [],
+  );
 
   const deletePerson = useCallback(async (personId: string): Promise<void> => {
     const response = await api.people.$delete({
@@ -91,7 +98,7 @@ export function usePeople(options: UsePeopleOptions = {}): UsePeopleReturn {
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.error || 'Failed to delete person');
+      throw new Error(errorData.error || "Failed to delete person");
     }
 
     // Update local state

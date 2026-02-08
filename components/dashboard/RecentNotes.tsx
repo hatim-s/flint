@@ -1,15 +1,21 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { formatDistanceToNow } from "date-fns";
+import { ArrowRight, Clock, FileText, Plus } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useEffect, useState } from "react";
+import { api } from "@/api/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FileText, Clock, ArrowRight, Plus } from "lucide-react";
 import type { Note } from "@/db/schema/notes";
-import { formatDistanceToNow } from "date-fns";
-import { api } from "@/api/client";
 
 interface RecentNotesProps {
   onCreateNote?: () => void;
@@ -39,14 +45,14 @@ export function RecentNotes({ onCreateNote }: RecentNotesProps) {
         console.log(response);
 
         if (!response.ok) {
-          throw new Error('Failed to fetch notes');
+          throw new Error("Failed to fetch notes");
         }
 
         const data = await response.json();
         setNotes(data.data || []);
       } catch (err) {
-        console.error('Error fetching recent notes:', err);
-        setError('Failed to load recent notes');
+        console.error("Error fetching recent notes:", err);
+        setError("Failed to load recent notes");
       } finally {
         setIsLoading(false);
       }
@@ -57,10 +63,8 @@ export function RecentNotes({ onCreateNote }: RecentNotesProps) {
 
   // Generate preview text (first 100 chars of plain content)
   const getPreview = (note: Note) => {
-    const plainText = note.contentPlain || note.content || '';
-    return plainText.length > 100
-      ? plainText.slice(0, 100) + '...'
-      : plainText;
+    const plainText = note.contentPlain || note.content || "";
+    return plainText.length > 100 ? `${plainText.slice(0, 100)}...` : plainText;
   };
 
   // Format relative time
@@ -68,7 +72,7 @@ export function RecentNotes({ onCreateNote }: RecentNotesProps) {
     try {
       return formatDistanceToNow(new Date(date), { addSuffix: true });
     } catch {
-      return 'Recently';
+      return "Recently";
     }
   };
 
@@ -106,7 +110,7 @@ export function RecentNotes({ onCreateNote }: RecentNotesProps) {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => router.push('/notes')}
+              onClick={() => router.push("/notes")}
               className="text-muted-foreground hover:text-foreground"
             >
               View all
@@ -145,6 +149,8 @@ export function RecentNotes({ onCreateNote }: RecentNotesProps) {
         {!error && notes.length > 0 && (
           <div className="space-y-4">
             {notes.map((note) => (
+              // biome-ignore lint/a11y/noStaticElementInteractions: is okay
+              // biome-ignore lint/a11y/useKeyWithClickEvents: is okay
               <div
                 key={note.id}
                 onClick={() => router.push(`/notes/${note.id}`)}
@@ -152,13 +158,15 @@ export function RecentNotes({ onCreateNote }: RecentNotesProps) {
               >
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <h3 className="font-medium line-clamp-1 group-hover:text-primary transition-colors">
-                    {note.title || 'Untitled'}
+                    {note.title || "Untitled"}
                   </h3>
                   <Badge
-                    variant={note.noteType === 'journal' ? 'default' : 'secondary'}
+                    variant={
+                      note.noteType === "journal" ? "default" : "secondary"
+                    }
                     className="shrink-0"
                   >
-                    {note.noteType === 'journal' ? 'Journal' : 'Note'}
+                    {note.noteType === "journal" ? "Journal" : "Note"}
                   </Badge>
                 </div>
 

@@ -1,12 +1,12 @@
 // Hook exports for Flint
-export { useTags } from './useTags';
-export { usePeople } from './usePeople';
-export { useVoiceRecorder } from './useVoiceRecorder';
 
+export { usePeople } from "./usePeople";
+export { useTags } from "./useTags";
 // Type exports
 export type {
   RecordingState,
   VoiceRecorderError,
   VoiceRecorderOptions,
   VoiceRecorderReturn,
-} from './useVoiceRecorder';
+} from "./useVoiceRecorder";
+export { useVoiceRecorder } from "./useVoiceRecorder";

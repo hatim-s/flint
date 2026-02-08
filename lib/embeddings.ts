@@ -1,7 +1,7 @@
+import { config } from "dotenv";
 import { z } from "zod";
-import { config } from 'dotenv';
 
-config({ path: '.env.local', quiet: true });
+config({ path: ".env.local", quiet: true });
 
 // Voyage AI configuration
 const VOYAGE_API_KEY = process.env.VOYAGEAI_API_KEY;
@@ -28,7 +28,7 @@ const EmbeddingResponseSchema = z.object({
     z.object({
       embedding: z.array(z.number()),
       index: z.number(),
-    })
+    }),
   ),
   model: z.string(),
   usage: z.object({
@@ -49,14 +49,14 @@ type EmbeddingRequest = z.infer<typeof EmbeddingRequestSchema>;
 
 /**
  * Generate embedding vector from text using Voyage AI
- * 
+ *
  * @param text - The text to generate embedding for (max 4000 chars for voyage-3-lite)
  * @param model - The Voyage AI model to use (default: voyage-3-lite)
  * @returns Promise<number[]> - The embedding vector
  */
 async function getEmbedding(
   text: string,
-  model: VoyageModel = VOYAGE_MODELS.voyage3Lite
+  model: VoyageModel = VOYAGE_MODELS.voyage3Lite,
 ): Promise<number[]> {
   // Truncate text to 4000 characters to stay within token limits
   const truncatedText = text.slice(0, 4000);
@@ -81,9 +81,7 @@ async function getEmbedding(
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(
-        `Voyage AI API error: ${response.status} - ${errorText}`
-      );
+      throw new Error(`Voyage AI API error: ${response.status} - ${errorText}`);
     }
 
     const data = await response.json();
@@ -109,14 +107,14 @@ async function getEmbedding(
 
 /**
  * Generate embeddings for multiple texts in batch
- * 
+ *
  * @param texts - Array of texts to generate embeddings for
  * @param model - The Voyage AI model to use (default: voyage-3-lite)
  * @returns Promise<number[][]> - Array of embedding vectors
  */
 async function getEmbeddings(
   texts: string[],
-  model: VoyageModel = VOYAGE_MODELS.voyage3Lite
+  model: VoyageModel = VOYAGE_MODELS.voyage3Lite,
 ): Promise<number[][]> {
   // Voyage AI supports batch processing (up to 128 documents)
   const batchSize = 128;
@@ -142,7 +140,7 @@ async function getEmbeddings(
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error(
-        `Voyage AI batch API error: ${response.status} - ${errorText}`
+        `Voyage AI batch API error: ${response.status} - ${errorText}`,
       );
     }
 
@@ -158,7 +156,7 @@ async function getEmbeddings(
 
 /**
  * Calculate cosine similarity between two vectors
- * 
+ *
  * @param vecA - First vector
  * @param vecB - Second vector
  * @returns number - Cosine similarity score (-1 to 1, higher is more similar)
@@ -192,15 +190,6 @@ function cosineSimilarity(vecA: number[], vecB: number[]): number {
   return dotProduct / (normA * normB);
 }
 
-export {
-  VOYAGE_MODELS,
-  getEmbedding,
-  getEmbeddings,
-  cosineSimilarity,
-};
+export { VOYAGE_MODELS, getEmbedding, getEmbeddings, cosineSimilarity };
 
-export type {
-  VoyageModel,
-  EmbeddingResponse,
-  EmbeddingRequest,
-};
+export type { VoyageModel, EmbeddingResponse, EmbeddingRequest };

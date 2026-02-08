@@ -1,20 +1,31 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Filter, X, ChevronDown, Sparkles, FileText, BookOpen } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Slider } from '@/components/ui/slider';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { Label } from '@/components/ui/label';
-import { cn } from '@/components/ui/lib/utils';
+import {
+  BookOpen,
+  ChevronDown,
+  FileText,
+  Filter,
+  Sparkles,
+  X,
+} from "lucide-react";
+import { useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/components/ui/lib/utils";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Slider } from "@/components/ui/slider";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 export interface SearchFiltersState {
-  noteType: 'all' | 'note' | 'journal';
+  noteType: "all" | "note" | "journal";
   tags: string[];
   moodRange: [number, number];
-  searchMode: 'hybrid' | 'keyword' | 'semantic';
+  searchMode: "hybrid" | "keyword" | "semantic";
 }
 
 interface SearchFiltersProps {
@@ -25,10 +36,10 @@ interface SearchFiltersProps {
 }
 
 export const defaultFilters: SearchFiltersState = {
-  noteType: 'all',
+  noteType: "all",
   tags: [],
   moodRange: [1, 10],
-  searchMode: 'hybrid',
+  searchMode: "hybrid",
 };
 
 export function SearchFilters({
@@ -41,21 +52,27 @@ export function SearchFilters({
 
   // Count active filters
   const activeFilterCount = [
-    filters.noteType !== 'all' ? 1 : 0,
+    filters.noteType !== "all" ? 1 : 0,
     filters.tags.length > 0 ? 1 : 0,
     filters.moodRange[0] !== 1 || filters.moodRange[1] !== 10 ? 1 : 0,
-    filters.searchMode !== 'hybrid' ? 1 : 0,
+    filters.searchMode !== "hybrid" ? 1 : 0,
   ].reduce((a, b) => a + b, 0);
 
   const handleNoteTypeChange = (value: string) => {
     if (value) {
-      onChange({ ...filters, noteType: value as SearchFiltersState['noteType'] });
+      onChange({
+        ...filters,
+        noteType: value as SearchFiltersState["noteType"],
+      });
     }
   };
 
   const handleSearchModeChange = (value: string) => {
     if (value) {
-      onChange({ ...filters, searchMode: value as SearchFiltersState['searchMode'] });
+      onChange({
+        ...filters,
+        searchMode: value as SearchFiltersState["searchMode"],
+      });
     }
   };
 
@@ -68,6 +85,7 @@ export function SearchFilters({
 
   const handleMoodChange = (value: number[]) => {
     if (value.length === 2) {
+      // biome-ignore lint/style/noNonNullAssertion: value has atleast 2 elements
       onChange({ ...filters, moodRange: [value[0]!, value[1]!] });
     }
   };
@@ -79,7 +97,7 @@ export function SearchFilters({
   const hasActiveFilters = activeFilterCount > 0;
 
   return (
-    <div className={cn('flex items-center gap-2', className)}>
+    <div className={cn("flex items-center gap-2", className)}>
       <Popover open={isOpen} onOpenChange={setIsOpen}>
         <PopoverTrigger asChild>
           <Button variant="outline" size="sm" className="h-9">
@@ -97,7 +115,9 @@ export function SearchFilters({
           <div className="space-y-4">
             {/* Note Type Filter */}
             <div className="space-y-2">
-              <Label className="text-xs font-medium text-muted-foreground">Note Type</Label>
+              <Label className="text-xs font-medium text-muted-foreground">
+                Note Type
+              </Label>
               <ToggleGroup
                 type="single"
                 value={filters.noteType}
@@ -121,7 +141,9 @@ export function SearchFilters({
 
             {/* Search Mode */}
             <div className="space-y-2">
-              <Label className="text-xs font-medium text-muted-foreground">Search Mode</Label>
+              <Label className="text-xs font-medium text-muted-foreground">
+                Search Mode
+              </Label>
               <ToggleGroup
                 type="single"
                 value={filters.searchMode}
@@ -145,7 +167,9 @@ export function SearchFilters({
             {/* Mood Range Slider */}
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <Label className="text-xs font-medium text-muted-foreground">Mood Range</Label>
+                <Label className="text-xs font-medium text-muted-foreground">
+                  Mood Range
+                </Label>
                 <span className="text-xs text-muted-foreground">
                   {filters.moodRange[0]} - {filters.moodRange[1]}
                 </span>
@@ -167,18 +191,25 @@ export function SearchFilters({
             {/* Tags Filter */}
             {availableTags.length > 0 && (
               <div className="space-y-2">
-                <Label className="text-xs font-medium text-muted-foreground">Tags</Label>
+                <Label className="text-xs font-medium text-muted-foreground">
+                  Tags
+                </Label>
                 <div className="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto">
                   {availableTags.map((tag) => (
                     <Badge
                       key={tag.id}
-                      variant={filters.tags.includes(tag.name) ? 'default' : 'outline'}
+                      variant={
+                        filters.tags.includes(tag.name) ? "default" : "outline"
+                      }
                       className={cn(
-                        'cursor-pointer text-xs transition-colors',
-                        filters.tags.includes(tag.name) && 'bg-primary text-primary-foreground'
+                        "cursor-pointer text-xs transition-colors",
+                        filters.tags.includes(tag.name) &&
+                          "bg-primary text-primary-foreground",
                       )}
                       style={{
-                        borderColor: filters.tags.includes(tag.name) ? undefined : tag.color,
+                        borderColor: filters.tags.includes(tag.name)
+                          ? undefined
+                          : tag.color,
                       }}
                       onClick={() => handleTagToggle(tag.name)}
                     >
@@ -206,9 +237,9 @@ export function SearchFilters({
       </Popover>
 
       {/* Active filter badges */}
-      {filters.noteType !== 'all' && (
+      {filters.noteType !== "all" && (
         <Badge variant="secondary" className="h-7 gap-1">
-          {filters.noteType === 'note' ? (
+          {filters.noteType === "note" ? (
             <>
               <FileText className="h-3 w-3" /> Notes
             </>
@@ -218,8 +249,9 @@ export function SearchFilters({
             </>
           )}
           <button
-            onClick={() => onChange({ ...filters, noteType: 'all' })}
+            onClick={() => onChange({ ...filters, noteType: "all" })}
             className="ml-1 hover:text-foreground"
+            type="button"
           >
             <X className="h-3 w-3" />
           </button>
@@ -232,6 +264,7 @@ export function SearchFilters({
           <button
             onClick={() => handleTagToggle(tag)}
             className="ml-1 hover:text-foreground"
+            type="button"
           >
             <X className="h-3 w-3" />
           </button>
@@ -244,19 +277,23 @@ export function SearchFilters({
           <button
             onClick={() => onChange({ ...filters, moodRange: [1, 10] })}
             className="ml-1 hover:text-foreground"
+            type="button"
           >
             <X className="h-3 w-3" />
           </button>
         </Badge>
       )}
 
-      {filters.searchMode !== 'hybrid' && (
+      {filters.searchMode !== "hybrid" && (
         <Badge variant="secondary" className="h-7 gap-1">
-          {filters.searchMode === 'semantic' && <Sparkles className="h-3 w-3" />}
+          {filters.searchMode === "semantic" && (
+            <Sparkles className="h-3 w-3" />
+          )}
           {filters.searchMode}
           <button
-            onClick={() => onChange({ ...filters, searchMode: 'hybrid' })}
+            onClick={() => onChange({ ...filters, searchMode: "hybrid" })}
             className="ml-1 hover:text-foreground"
+            type="button"
           >
             <X className="h-3 w-3" />
           </button>

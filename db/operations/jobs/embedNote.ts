@@ -1,22 +1,22 @@
 /**
  * Background Job: Generate and Store Note Embeddings
- * 
+ *
  * This job is triggered after note creation/update to:
  * 1. Generate embeddings using Voyage AI
  * 2. Store embeddings in Upstash Vector
  * 3. Update note metadata with embedding status
- * 
+ *
  * For MVP, this runs synchronously. In production, use a queue like Inngest.
  */
 
-import { getEmbedding } from "@/lib/embeddings";
-import { indexNote } from "@/lib/vector";
+import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { notes, type Note } from "@/db/schema/notes";
+import { rlsExecutor } from "@/db/lib/rls";
+import { notes } from "@/db/schema/notes";
 import { noteTags } from "@/db/schema/noteTags";
 import { tags } from "@/db/schema/tags";
-import { eq, and } from "drizzle-orm";
-import { rlsExecutor } from "@/db/lib/rls";
+import { getEmbedding } from "@/lib/embeddings";
+import { indexNote } from "@/lib/vector";
 
 interface EmbedNoteResult {
   success: boolean;
@@ -35,7 +35,7 @@ export async function embedNote(
   noteId: string,
   userId: string,
   retryCount: number = 0,
-  maxRetries: number = 3
+  maxRetries: number = 3,
 ): Promise<EmbedNoteResult> {
   const rls = rlsExecutor(userId);
   try {
@@ -75,14 +75,9 @@ export async function embedNote(
       })
       .from(noteTags)
       .innerJoin(tags, eq(noteTags.tagId, tags.id))
-      .where(
-        and(
-          eq(noteTags.noteId, noteId),
-          rls.where(tags)
-        )
-      );
+      .where(and(eq(noteTags.noteId, noteId), rls.where(tags)));
 
-    const tagNames = noteTags_.map(nt => nt.tagName);
+    const tagNames = noteTags_.map((nt) => nt.tagName);
 
     // Store embedding in Upstash Vector
     await indexNote(noteId, embedding, {
@@ -114,15 +109,19 @@ export async function embedNote(
       noteId,
     };
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    console.error(`❌ Error embedding note ${noteId} (attempt ${retryCount + 1}/${maxRetries + 1}):`, errorMessage);
+    const errorMessage =
+      error instanceof Error ? error.message : "Unknown error";
+    console.error(
+      `❌ Error embedding note ${noteId} (attempt ${retryCount + 1}/${maxRetries + 1}):`,
+      errorMessage,
+    );
 
     // Retry logic with exponential backoff
     if (retryCount < maxRetries) {
-      const delay = Math.pow(2, retryCount) * 1000; // 1s, 2s, 4s
+      const delay = 2 ** retryCount * 1000; // 1s, 2s, 4s
       console.log(`⏳ Retrying in ${delay}ms...`);
-      
-      await new Promise(resolve => setTimeout(resolve, delay));
+
+      await new Promise((resolve) => setTimeout(resolve, delay));
       return embedNote(noteId, userId, retryCount + 1, maxRetries);
     }
 
@@ -148,7 +147,10 @@ export async function embedNote(
           .where(rls.where(notes, eq(notes.id, noteId)));
       }
     } catch (updateError) {
-      console.error(`Failed to update note status after failed embedding:`, updateError);
+      console.error(
+        `Failed to update note status after failed embedding:`,
+        updateError,
+      );
     }
 
     return {
@@ -166,24 +168,26 @@ export async function embedNote(
  */
 export async function embedNotes(
   noteIds: string[],
-  userId: string
+  userId: string,
 ): Promise<EmbedNoteResult[]> {
   const results: EmbedNoteResult[] = [];
 
   for (const noteId of noteIds) {
     const result = await embedNote(noteId, userId);
     results.push(result);
-    
+
     // Small delay between notes to avoid rate limiting
     if (noteIds.length > 1) {
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
     }
   }
 
-  const successCount = results.filter(r => r.success).length;
-  const failureCount = results.filter(r => !r.success).length;
+  const successCount = results.filter((r) => r.success).length;
+  const failureCount = results.filter((r) => !r.success).length;
 
-  console.log(`📊 Batch embedding complete: ${successCount} succeeded, ${failureCount} failed`);
+  console.log(
+    `📊 Batch embedding complete: ${successCount} succeeded, ${failureCount} failed`,
+  );
 
   return results;
 }
@@ -195,11 +199,11 @@ export async function embedNotes(
  */
 export async function reembedNote(
   noteId: string,
-  userId: string
+  userId: string,
 ): Promise<EmbedNoteResult> {
   console.log(`🔄 Re-embedding note ${noteId}`);
   const rls = rlsExecutor(userId);
-  
+
   // Reset embedding status first
   try {
     const [note] = await db

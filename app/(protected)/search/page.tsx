@@ -1,20 +1,20 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { ArrowLeft, LogOut, Search as SearchIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useSession, signOut } from "@/auth/client";
-import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { LogOut, ArrowLeft, Search as SearchIcon } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { api } from "@/api/client";
+import { signOut, useSession } from "@/auth/client";
 import {
+  defaultFilters,
   SearchBar,
   SearchFilters,
-  SearchResults,
-  defaultFilters,
   type SearchFiltersState,
   type SearchResult,
+  SearchResults,
 } from "@/components/search";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 
 interface HybridSearchResponse {
   results: SearchResult[];
@@ -65,9 +65,8 @@ export default function SearchPage() {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
         // Focus on search input
-        const searchInput = document.querySelector<HTMLInputElement>(
-          'input[type="text"]'
-        );
+        const searchInput =
+          document.querySelector<HTMLInputElement>('input[type="text"]');
         searchInput?.focus();
       }
       // Escape to go back
@@ -81,55 +80,58 @@ export default function SearchPage() {
   }, [router, query]);
 
   // Perform search
-  const performSearch = useCallback(async (searchQuery: string, searchFilters: SearchFiltersState) => {
-    if (!searchQuery.trim()) {
-      setResults([]);
-      return;
-    }
-
-    setIsLoading(true);
-    setSelectedIndex(-1);
-
-    try {
-      const params = new URLSearchParams({
-        q: searchQuery,
-        limit: "20",
-        searchMode: searchFilters.searchMode,
-      });
-
-      if (searchFilters.noteType !== "all") {
-        params.set("noteType", searchFilters.noteType);
+  const performSearch = useCallback(
+    async (searchQuery: string, searchFilters: SearchFiltersState) => {
+      if (!searchQuery.trim()) {
+        setResults([]);
+        return;
       }
 
-      if (searchFilters.tags.length > 0) {
-        params.set("tags", searchFilters.tags.join(","));
+      setIsLoading(true);
+      setSelectedIndex(-1);
+
+      try {
+        const params = new URLSearchParams({
+          q: searchQuery,
+          limit: "20",
+          searchMode: searchFilters.searchMode,
+        });
+
+        if (searchFilters.noteType !== "all") {
+          params.set("noteType", searchFilters.noteType);
+        }
+
+        if (searchFilters.tags.length > 0) {
+          params.set("tags", searchFilters.tags.join(","));
+        }
+
+        if (searchFilters.moodRange[0] !== 1) {
+          params.set("minMood", searchFilters.moodRange[0].toString());
+        }
+
+        if (searchFilters.moodRange[1] !== 10) {
+          params.set("maxMood", searchFilters.moodRange[1].toString());
+        }
+
+        const response = await api.search.$get({
+          query: Object.fromEntries(params.entries()),
+        });
+
+        if (!response.ok) {
+          throw new Error("Search failed");
+        }
+
+        const data: HybridSearchResponse = await response.json();
+        setResults(data.results);
+      } catch (error) {
+        console.error("Search error:", error);
+        setResults([]);
+      } finally {
+        setIsLoading(false);
       }
-
-      if (searchFilters.moodRange[0] !== 1) {
-        params.set("minMood", searchFilters.moodRange[0].toString());
-      }
-
-      if (searchFilters.moodRange[1] !== 10) {
-        params.set("maxMood", searchFilters.moodRange[1].toString());
-      }
-
-      const response = await api.search.$get({
-        query: Object.fromEntries(params.entries()),
-      });
-
-      if (!response.ok) {
-        throw new Error("Search failed");
-      }
-
-      const data: HybridSearchResponse = await response.json();
-      setResults(data.results);
-    } catch (error) {
-      console.error("Search error:", error);
-      setResults([]);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
+    },
+    [],
+  );
 
   // Trigger search when query or filters change
   useEffect(() => {
@@ -181,17 +183,26 @@ export default function SearchPage() {
               <>
                 <div className="flex items-center gap-2">
                   <Avatar className="h-8 w-8">
-                    <AvatarImage src={user.image || undefined} alt={user.name} />
+                    <AvatarImage
+                      src={user.image || undefined}
+                      alt={user.name}
+                    />
                     <AvatarFallback>
                       {user.name?.charAt(0).toUpperCase() || "U"}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="text-sm font-medium hidden sm:inline">{user.name}</span>
+                  <span className="text-sm font-medium hidden sm:inline">
+                    {user.name}
+                  </span>
                 </div>
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => signOut({ fetchOptions: { onSuccess: () => router.push("/login") } })}
+                  onClick={() =>
+                    signOut({
+                      fetchOptions: { onSuccess: () => router.push("/login") },
+                    })
+                  }
                 >
                   <LogOut className="h-4 w-4 sm:mr-2" />
                   <span className="hidden sm:inline">Sign out</span>
@@ -226,7 +237,8 @@ export default function SearchPage() {
             <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
               <span>Press</span>
               <kbd className="px-1.5 py-0.5 text-xs font-semibold bg-muted border border-border rounded">
-                {typeof navigator !== "undefined" && navigator.platform?.includes("Mac")
+                {typeof navigator !== "undefined" &&
+                navigator.platform?.includes("Mac")
                   ? "Cmd"
                   : "Ctrl"}
               </kbd>

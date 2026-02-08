@@ -110,12 +110,8 @@
           "name": "account_user_id_user_id_fk",
           "tableFrom": "account",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -202,12 +198,8 @@
           "name": "session_user_id_user_id_fk",
           "tableFrom": "session",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -217,9 +209,7 @@
         "session_token_unique": {
           "name": "session_token_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "token"
-          ]
+          "columns": ["token"]
         }
       },
       "policies": {},
@@ -283,9 +273,7 @@
         "user_email_unique": {
           "name": "user_email_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "email"
-          ]
+          "columns": ["email"]
         }
       },
       "policies": {},
@@ -498,12 +486,8 @@
           "name": "notes_user_id_user_id_fk",
           "tableFrom": "notes",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -573,12 +557,8 @@
           "name": "tags_user_id_user_id_fk",
           "tableFrom": "tags",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -588,10 +568,7 @@
         "tags_userId_name_unique": {
           "name": "tags_userId_name_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "user_id",
-            "name"
-          ]
+          "columns": ["user_id", "name"]
         }
       },
       "policies": {},
@@ -652,12 +629,8 @@
           "name": "note_tags_note_id_notes_id_fk",
           "tableFrom": "note_tags",
           "tableTo": "notes",
-          "columnsFrom": [
-            "note_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["note_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -665,12 +638,8 @@
           "name": "note_tags_tag_id_tags_id_fk",
           "tableFrom": "note_tags",
           "tableTo": "tags",
-          "columnsFrom": [
-            "tag_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["tag_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -678,10 +647,7 @@
       "compositePrimaryKeys": {
         "note_tags_note_id_tag_id_pk": {
           "name": "note_tags_note_id_tag_id_pk",
-          "columns": [
-            "note_id",
-            "tag_id"
-          ]
+          "columns": ["note_id", "tag_id"]
         }
       },
       "uniqueConstraints": {},
@@ -754,12 +720,8 @@
           "name": "people_user_id_user_id_fk",
           "tableFrom": "people",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -824,12 +786,8 @@
           "name": "note_mentions_note_id_notes_id_fk",
           "tableFrom": "note_mentions",
           "tableTo": "notes",
-          "columnsFrom": [
-            "note_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["note_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -837,12 +795,8 @@
           "name": "note_mentions_person_id_people_id_fk",
           "tableFrom": "note_mentions",
           "tableTo": "people",
-          "columnsFrom": [
-            "person_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["person_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -850,10 +804,7 @@
       "compositePrimaryKeys": {
         "note_mentions_note_id_person_id_pk": {
           "name": "note_mentions_note_id_person_id_pk",
-          "columns": [
-            "note_id",
-            "person_id"
-          ]
+          "columns": ["note_id", "person_id"]
         }
       },
       "uniqueConstraints": {},
@@ -943,12 +894,8 @@
           "name": "note_links_source_note_id_notes_id_fk",
           "tableFrom": "note_links",
           "tableTo": "notes",
-          "columnsFrom": [
-            "source_note_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["source_note_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -956,12 +903,8 @@
           "name": "note_links_target_note_id_notes_id_fk",
           "tableFrom": "note_links",
           "tableTo": "notes",
-          "columnsFrom": [
-            "target_note_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["target_note_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -971,10 +914,7 @@
         "note_links_source_target_unique": {
           "name": "note_links_source_target_unique",
           "nullsNotDistinct": false,
-          "columns": [
-            "source_note_id",
-            "target_note_id"
-          ]
+          "columns": ["source_note_id", "target_note_id"]
         }
       },
       "policies": {},
@@ -1068,12 +1008,8 @@
           "name": "templates_user_id_user_id_fk",
           "tableFrom": "templates",
           "tableTo": "user",
-          "columnsFrom": [
-            "user_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
+          "columnsFrom": ["user_id"],
+          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1089,19 +1025,12 @@
     "public.note_type": {
       "name": "note_type",
       "schema": "public",
-      "values": [
-        "note",
-        "journal"
-      ]
+      "values": ["note", "journal"]
     },
     "public.link_type": {
       "name": "link_type",
       "schema": "public",
-      "values": [
-        "reference",
-        "ai_suggested",
-        "manual"
-      ]
+      "values": ["reference", "ai_suggested", "manual"]
     }
   },
   "schemas": {},

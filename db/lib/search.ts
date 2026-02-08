@@ -1,13 +1,13 @@
 /**
  * Full-Text Search Utilities
- * 
+ *
  * Provides keyword-based search functionality for notes using PostgreSQL's
  * full-text search capabilities with GIN indexes for optimal performance.
  */
 
-import { db } from "@/db";
-import { notes, type Note } from "@/db/schema/notes";
 import { sql } from "drizzle-orm";
+import { db } from "@/db";
+import { type Note, notes } from "@/db/schema/notes";
 import { rlsExecutor } from "./rls";
 
 /**
@@ -40,36 +40,36 @@ export interface SearchOptions {
 /**
  * Sanitizes search query for PostgreSQL full-text search.
  * Removes special characters that could cause errors.
- * 
+ *
  * @param query - Raw user input
  * @returns Sanitized query string safe for plainto_tsquery
  */
 export function sanitizeSearchQuery(query: string): string {
   // Remove leading/trailing whitespace
   let sanitized = query.trim();
-  
+
   // If empty after trimming, return empty string
   if (!sanitized) return "";
-  
+
   // plainto_tsquery handles most special characters, but we remove some problematic ones
   sanitized = sanitized.replace(/[<>{}[\]\\]/g, " ");
-  
+
   // Collapse multiple spaces into one
   sanitized = sanitized.replace(/\s+/g, " ");
-  
+
   return sanitized;
 }
 
 /**
  * Performs keyword-based full-text search on notes using PostgreSQL's
  * tsvector and tsquery for efficient searching.
- * 
+ *
  * Uses the GIN index created by the fulltext-search-index.sql migration
  * for optimal performance.
- * 
+ *
  * @param options - Search parameters and filters
  * @returns Array of search results with ranking scores
- * 
+ *
  * @example
  * ```ts
  * const results = await searchNotes({
@@ -81,7 +81,7 @@ export function sanitizeSearchQuery(query: string): string {
  * ```
  */
 export async function searchNotes(
-  options: SearchOptions
+  options: SearchOptions,
 ): Promise<SearchResult[]> {
   const {
     userId,
@@ -95,7 +95,7 @@ export async function searchNotes(
 
   // Sanitize the search query
   const sanitizedQuery = sanitizeSearchQuery(query);
-  
+
   // If query is empty after sanitization, return empty results
   if (!sanitizedQuery) {
     return [];
@@ -113,19 +113,20 @@ export async function searchNotes(
   if (noteType) {
     conditions.push(sql`${notes.noteType} = ${noteType}`);
   }
-  
+
   if (minMoodScore !== undefined) {
     conditions.push(sql`${notes.moodScore} >= ${minMoodScore}`);
   }
-  
+
   if (maxMoodScore !== undefined) {
     conditions.push(sql`${notes.moodScore} <= ${maxMoodScore}`);
   }
 
   // Combine all conditions with AND
-  const whereClause = conditions.length > 1 
-    ? sql`${conditions.reduce((acc, condition) => sql`${acc} AND ${condition}`)}`
-    : conditions[0];
+  const whereClause =
+    conditions.length > 1
+      ? sql`${conditions.reduce((acc, condition) => sql`${acc} AND ${condition}`)}`
+      : conditions[0];
 
   // Execute the search query with ranking
   const results = await db.execute(sql`
@@ -160,18 +161,18 @@ export async function searchNotes(
 /**
  * Counts the total number of search results without pagination.
  * Useful for implementing pagination UI.
- * 
+ *
  * @param options - Search parameters (excluding limit and offset)
  * @returns Total count of matching notes
  */
 export async function countSearchResults(
-  options: Omit<SearchOptions, "limit" | "offset">
+  options: Omit<SearchOptions, "limit" | "offset">,
 ): Promise<number> {
   const { userId, query, noteType, minMoodScore, maxMoodScore } = options;
 
   // Sanitize the search query
   const sanitizedQuery = sanitizeSearchQuery(query);
-  
+
   // If query is empty, return 0
   if (!sanitizedQuery) {
     return 0;
@@ -188,18 +189,19 @@ export async function countSearchResults(
   if (noteType) {
     conditions.push(sql`${notes.noteType} = ${noteType}`);
   }
-  
+
   if (minMoodScore !== undefined) {
     conditions.push(sql`${notes.moodScore} >= ${minMoodScore}`);
   }
-  
+
   if (maxMoodScore !== undefined) {
     conditions.push(sql`${notes.moodScore} <= ${maxMoodScore}`);
   }
 
-  const whereClause = conditions.length > 1 
-    ? sql`${conditions.reduce((acc, condition) => sql`${acc} AND ${condition}`)}`
-    : conditions[0];
+  const whereClause =
+    conditions.length > 1
+      ? sql`${conditions.reduce((acc, condition) => sql`${acc} AND ${condition}`)}`
+      : conditions[0];
 
   // Execute count query
   const result = await db.execute(sql`

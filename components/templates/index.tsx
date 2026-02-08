@@ -1,2 +1,2 @@
-export { TemplateCard } from './TemplateCard';
-export { TemplateEditor } from './TemplateEditor';
+export { TemplateCard } from "./TemplateCard";
+export { TemplateEditor } from "./TemplateEditor";

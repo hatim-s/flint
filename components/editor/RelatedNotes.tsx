@@ -1,21 +1,41 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import Link from 'next/link';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Link2, LinkIcon, Unlink, ExternalLink, Sparkles, RefreshCw, FileText, BookOpen } from 'lucide-react';
-import { toast } from 'sonner';
-import { api } from '@/api/client';
+import {
+  BookOpen,
+  ExternalLink,
+  FileText,
+  Link2,
+  LinkIcon,
+  RefreshCw,
+  Sparkles,
+  Unlink,
+} from "lucide-react";
+import Link from "next/link";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
+import { api } from "@/api/client";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface RelatedNote {
   id: string;
   title: string;
   preview: string;
-  noteType: 'note' | 'journal';
+  noteType: "note" | "journal";
   similarity: number;
   createdAt: string;
   updatedAt: string;
@@ -28,7 +48,11 @@ interface RelatedNotesProps {
   debounceMs?: number;
 }
 
-export function RelatedNotes({ noteId, content, debounceMs = 30000 }: RelatedNotesProps) {
+export function RelatedNotes({
+  noteId,
+  content,
+  debounceMs = 30000,
+}: RelatedNotesProps) {
   const [relatedNotes, setRelatedNotes] = useState<RelatedNote[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [hasEmbedding, setHasEmbedding] = useState(false);
@@ -36,7 +60,7 @@ export function RelatedNotes({ noteId, content, debounceMs = 30000 }: RelatedNot
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // Track last content that was used for refresh
-  const lastContentRef = useRef<string>('');
+  const lastContentRef = useRef<string>("");
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Fetch related notes on initial load (using stored embedding)
@@ -49,14 +73,14 @@ export function RelatedNotes({ noteId, content, debounceMs = 30000 }: RelatedNot
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch related notes');
+        throw new Error("Failed to fetch related notes");
       }
 
       const data = await response.json();
       setRelatedNotes(data.related || []);
       setHasEmbedding(data.hasEmbedding ?? false);
     } catch (error) {
-      console.error('Error fetching related notes:', error);
+      console.error("Error fetching related notes:", error);
       // Don't show error toast on initial load - might just be no embedding yet
     } finally {
       setIsLoading(false);
@@ -64,33 +88,36 @@ export function RelatedNotes({ noteId, content, debounceMs = 30000 }: RelatedNot
   }, [noteId]);
 
   // Refresh related notes based on current content
-  const refreshFromContent = useCallback(async (contentToAnalyze: string) => {
-    if (!contentToAnalyze || contentToAnalyze.trim().length < 50) {
-      return; // Not enough content
-    }
-
-    try {
-      setIsRefreshing(true);
-      const response = await api.notes[":id"].related.$post({
-        param: { id: noteId },
-        query: { limit: "5" },
-        json: { content: contentToAnalyze },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to refresh related notes');
+  const refreshFromContent = useCallback(
+    async (contentToAnalyze: string) => {
+      if (!contentToAnalyze || contentToAnalyze.trim().length < 50) {
+        return; // Not enough content
       }
 
-      const data = await response.json();
-      setRelatedNotes(data.related || []);
-      setHasEmbedding(data.hasEmbedding ?? true);
-      lastContentRef.current = contentToAnalyze;
-    } catch (error) {
-      console.error('Error refreshing related notes:', error);
-    } finally {
-      setIsRefreshing(false);
-    }
-  }, [noteId]);
+      try {
+        setIsRefreshing(true);
+        const response = await api.notes[":id"].related.$post({
+          param: { id: noteId },
+          query: { limit: "5" },
+          json: { content: contentToAnalyze },
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to refresh related notes");
+        }
+
+        const data = await response.json();
+        setRelatedNotes(data.related || []);
+        setHasEmbedding(data.hasEmbedding ?? true);
+        lastContentRef.current = contentToAnalyze;
+      } catch (error) {
+        console.error("Error refreshing related notes:", error);
+      } finally {
+        setIsRefreshing(false);
+      }
+    },
+    [noteId],
+  );
 
   // Initial fetch
   useEffect(() => {
@@ -128,7 +155,7 @@ export function RelatedNotes({ noteId, content, debounceMs = 30000 }: RelatedNot
         param: { id: noteId },
         json: {
           targetNoteId,
-          linkType: 'manual',
+          linkType: "manual",
           strength: 1.0,
         },
       });
@@ -136,9 +163,9 @@ export function RelatedNotes({ noteId, content, debounceMs = 30000 }: RelatedNot
       if (!response.ok) {
         const error = await response.json();
         if (response.status === 409) {
-          toast.info('Notes are already linked');
+          toast.info("Notes are already linked");
         } else {
-          throw new Error(error.error || 'Failed to link notes');
+          throw new Error(error.error || "Failed to link notes");
         }
         return;
       }
@@ -146,13 +173,13 @@ export function RelatedNotes({ noteId, content, debounceMs = 30000 }: RelatedNot
       // Update local state
       setRelatedNotes((prev) =>
         prev.map((note) =>
-          note.id === targetNoteId ? { ...note, isLinked: true } : note
-        )
+          note.id === targetNoteId ? { ...note, isLinked: true } : note,
+        ),
       );
-      toast.success('Notes linked successfully');
+      toast.success("Notes linked successfully");
     } catch (error) {
-      console.error('Error linking notes:', error);
-      toast.error('Failed to link notes');
+      console.error("Error linking notes:", error);
+      toast.error("Failed to link notes");
     } finally {
       setIsLinking(null);
     }
@@ -168,19 +195,19 @@ export function RelatedNotes({ noteId, content, debounceMs = 30000 }: RelatedNot
       });
 
       if (!response.ok) {
-        throw new Error('Failed to unlink notes');
+        throw new Error("Failed to unlink notes");
       }
 
       // Update local state
       setRelatedNotes((prev) =>
         prev.map((note) =>
-          note.id === targetNoteId ? { ...note, isLinked: false } : note
-        )
+          note.id === targetNoteId ? { ...note, isLinked: false } : note,
+        ),
       );
-      toast.success('Link removed');
+      toast.success("Link removed");
     } catch (error) {
-      console.error('Error unlinking notes:', error);
-      toast.error('Failed to remove link');
+      console.error("Error unlinking notes:", error);
+      toast.error("Failed to remove link");
     } finally {
       setIsLinking(null);
     }
@@ -197,10 +224,10 @@ export function RelatedNotes({ noteId, content, debounceMs = 30000 }: RelatedNot
 
   // Get similarity badge color
   const getSimilarityColor = (similarity: number) => {
-    if (similarity >= 80) return 'bg-emerald-500';
-    if (similarity >= 60) return 'bg-green-500';
-    if (similarity >= 40) return 'bg-yellow-500';
-    return 'bg-orange-500';
+    if (similarity >= 80) return "bg-emerald-500";
+    if (similarity >= 60) return "bg-green-500";
+    if (similarity >= 40) return "bg-yellow-500";
+    return "bg-orange-500";
   };
 
   return (
@@ -221,7 +248,9 @@ export function RelatedNotes({ noteId, content, debounceMs = 30000 }: RelatedNot
                   onClick={handleManualRefresh}
                   disabled={isLoading || isRefreshing}
                 >
-                  <RefreshCw className={`h-3 w-3 ${isRefreshing ? 'animate-spin' : ''}`} />
+                  <RefreshCw
+                    className={`h-3 w-3 ${isRefreshing ? "animate-spin" : ""}`}
+                  />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
@@ -250,8 +279,8 @@ export function RelatedNotes({ noteId, content, debounceMs = 30000 }: RelatedNot
             <Link2 className="h-8 w-8 mx-auto text-muted-foreground/50 mb-2" />
             <p className="text-sm text-muted-foreground">
               {hasEmbedding
-                ? 'No related notes found yet'
-                : 'Keep writing to discover connections'}
+                ? "No related notes found yet"
+                : "Keep writing to discover connections"}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
               Related notes will appear as you add more content
@@ -267,7 +296,7 @@ export function RelatedNotes({ noteId, content, debounceMs = 30000 }: RelatedNot
               >
                 <div className="flex items-start justify-between gap-2 mb-1">
                   <div className="flex items-center gap-2 min-w-0 flex-1">
-                    {note.noteType === 'journal' ? (
+                    {note.noteType === "journal" ? (
                       <BookOpen className="h-4 w-4 text-orange-500 flex-shrink-0" />
                     ) : (
                       <FileText className="h-4 w-4 text-blue-500 flex-shrink-0" />
@@ -312,7 +341,7 @@ export function RelatedNotes({ noteId, content, debounceMs = 30000 }: RelatedNot
                           </Button>
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p>{note.isLinked ? 'Remove link' : 'Link notes'}</p>
+                          <p>{note.isLinked ? "Remove link" : "Link notes"}</p>
                         </TooltipContent>
                       </Tooltip>
                     </TooltipProvider>

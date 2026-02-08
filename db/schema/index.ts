@@ -1,23 +1,23 @@
 import { relations } from "drizzle-orm";
 
+export * from "./noteLinks";
+export * from "./noteMentions";
 // Export all tables
 export * from "./notes";
-export * from "./tags";
 export * from "./noteTags";
 export * from "./people";
-export * from "./noteMentions";
-export * from "./noteLinks";
+export * from "./tags";
 export * from "./templates";
 
+import { user } from "@/auth/schema";
+import { noteLinks } from "./noteLinks";
+import { noteMentions } from "./noteMentions";
 // Import tables for defining relations
 import { notes } from "./notes";
-import { tags } from "./tags";
 import { noteTags } from "./noteTags";
 import { people } from "./people";
-import { noteMentions } from "./noteMentions";
-import { noteLinks } from "./noteLinks";
+import { tags } from "./tags";
 import { templates } from "./templates";
-import { user } from "@/auth/schema";
 
 // Define relations
 const notesRelations = relations(notes, ({ one, many }) => ({

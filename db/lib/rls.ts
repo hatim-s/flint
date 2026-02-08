@@ -35,8 +35,12 @@ export function rlsExecutor(userId: string) {
     return condition ? and(ownerCheck, condition) : ownerCheck;
   };
 
-  function values<T extends Record<string, unknown>>(input: T): T & { userId: string };
-  function values<T extends Record<string, unknown>>(input: T[]): (T & { userId: string })[];
+  function values<T extends Record<string, unknown>>(
+    input: T,
+  ): T & { userId: string };
+  function values<T extends Record<string, unknown>>(
+    input: T[],
+  ): (T & { userId: string })[];
   function values<T extends Record<string, unknown>>(input: T | T[]) {
     if (Array.isArray(input)) {
       return input.map((value) => ({ ...value, userId }));

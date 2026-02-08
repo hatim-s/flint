@@ -1,13 +1,15 @@
 import { Index } from "@upstash/vector";
-import { config } from 'dotenv';
+import { config } from "dotenv";
 
-config({ path: '.env.local', quiet: true });
+config({ path: ".env.local", quiet: true });
 
 const UPSTASH_VECTOR_URL = process.env.UPSTASH_VECTOR_REST_URL;
 const UPSTASH_VECTOR_TOKEN = process.env.UPSTASH_VECTOR_REST_TOKEN;
 
 if (!UPSTASH_VECTOR_URL || !UPSTASH_VECTOR_TOKEN) {
-  throw new Error("UPSTASH_VECTOR_REST_URL and UPSTASH_VECTOR_REST_TOKEN environment variables must be set");
+  throw new Error(
+    "UPSTASH_VECTOR_REST_URL and UPSTASH_VECTOR_REST_TOKEN environment variables must be set",
+  );
 }
 
 // Create Upstash Vector index instance
@@ -33,7 +35,7 @@ export interface NoteVectorMetadata {
 
 /**
  * Upsert a note embedding to Upstash Vector
- * 
+ *
  * @param noteId - The ID of the note
  * @param embedding - The embedding vector (512 dimensions for voyage-3-lite)
  * @param metadata - Additional metadata for filtering and retrieval
@@ -42,7 +44,7 @@ export interface NoteVectorMetadata {
 export async function indexNote(
   noteId: string,
   embedding: number[],
-  metadata: NoteVectorMetadata
+  metadata: NoteVectorMetadata,
 ): Promise<void> {
   try {
     await vectorIndex.upsert({
@@ -58,7 +60,7 @@ export async function indexNote(
 
 /**
  * Upsert multiple notes in batch
- * 
+ *
  * @param items - Array of { noteId, embedding, metadata } objects
  * @returns Promise<void>
  */
@@ -67,7 +69,7 @@ export async function indexNotes(
     noteId: string;
     embedding: number[];
     metadata: NoteVectorMetadata;
-  }>
+  }>,
 ): Promise<void> {
   try {
     const vectors = items.map((item) => ({
@@ -85,7 +87,7 @@ export async function indexNotes(
 
 /**
  * Perform semantic search for similar notes
- * 
+ *
  * @param queryEmbedding - The embedding vector of the search query
  * @param userId - The user ID to filter results
  * @param options - Search options
@@ -107,7 +109,7 @@ export interface SemanticSearchResult {
 export async function semanticSearch(
   queryEmbedding: number[],
   userId: string,
-  options: SemanticSearchOptions = {}
+  options: SemanticSearchOptions = {},
 ): Promise<SemanticSearchResult[]> {
   const {
     topK = 10,
@@ -151,7 +153,7 @@ export async function semanticSearch(
 
 /**
  * Find related notes for a given note
- * 
+ *
  * @param noteId - The ID of the note to find related notes for
  * @param userId - The user ID to ensure data isolation
  * @param topK - Number of related notes to return (default: 5)
@@ -160,7 +162,7 @@ export async function semanticSearch(
 export async function findRelatedNotes(
   noteId: string,
   userId: string,
-  topK: number = 5
+  topK: number = 5,
 ): Promise<SemanticSearchResult[]> {
   try {
     // Fetch the note's embedding
@@ -187,7 +189,7 @@ export async function findRelatedNotes(
 
 /**
  * Delete a note embedding from the vector store
- * 
+ *
  * @param noteId - The ID of the note to delete
  * @returns Promise<void>
  */
@@ -202,7 +204,7 @@ export async function deleteNoteVector(noteId: string): Promise<void> {
 
 /**
  * Delete multiple note embeddings in batch
- * 
+ *
  * @param noteIds - Array of note IDs to delete
  * @returns Promise<void>
  */
@@ -217,7 +219,7 @@ export async function deleteNoteVectors(noteIds: string[]): Promise<void> {
 
 /**
  * Get statistics about the vector store
- * 
+ *
  * @returns Promise<{ count: number }>
  */
 export async function getVectorStats(): Promise<{ count: number }> {
