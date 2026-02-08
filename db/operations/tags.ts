@@ -10,29 +10,7 @@ import { tags, type Tag } from "@/db/schema/tags";
 import { noteTags } from "@/db/schema/noteTags";
 import { eq, and, inArray } from "drizzle-orm";
 import { rlsExecutor } from "@/db/lib/rls";
-
-/**
- * Extracts tag names from markdown content
- * Tags are identified by the #tagname pattern (mention format)
- * 
- * @param content - Markdown content to extract tags from
- * @returns Array of unique tag names
- */
-export function extractTagsFromContent(content: string): string[] {
-  // Match #tagname pattern, but not ## (headings)
-  // Lookahead to ensure it's not a heading (not preceded by #)
-  const tagRegex = /(?<![#\w])#([a-zA-Z0-9_-]+)/g;
-  const matches = content.matchAll(tagRegex);
-  
-  const tagNames = new Set<string>();
-  for (const match of matches) {
-    if (match[1]) {
-      tagNames.add(match[1]);
-    }
-  }
-  
-  return Array.from(tagNames);
-}
+import { extractTagsFromContent } from "@/lib/mentions";
 
 /**
  * Syncs tags for a note:
@@ -74,7 +52,7 @@ export async function syncNoteTags(
 
   // Get or create tags
   const tagRecords: Tag[] = [];
-  
+
   for (const tagName of tagNames) {
     // Check if tag exists
     const [existingTag] = await db
@@ -191,6 +169,6 @@ function generateRandomColor(): string {
     '#3b82f6', // Blue
     '#6366f1', // Indigo (repeat for variety)
   ];
-  
+
   return colors[Math.floor(Math.random() * colors.length)] ?? '#6366f1';
 }
