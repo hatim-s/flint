@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { Flame, Calendar } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { api } from "@/api/client";
 
 interface ActivityDay {
   date: string;
@@ -39,8 +40,8 @@ export function StreakCalendar({ days = 90 }: StreakCalendarProps) {
       try {
         setIsLoading(true);
         setError(null);
-        const response = await fetch("/api/analytics/activity");
-        
+        const response = await api.analytics.activity.$get();
+
         if (!response.ok) {
           throw new Error("Failed to fetch activity data");
         }
@@ -237,7 +238,7 @@ export function StreakCalendar({ days = 90 }: StreakCalendarProps) {
                     <div key={weekIndex} className="flex flex-col gap-1">
                       {week.map((day, dayIndex) => {
                         if (!day) return <div key={dayIndex} className="w-3 h-3 rounded-sm" />;
-                        
+
                         return (
                           <div
                             key={dayIndex}

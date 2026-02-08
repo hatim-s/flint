@@ -1,33 +1,25 @@
-/**
- * Hybrid Search API Route
- * 
- * Combines keyword-based full-text search with semantic vector search
- * for comprehensive note retrieval. Results are fused using weighted scores.
- */
-
-import { auth } from "@/auth";
+import { createApp } from "../app";
 import { getEmbedding } from "@/lib/embeddings";
-import { searchNotes as keywordSearch } from "@/db/lib/search";
+import { searchNotes as keywordSearch, countSearchResults } from "@/db/lib/search";
 import { semanticSearch } from "@/lib/vector";
 import { db } from "@/db";
 import { notes } from "@/db/schema/notes";
 import { rlsExecutor } from "@/db/lib/rls";
 import { inArray } from "drizzle-orm";
-import { NextRequest } from "next/server";
 import { z } from "zod";
 
-// Request validation schema
+
 const SearchParamsSchema = z.object({
   q: z.string().min(1, "Query is required"),
   limit: z.coerce.number().int().min(1).max(50).default(20),
   offset: z.coerce.number().int().min(0).default(0),
   noteType: z.enum(["note", "journal"]).optional(),
-  tags: z.string().optional(), // Comma-separated tag names
+  tags: z.string().optional(),
   minMood: z.coerce.number().int().min(1).max(10).optional(),
   maxMood: z.coerce.number().int().min(1).max(10).optional(),
   includeCount: z.coerce.boolean().default(false),
   searchMode: z.enum(["hybrid", "keyword", "semantic"]).default("hybrid"),
-  semanticWeight: z.coerce.number().min(0).max(1).default(0.6), // Weight for semantic score
+  semanticWeight: z.coerce.number().min(0).max(1).default(0.6),
 });
 
 export type SearchParams = z.infer<typeof SearchParamsSchema>;
@@ -42,22 +34,16 @@ export interface HybridSearchResult {
   moodScore: number | null;
   createdAt: Date;
   updatedAt: Date;
-  score: number; // Combined score
-  keywordRank?: number; // Keyword search rank
-  semanticScore?: number; // Semantic similarity score
+  score: number;
+  keywordRank?: number;
+  semanticScore?: number;
 }
 
-/**
- * Normalize scores to 0-1 range
- */
 function normalizeScore(score: number, min: number, max: number): number {
   if (max === min) return 1;
   return (score - min) / (max - min);
 }
 
-/**
- * Fuse keyword and semantic search results with weighted scoring
- */
 function fuseResults(
   keywordResults: Array<{ id: string; rank: number }>,
   semanticResults: Array<{ id: string; score: number }>,
@@ -66,7 +52,6 @@ function fuseResults(
   const keywordWeight = 1 - semanticWeight;
   const fusedScores = new Map<string, { score: number; keywordRank?: number; semanticScore?: number }>();
 
-  // Find min/max for normalization
   const keywordRanks = keywordResults.map((r) => r.rank);
   const semanticScores = semanticResults.map((r) => r.score);
 
@@ -75,7 +60,6 @@ function fuseResults(
   const minSemanticScore = Math.min(...semanticScores, 0);
   const maxSemanticScore = Math.max(...semanticScores, 1);
 
-  // Process keyword results
   for (const result of keywordResults) {
     const normalizedRank = normalizeScore(result.rank, minKeywordRank, maxKeywordRank);
     fusedScores.set(result.id, {
@@ -84,17 +68,14 @@ function fuseResults(
     });
   }
 
-  // Process semantic results
   for (const result of semanticResults) {
     const normalizedScore = normalizeScore(result.score, minSemanticScore, maxSemanticScore);
     const existing = fusedScores.get(result.id);
 
     if (existing) {
-      // Combine scores if note appears in both results
       existing.score += normalizedScore * semanticWeight;
       existing.semanticScore = result.score;
     } else {
-      // Add semantic-only result
       fusedScores.set(result.id, {
         score: normalizedScore * semanticWeight,
         semanticScore: result.score,
@@ -105,22 +86,9 @@ function fuseResults(
   return fusedScores;
 }
 
-/**
- * GET /api/search - Unified hybrid search endpoint
- */
-export async function GET(request: NextRequest) {
+const app = createApp().get("/search", async (c) => {
   try {
-    // 1. Authenticate user
-    const session = await auth.api.getSession({
-      headers: request.headers,
-    });
-
-    if (!session?.user) {
-      return Response.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // 2. Validate query parameters
-    const searchParams = request.nextUrl.searchParams;
+    const { searchParams } = new URL(c.req.url);
     const params = SearchParamsSchema.safeParse({
       q: searchParams.get("q"),
       limit: searchParams.get("limit"),
@@ -135,9 +103,9 @@ export async function GET(request: NextRequest) {
     });
 
     if (!params.success) {
-      return Response.json(
+      return c.json(
         { error: "Invalid parameters", details: params.error.issues },
-        { status: 400 }
+        400
       );
     }
 
@@ -153,21 +121,17 @@ export async function GET(request: NextRequest) {
       semanticWeight,
     } = params.data;
 
-    const userId = session.user.id;
+    const userId = c.get("userId");
     const rls = rlsExecutor(userId);
-
-    // Parse tags if provided
     const tags = tagsParam ? tagsParam.split(",").map((t) => t.trim()) : undefined;
 
-    // 3. Perform search based on mode
     let fusedScores: Map<string, { score: number; keywordRank?: number; semanticScore?: number }>;
 
     if (searchMode === "keyword") {
-      // Keyword-only search
       const keywordResults = await keywordSearch({
         userId,
         query,
-        limit: limit * 2, // Fetch more for better results
+        limit: limit * 2,
         noteType,
         minMoodScore: minMood,
         maxMoodScore: maxMood,
@@ -180,7 +144,6 @@ export async function GET(request: NextRequest) {
         ])
       );
     } else if (searchMode === "semantic") {
-      // Semantic-only search
       const queryEmbedding = await getEmbedding(query);
       const semanticResults = await semanticSearch(queryEmbedding, userId, {
         topK: limit * 2,
@@ -196,8 +159,6 @@ export async function GET(request: NextRequest) {
         ])
       );
     } else {
-      // Hybrid search (default)
-      // Execute both searches in parallel
       const [keywordResults, queryEmbedding] = await Promise.all([
         keywordSearch({
           userId,
@@ -217,7 +178,6 @@ export async function GET(request: NextRequest) {
         filterTags: tags,
       });
 
-      // Fuse results with weighted scoring
       fusedScores = fuseResults(
         keywordResults.map((r) => ({ id: r.id, rank: r.rank })),
         semanticResults,
@@ -225,14 +185,13 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // 4. Get unique note IDs sorted by fused score
     const sortedNoteIds = Array.from(fusedScores.entries())
       .sort(([, a], [, b]) => b.score - a.score)
       .slice(offset, offset + limit)
       .map(([id]) => id);
 
     if (sortedNoteIds.length === 0) {
-      return Response.json({
+      return c.json({
         results: [],
         count: 0,
         offset,
@@ -242,42 +201,37 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // 5. Fetch full note data from database
     const notesData = await db
       .select()
       .from(notes)
       .where(rls.where(notes, inArray(notes.id, sortedNoteIds)));
 
-    // 6. Construct response with scores
-    const results: HybridSearchResult[] = sortedNoteIds
-      .map((id) => {
-        const note = notesData.find((n) => n.id === id);
-        const scoreData = fusedScores.get(id);
+    const results: HybridSearchResult[] = [];
+    for (const id of sortedNoteIds) {
+      const note = notesData.find((n) => n.id === id);
+      const scoreData = fusedScores.get(id);
 
-        if (!note || !scoreData) return null;
+      if (!note || !scoreData) continue;
 
-        const result: HybridSearchResult = {
-          id: note.id,
-          title: note.title,
-          content: note.content,
-          contentPlain: note.contentPlain,
-          noteType: note.noteType,
-          sourceUrl: note.sourceUrl,
-          moodScore: note.moodScore,
-          createdAt: note.createdAt,
-          updatedAt: note.updatedAt,
-          score: scoreData.score,
-          keywordRank: scoreData.keywordRank,
-          semanticScore: scoreData.semanticScore,
-        };
-        
-        return result;
-      })
-      .filter((r): r is HybridSearchResult => r !== null);
+      results.push({
+        id: note.id,
+        title: note.title,
+        content: note.content,
+        contentPlain: note.contentPlain,
+        noteType: note.noteType,
+        sourceUrl: note.sourceUrl,
+        moodScore: note.moodScore,
+        createdAt: note.createdAt,
+        updatedAt: note.updatedAt,
+        score: scoreData.score,
+        keywordRank: scoreData.keywordRank,
+        semanticScore: scoreData.semanticScore,
+      });
+    }
 
-    return Response.json({
+    return c.json({
       results,
-      count: fusedScores.size, // Total unique results (before pagination)
+      count: fusedScores.size,
       offset,
       limit,
       query,
@@ -286,9 +240,116 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("Search error:", error);
-    return Response.json(
+    return c.json(
       { error: "Failed to perform search", details: String(error) },
-      { status: 500 }
+      500
     );
   }
-}
+}).get("/search/keyword", async (c) => {
+  try {
+    const { searchParams } = new URL(c.req.url);
+    const query = searchParams.get("q") || "";
+    const limit = parseInt(searchParams.get("limit") || "20", 10);
+    const offset = parseInt(searchParams.get("offset") || "0", 10);
+    const noteType = searchParams.get("noteType") as "note" | "journal" | null;
+    const minMoodScore = searchParams.get("minMood")
+      ? parseInt(searchParams.get("minMood")!, 10)
+      : undefined;
+    const maxMoodScore = searchParams.get("maxMood")
+      ? parseInt(searchParams.get("maxMood")!, 10)
+      : undefined;
+    const includeCount = searchParams.get("includeCount") === "true";
+
+    if (!query.trim()) {
+      return c.json(
+        {
+          error: "Bad Request",
+          message: "Search query parameter 'q' is required and cannot be empty",
+        },
+        400
+      );
+    }
+
+    if (limit < 1 || limit > 100) {
+      return c.json(
+        { error: "Bad Request", message: "Limit must be between 1 and 100" },
+        400
+      );
+    }
+
+    if (offset < 0) {
+      return c.json(
+        { error: "Bad Request", message: "Offset must be non-negative" },
+        400
+      );
+    }
+
+    if (minMoodScore !== undefined && (minMoodScore < 1 || minMoodScore > 10)) {
+      return c.json(
+        { error: "Bad Request", message: "minMood must be between 1 and 10" },
+        400
+      );
+    }
+
+    if (maxMoodScore !== undefined && (maxMoodScore < 1 || maxMoodScore > 10)) {
+      return c.json(
+        { error: "Bad Request", message: "maxMood must be between 1 and 10" },
+        400
+      );
+    }
+
+    if (minMoodScore !== undefined && maxMoodScore !== undefined && minMoodScore > maxMoodScore) {
+      return c.json(
+        { error: "Bad Request", message: "minMood cannot be greater than maxMood" },
+        400
+      );
+    }
+
+    const results = await keywordSearch({
+      userId: c.get("userId"),
+      query,
+      limit,
+      offset,
+      noteType: noteType || undefined,
+      minMoodScore,
+      maxMoodScore,
+    });
+
+    let totalCount: number | undefined;
+    if (includeCount) {
+      totalCount = await countSearchResults({
+        userId: c.get("userId"),
+        query,
+        noteType: noteType || undefined,
+        minMoodScore,
+        maxMoodScore,
+      });
+    }
+
+    return c.json({
+      results,
+      query,
+      count: results.length,
+      totalCount,
+      pagination: {
+        limit,
+        offset,
+        hasMore: includeCount ? offset + results.length < totalCount! : undefined,
+      },
+    });
+  } catch (error) {
+    console.error("Search API error:", error);
+    return c.json(
+      {
+        error: "Internal Server Error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "An unexpected error occurred while searching",
+      },
+      500
+    );
+  }
+});
+
+export default app;

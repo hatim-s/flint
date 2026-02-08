@@ -12,6 +12,7 @@ import {
 } from "recharts";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { api } from "@/api/client";
 
 interface MoodDataPoint {
   date: string;
@@ -43,8 +44,10 @@ export function MoodChart({ days = 30 }: MoodChartProps) {
       try {
         setIsLoading(true);
         setError(null);
-        const response = await fetch(`/api/analytics/mood-trends?days=${days}`);
-        
+        const response = await api.analytics["mood-trends"].$get({
+          query: { days: String(days) },
+        });
+
         if (!response.ok) {
           throw new Error("Failed to fetch mood trends");
         }

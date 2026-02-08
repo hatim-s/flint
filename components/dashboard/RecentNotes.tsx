@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { FileText, Clock, ArrowRight, Plus } from "lucide-react";
 import type { Note } from "@/db/schema/notes";
 import { formatDistanceToNow } from "date-fns";
+import { api } from "@/api/client";
 
 interface RecentNotesProps {
   onCreateNote?: () => void;
@@ -25,16 +26,24 @@ export function RecentNotes({ onCreateNote }: RecentNotesProps) {
       try {
         setIsLoading(true);
         setError(null);
-        
+
         // Fetch last 5 notes ordered by updatedAt
-        const response = await fetch('/api/notes?limit=5&sortBy=updatedAt&sortOrder=desc');
-        
+        const response = await api.notes.$get({
+          query: {
+            limit: "5",
+            sortBy: "updatedAt",
+            sortOrder: "desc",
+          },
+        });
+
+        console.log(response);
+
         if (!response.ok) {
           throw new Error('Failed to fetch notes');
         }
 
         const data = await response.json();
-        setNotes(data.notes || []);
+        setNotes(data.data || []);
       } catch (err) {
         console.error('Error fetching recent notes:', err);
         setError('Failed to load recent notes');
@@ -49,8 +58,8 @@ export function RecentNotes({ onCreateNote }: RecentNotesProps) {
   // Generate preview text (first 100 chars of plain content)
   const getPreview = (note: Note) => {
     const plainText = note.contentPlain || note.content || '';
-    return plainText.length > 100 
-      ? plainText.slice(0, 100) + '...' 
+    return plainText.length > 100
+      ? plainText.slice(0, 100) + '...'
       : plainText;
   };
 
@@ -145,20 +154,20 @@ export function RecentNotes({ onCreateNote }: RecentNotesProps) {
                   <h3 className="font-medium line-clamp-1 group-hover:text-primary transition-colors">
                     {note.title || 'Untitled'}
                   </h3>
-                  <Badge 
+                  <Badge
                     variant={note.noteType === 'journal' ? 'default' : 'secondary'}
                     className="shrink-0"
                   >
                     {note.noteType === 'journal' ? 'Journal' : 'Note'}
                   </Badge>
                 </div>
-                
+
                 {getPreview(note) && (
                   <p className="text-sm text-muted-foreground line-clamp-2 mb-2">
                     {getPreview(note)}
                   </p>
                 )}
-                
+
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Clock className="h-3 w-3" />
                   <span>{getRelativeTime(note.updatedAt)}</span>

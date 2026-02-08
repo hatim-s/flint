@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'sonner';
+import { api } from '@/api/client';
 import {
   Mic,
   MicOff,
@@ -174,9 +175,8 @@ export function VoiceCapture({
       const formData = new FormData();
       formData.append('audio', blob, 'recording.webm');
 
-      const response = await fetch('/api/transcribe', {
-        method: 'POST',
-        body: formData,
+      const response = await api.transcribe.$post({
+        form: formData,
       });
 
       if (!response.ok) {
@@ -263,7 +263,7 @@ export function VoiceCapture({
         className={cn(
           'relative',
           position === 'floating' &&
-            'fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg',
+          'fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg',
           className
         )}
         title="Voice recording not supported in this browser"
@@ -286,7 +286,7 @@ export function VoiceCapture({
           className={cn(
             'relative',
             position === 'floating' &&
-              'fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow',
+            'fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-shadow',
             className
           )}
           title="Start voice recording"
@@ -301,7 +301,7 @@ export function VoiceCapture({
           className={cn(
             'flex flex-col items-center gap-4 p-4 rounded-lg border bg-background',
             position === 'floating' &&
-              'fixed bottom-6 right-6 shadow-xl min-w-[280px]',
+            'fixed bottom-6 right-6 shadow-xl min-w-[280px]',
             position === 'inline' && 'w-full max-w-sm mx-auto',
             className
           )}
@@ -387,7 +387,7 @@ export function VoiceCapture({
           className={cn(
             'flex flex-col items-center gap-4 p-6 rounded-lg border bg-background',
             position === 'floating' &&
-              'fixed bottom-6 right-6 shadow-xl min-w-[280px]',
+            'fixed bottom-6 right-6 shadow-xl min-w-[280px]',
             position === 'inline' && 'w-full max-w-sm mx-auto',
             className
           )}
@@ -408,7 +408,7 @@ export function VoiceCapture({
           className={cn(
             'flex flex-col items-center gap-4 p-6 rounded-lg border border-destructive/50 bg-background',
             position === 'floating' &&
-              'fixed bottom-6 right-6 shadow-xl min-w-[280px]',
+            'fixed bottom-6 right-6 shadow-xl min-w-[280px]',
             position === 'inline' && 'w-full max-w-sm mx-auto',
             className
           )}

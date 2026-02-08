@@ -11,6 +11,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { Clock, Brain, ChevronLeft, ChevronRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { fillTemplateVariables } from '@/db/seed/templates';
+import { api } from '@/api/client';
 
 type NoteType = 'note' | 'journal';
 
@@ -31,7 +32,7 @@ export function CreateNoteModal({ open, onOpenChange }: CreateNoteModalProps) {
   const router = useRouter();
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [isCreating, setIsCreating] = useState(false);
-  
+
   // Form state
   const [noteType, setNoteType] = useState<NoteType | null>(null);
   const [title, setTitle] = useState('');
@@ -65,11 +66,13 @@ export function CreateNoteModal({ open, onOpenChange }: CreateNoteModalProps) {
       toast.error('Please enter a title');
       return;
     }
-    
+
     // Fetch templates for selected note type
     setLoadingTemplates(true);
     try {
-      const response = await fetch(`/api/templates?noteType=${noteType}`);
+      const response = await api.templates.$get({
+        query: noteType ? { noteType } : {},
+      });
       if (!response.ok) throw new Error('Failed to fetch templates');
       const data = await response.json();
       setTemplates(data.templates || []);
@@ -109,17 +112,15 @@ export function CreateNoteModal({ open, onOpenChange }: CreateNoteModalProps) {
         }
       }
 
-      const response = await fetch('/api/notes', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const response = await api.notes.$post({
+        json: {
           title: title.trim(),
           content: content,
           noteType,
           sourceUrl: sourceUrl.trim() || undefined,
           templateId: skipTemplate ? undefined : selectedTemplateId,
           moodScore: noteType === 'journal' ? 5 : undefined, // Default neutral mood for journals
-        }),
+        },
       });
 
       if (!response.ok) {
@@ -127,10 +128,10 @@ export function CreateNoteModal({ open, onOpenChange }: CreateNoteModalProps) {
         throw new Error(error.error || 'Failed to create note');
       }
 
-      const { note } = await response.json();
+      const { data } = await response.json();
       toast.success('Note created successfully!');
       handleOpenChange(false);
-      router.push(`/notes/${note.id}`);
+      router.push(`/notes/${data.id}`);
     } catch (error) {
       console.error('Error creating note:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to create note');
@@ -151,9 +152,8 @@ export function CreateNoteModal({ open, onOpenChange }: CreateNoteModalProps) {
           {[1, 2, 3].map((s) => (
             <div
               key={s}
-              className={`h-2 w-12 rounded-full transition-colors ${
-                s === step ? 'bg-primary' : s < step ? 'bg-primary/60' : 'bg-muted'
-              }`}
+              className={`h-2 w-12 rounded-full transition-colors ${s === step ? 'bg-primary' : s < step ? 'bg-primary/60' : 'bg-muted'
+                }`}
             />
           ))}
         </div>
@@ -267,9 +267,8 @@ export function CreateNoteModal({ open, onOpenChange }: CreateNoteModalProps) {
                 {templates.map((template) => (
                   <Card
                     key={template.id}
-                    className={`p-4 cursor-pointer hover:border-primary transition-colors ${
-                      selectedTemplateId === template.id ? 'border-primary bg-primary/5' : ''
-                    }`}
+                    className={`p-4 cursor-pointer hover:border-primary transition-colors ${selectedTemplateId === template.id ? 'border-primary bg-primary/5' : ''
+                      }`}
                     onClick={() => setSelectedTemplateId(template.id)}
                   >
                     <div className="flex items-start justify-between">
