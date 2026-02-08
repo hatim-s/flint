@@ -2,12 +2,12 @@ import React, { forwardRef, useEffect, useImperativeHandle, useState } from 'rea
 import { Person } from '@/db/schema/people';
 import { User } from 'lucide-react';
 
-export interface PeopleSuggestionProps {
+interface PeopleSuggestionProps {
   items: Person[];
   command: (item: { id: string; label: string }) => void;
 }
 
-export interface PeopleSuggestionRef {
+interface PeopleSuggestionRef {
   onKeyDown: (props: { event: KeyboardEvent }) => boolean;
 }
 
@@ -15,7 +15,7 @@ export interface PeopleSuggestionRef {
  * People suggestion dropdown component for TipTap Mention extension
  * Displays a list of people/contacts that can be filtered and selected with keyboard navigation
  */
-export const PeopleSuggestion = forwardRef<PeopleSuggestionRef, PeopleSuggestionProps>(
+const PeopleSuggestion = forwardRef<PeopleSuggestionRef, PeopleSuggestionProps>(
   (props, ref) => {
     const [selectedIndex, setSelectedIndex] = useState(0);
 
@@ -80,11 +80,10 @@ export const PeopleSuggestion = forwardRef<PeopleSuggestionRef, PeopleSuggestion
           {props.items.map((item, index) => (
             <button
               key={item.id}
-              className={`flex w-full items-center gap-2 rounded-sm px-2 py-2 text-sm outline-none transition-colors ${
-                index === selectedIndex
+              className={`flex w-full items-center gap-2 rounded-sm px-2 py-2 text-sm outline-none transition-colors ${index === selectedIndex
                   ? 'bg-neutral-100 dark:bg-neutral-800'
                   : 'hover:bg-neutral-50 dark:hover:bg-neutral-900'
-              }`}
+                }`}
               onClick={() => selectItem(index)}
               type="button"
             >
@@ -106,3 +105,6 @@ export const PeopleSuggestion = forwardRef<PeopleSuggestionRef, PeopleSuggestion
 );
 
 PeopleSuggestion.displayName = 'PeopleSuggestion';
+
+export { PeopleSuggestion };
+export type { PeopleSuggestionProps, PeopleSuggestionRef };

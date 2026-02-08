@@ -6,14 +6,14 @@ import { cors } from "hono/cors";
 import { auth } from "@/auth";
 import { NOT_FOUND, INTERNAL_SERVER_ERROR, UNAUTHORIZED } from "@/api/lib/http-status-codes";
 
-export type AppBindings = {
+type AppBindings = {
   Variables: {
     session: Awaited<ReturnType<typeof auth.api.getSession>>;
     userId: string;
   };
 };
 
-export const authMiddleware: MiddlewareHandler<AppBindings> = async (c, next) => {
+const authMiddleware: MiddlewareHandler<AppBindings> = async (c, next) => {
   const session = await auth.api.getSession({ headers: c.req.raw.headers });
   if (!session) {
     return c.json({ error: "Unauthorized" }, UNAUTHORIZED);
@@ -24,11 +24,11 @@ export const authMiddleware: MiddlewareHandler<AppBindings> = async (c, next) =>
   return await next();
 };
 
-export function createApp() {
+function createApp() {
   const app = new Hono<AppBindings>({
     strict: false
   });
-  
+
   app.use("*", authMiddleware).use(requestId()).use(logger()).use(cors());
 
   // we want json responses for all errors
@@ -40,5 +40,8 @@ export function createApp() {
 
   return app;
 }
+
+export { authMiddleware, createApp };
+export type { AppBindings };
 
 

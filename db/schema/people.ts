@@ -1,7 +1,7 @@
 import { pgTable, text, timestamp, jsonb, index } from "drizzle-orm/pg-core";
 import { user } from "@/auth/schema";
 
-export const people = pgTable(
+const people = pgTable(
   "people",
   {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
@@ -22,5 +22,8 @@ export const people = pgTable(
   ]
 );
 
-export type Person = typeof people.$inferSelect;
-export type NewPerson = typeof people.$inferInsert;
+type Person = typeof people.$inferSelect;
+type NewPerson = typeof people.$inferInsert;
+
+export { people };
+export type { Person, NewPerson };

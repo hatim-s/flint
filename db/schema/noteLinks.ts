@@ -2,9 +2,9 @@ import { pgTable, text, timestamp, real, pgEnum, index, unique } from "drizzle-o
 import { notes } from "./notes";
 
 // Enum for link types
-export const linkTypeEnum = pgEnum("link_type", ["reference", "ai_suggested", "manual"]);
+const linkTypeEnum = pgEnum("link_type", ["reference", "ai_suggested", "manual"]);
 
-export const noteLinks = pgTable(
+const noteLinks = pgTable(
   "note_links",
   {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
@@ -25,5 +25,8 @@ export const noteLinks = pgTable(
   ]
 );
 
-export type NoteLink = typeof noteLinks.$inferSelect;
-export type NewNoteLink = typeof noteLinks.$inferInsert;
+type NoteLink = typeof noteLinks.$inferSelect;
+type NewNoteLink = typeof noteLinks.$inferInsert;
+
+export { linkTypeEnum, noteLinks };
+export type { NoteLink, NewNoteLink };

@@ -5,12 +5,12 @@ import { useState, useRef, useCallback, useEffect } from 'react';
 /**
  * Recording state for the voice recorder
  */
-export type RecordingState = 'idle' | 'recording' | 'paused' | 'stopped';
+type RecordingState = 'idle' | 'recording' | 'paused' | 'stopped';
 
 /**
  * Error types for voice recording
  */
-export type VoiceRecorderError = 
+type VoiceRecorderError =
   | 'permission_denied'
   | 'not_supported'
   | 'no_audio_device'
@@ -20,7 +20,7 @@ export type VoiceRecorderError =
 /**
  * Options for the voice recorder hook
  */
-export interface VoiceRecorderOptions {
+interface VoiceRecorderOptions {
   /** Audio mime type (default: 'audio/webm') */
   mimeType?: string;
   /** Audio bits per second (default: 128000) */
@@ -34,7 +34,7 @@ export interface VoiceRecorderOptions {
 /**
  * Return type for the useVoiceRecorder hook
  */
-export interface VoiceRecorderReturn {
+interface VoiceRecorderReturn {
   /** Current recording state */
   state: RecordingState;
   /** Whether currently recording (state === 'recording') */
@@ -92,10 +92,10 @@ function formatDuration(seconds: number): string {
  * Check if MediaRecorder is supported
  */
 function isMediaRecorderSupported(): boolean {
-  return typeof window !== 'undefined' && 
-         'MediaRecorder' in window && 
-         'mediaDevices' in navigator && 
-         'getUserMedia' in navigator.mediaDevices;
+  return typeof window !== 'undefined' &&
+    'MediaRecorder' in window &&
+    'mediaDevices' in navigator &&
+    'getUserMedia' in navigator.mediaDevices;
 }
 
 /**
@@ -103,7 +103,7 @@ function isMediaRecorderSupported(): boolean {
  */
 function getSupportedMimeType(preferred: string): string {
   if (typeof window === 'undefined') return preferred;
-  
+
   const types = [
     preferred,
     'audio/webm;codecs=opus',
@@ -113,13 +113,13 @@ function getSupportedMimeType(preferred: string): string {
     'audio/mp4',
     'audio/mpeg',
   ];
-  
+
   for (const type of types) {
     if (MediaRecorder.isTypeSupported(type)) {
       return type;
     }
   }
-  
+
   return 'audio/webm'; // fallback
 }
 
@@ -148,7 +148,7 @@ function getSupportedMimeType(preferred: string): string {
  * };
  * ```
  */
-export function useVoiceRecorder(options: VoiceRecorderOptions = {}): VoiceRecorderReturn {
+function useVoiceRecorder(options: VoiceRecorderOptions = {}): VoiceRecorderReturn {
   const {
     mimeType = 'audio/webm',
     audioBitsPerSecond = 128000,
@@ -264,7 +264,7 @@ export function useVoiceRecorder(options: VoiceRecorderOptions = {}): VoiceRecor
    */
   const startDurationTimer = useCallback(() => {
     startTimeRef.current = Date.now() - (pausedDurationRef.current * 1000);
-    
+
     durationIntervalRef.current = setInterval(() => {
       const elapsed = (Date.now() - startTimeRef.current) / 1000;
       setDuration(elapsed);
@@ -367,7 +367,7 @@ export function useVoiceRecorder(options: VoiceRecorderOptions = {}): VoiceRecor
       return true;
     } catch (err) {
       console.error('Failed to start recording:', err);
-      
+
       if (err instanceof DOMException) {
         if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
           setError('permission_denied');
@@ -447,9 +447,9 @@ export function useVoiceRecorder(options: VoiceRecorderOptions = {}): VoiceRecor
         // Create blob from chunks
         const supportedType = getSupportedMimeType(mimeType);
         const blob = new Blob(chunksRef.current, { type: supportedType });
-        
+
         setAudioBlob(blob);
-        
+
         // Create URL for playback
         const url = URL.createObjectURL(blob);
         setAudioUrl(url);
@@ -515,3 +515,11 @@ export function useVoiceRecorder(options: VoiceRecorderOptions = {}): VoiceRecor
     isSupported,
   };
 }
+
+export { useVoiceRecorder };
+export type {
+  RecordingState,
+  VoiceRecorderError,
+  VoiceRecorderOptions,
+  VoiceRecorderReturn,
+};

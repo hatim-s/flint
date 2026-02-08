@@ -20,7 +20,7 @@ import { templates } from "./templates";
 import { user } from "@/auth/schema";
 
 // Define relations
-export const notesRelations = relations(notes, ({ one, many }) => ({
+const notesRelations = relations(notes, ({ one, many }) => ({
   user: one(user, {
     fields: [notes.userId],
     references: [user.id],
@@ -35,7 +35,7 @@ export const notesRelations = relations(notes, ({ one, many }) => ({
   targetLinks: many(noteLinks, { relationName: "targetLinks" }),
 }));
 
-export const tagsRelations = relations(tags, ({ one, many }) => ({
+const tagsRelations = relations(tags, ({ one, many }) => ({
   user: one(user, {
     fields: [tags.userId],
     references: [user.id],
@@ -43,7 +43,7 @@ export const tagsRelations = relations(tags, ({ one, many }) => ({
   noteTags: many(noteTags),
 }));
 
-export const noteTagsRelations = relations(noteTags, ({ one }) => ({
+const noteTagsRelations = relations(noteTags, ({ one }) => ({
   note: one(notes, {
     fields: [noteTags.noteId],
     references: [notes.id],
@@ -54,7 +54,7 @@ export const noteTagsRelations = relations(noteTags, ({ one }) => ({
   }),
 }));
 
-export const peopleRelations = relations(people, ({ one, many }) => ({
+const peopleRelations = relations(people, ({ one, many }) => ({
   user: one(user, {
     fields: [people.userId],
     references: [user.id],
@@ -62,7 +62,7 @@ export const peopleRelations = relations(people, ({ one, many }) => ({
   noteMentions: many(noteMentions),
 }));
 
-export const noteMentionsRelations = relations(noteMentions, ({ one }) => ({
+const noteMentionsRelations = relations(noteMentions, ({ one }) => ({
   note: one(notes, {
     fields: [noteMentions.noteId],
     references: [notes.id],
@@ -73,7 +73,7 @@ export const noteMentionsRelations = relations(noteMentions, ({ one }) => ({
   }),
 }));
 
-export const noteLinksRelations = relations(noteLinks, ({ one }) => ({
+const noteLinksRelations = relations(noteLinks, ({ one }) => ({
   sourceNote: one(notes, {
     fields: [noteLinks.sourceNoteId],
     references: [notes.id],
@@ -86,7 +86,7 @@ export const noteLinksRelations = relations(noteLinks, ({ one }) => ({
   }),
 }));
 
-export const templatesRelations = relations(templates, ({ one, many }) => ({
+const templatesRelations = relations(templates, ({ one, many }) => ({
   user: one(user, {
     fields: [templates.userId],
     references: [user.id],
@@ -95,9 +95,20 @@ export const templatesRelations = relations(templates, ({ one, many }) => ({
 }));
 
 // Extend user relations with new tables
-export const userNotesRelations = relations(user, ({ many }) => ({
+const userNotesRelations = relations(user, ({ many }) => ({
   notes: many(notes),
   tags: many(tags),
   people: many(people),
   templates: many(templates),
 }));
+
+export {
+  notesRelations,
+  tagsRelations,
+  noteTagsRelations,
+  peopleRelations,
+  noteMentionsRelations,
+  noteLinksRelations,
+  templatesRelations,
+  userNotesRelations,
+};

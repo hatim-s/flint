@@ -2,7 +2,7 @@ import { pgTable, text, timestamp, boolean, index } from "drizzle-orm/pg-core";
 import { user } from "@/auth/schema";
 import { noteTypeEnum } from "./notes";
 
-export const templates = pgTable(
+const templates = pgTable(
   "templates",
   {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
@@ -21,5 +21,8 @@ export const templates = pgTable(
   ]
 );
 
-export type Template = typeof templates.$inferSelect;
-export type NewTemplate = typeof templates.$inferInsert;
+type Template = typeof templates.$inferSelect;
+type NewTemplate = typeof templates.$inferInsert;
+
+export { templates };
+export type { Template, NewTemplate };

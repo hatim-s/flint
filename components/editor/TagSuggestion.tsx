@@ -1,12 +1,12 @@
 import React, { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import { Tag } from '@/db/schema/tags';
 
-export interface TagSuggestionProps {
+interface TagSuggestionProps {
   items: Tag[];
   command: (item: { id: string; label: string }) => void;
 }
 
-export interface TagSuggestionRef {
+interface TagSuggestionRef {
   onKeyDown: (props: { event: KeyboardEvent }) => boolean;
 }
 
@@ -14,7 +14,7 @@ export interface TagSuggestionRef {
  * Tag suggestion dropdown component for TipTap Mention extension
  * Displays a list of tags that can be filtered and selected with keyboard navigation
  */
-export const TagSuggestion = forwardRef<TagSuggestionRef, TagSuggestionProps>(
+const TagSuggestion = forwardRef<TagSuggestionRef, TagSuggestionProps>(
   (props, ref) => {
     const [selectedIndex, setSelectedIndex] = useState(0);
 
@@ -79,11 +79,10 @@ export const TagSuggestion = forwardRef<TagSuggestionRef, TagSuggestionProps>(
           {props.items.map((item, index) => (
             <button
               key={item.id}
-              className={`flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors ${
-                index === selectedIndex
+              className={`flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors ${index === selectedIndex
                   ? 'bg-neutral-100 dark:bg-neutral-800'
                   : 'hover:bg-neutral-50 dark:hover:bg-neutral-900'
-              }`}
+                }`}
               onClick={() => selectItem(index)}
               type="button"
             >
@@ -101,3 +100,6 @@ export const TagSuggestion = forwardRef<TagSuggestionRef, TagSuggestionProps>(
 );
 
 TagSuggestion.displayName = 'TagSuggestion';
+
+export { TagSuggestion };
+export type { TagSuggestionProps, TagSuggestionRef };
